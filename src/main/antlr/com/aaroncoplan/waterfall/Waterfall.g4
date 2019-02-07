@@ -10,6 +10,7 @@ code
 
 codeline
     : variableDeclaration
+    | variableAssignment
     ;
 
 variableType
@@ -27,6 +28,10 @@ variableValue
 
 variableDeclaration
     : variableType variableName EQUALS variableValue SEMICOLON
+    ;
+
+variableAssignment
+    : variableName EQUALS variableValue SEMICOLON
     ;
 
 // Symbols
