@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "format": "prettier prettier --tab-width 4 --write \"src/main/java/**/*.java\""
+    "format": "prettier --tab-width 4 --write \"src/main/java/**/*.java\""
   },
   "devDependencies": {
     "prettier": "1.16.4",
