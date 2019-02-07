@@ -29,6 +29,7 @@ jar {
     manifest {
         attributes 'Main-Class': 'org.aaroncoplan.waterfall.App'
     }
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
 }
 
 generateGrammarSource {
