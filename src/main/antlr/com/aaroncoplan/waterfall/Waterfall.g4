@@ -1,5 +1,22 @@
 grammar Waterfall;
 
 program
-    : 'hello' EOF
+    : 'main {' code '}' EOF
+    ;
+
+code
+    : codeline*
+    ;
+
+codeline
+    : 'hello' SEMICOLON
+    | 'goodbye' SEMICOLON
+    ;
+
+SEMICOLON
+    : ';'
+    ;
+
+WHITESPACE
+    : [ \t\r\n]+ -> skip
     ;
