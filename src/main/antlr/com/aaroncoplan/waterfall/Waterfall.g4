@@ -9,21 +9,46 @@ code
     ;
 
 codeline
-    : 'hello' SEMICOLON
-    | 'goodbye' SEMICOLON
+    : variableDeclaration
     ;
 
-DECIMAL_LITERAL
-    : ('0' .. '9')+
-    | ('0' .. '9')+ DOT ('0' .. '9')+
+variableType
+    : ID
     ;
 
-INTEGER_LITERAL
+variableName
+    : ID
+    ;
+
+variableValue
+    : INT_LITERAL
+    | DEC_LITERAL
+    ;
+
+variableDeclaration
+    : variableType variableName EQUALS variableValue SEMICOLON
+    ;
+
+// Symbols
+
+ID
+    : ('a' .. 'z' | 'A' .. 'Z' | '_')+
+    ;
+
+INT_LITERAL
     : ('0' .. '9')+
+    ;
+
+DEC_LITERAL
+    : ('0' .. '9')+ DOT ('0' .. '9')+
     ;
 
 DOT
     : '.'
+    ;
+
+EQUALS
+    : '='
     ;
 
 SEMICOLON
