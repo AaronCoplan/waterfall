@@ -55,13 +55,44 @@ public class App {
             }
             System.exit(-1);
         }
-        List<WaterfallParser.CodelineContext> codelineContexts = programAST.code().codeline();
+        final Scope globalScope = new Scope(null);
+
+        final List<WaterfallParser.CodelineContext> codelineContexts = programAST.code().codeline();
+        final List<VariableDeclaration> scopedAST = new ArrayList<VariableDeclaration>();
+        // PASS 1
+        int statementNumber = 0;
         for (WaterfallParser.CodelineContext codelineContext : codelineContexts) {
-            if (codelineContext.variableDeclaration() != null) {
-                System.out.println(
-                    new VariableDeclaration(codelineContext.variableDeclaration()).emit()
+            VariableDeclaration variableDeclaration = new VariableDeclaration(
+                codelineContext.variableDeclaration(),
+                globalScope
+            );
+            if (globalScope.getReference(variableDeclaration.getVariableName()) != null) {
+                System.err.println(
+                    "INVALID DECL, var already declared: " + variableDeclaration.getVariableName()
                 );
+                System.exit(-1);
             }
+            globalScope.addReference(variableDeclaration.getVariableName(), statementNumber);
+
+            scopedAST.add(variableDeclaration);
+
+            ++statementNumber;
+        }
+        globalScope.debugPrint();
+
+        // PASS 2
+        statementNumber = 0;
+        for (VariableDeclaration variableDeclaration : scopedAST) {
+            final Integer refLineNumber = variableDeclaration.getScope().getReference(
+                variableDeclaration.getVariableName()
+            );
+            if (refLineNumber == null || statementNumber < refLineNumber) {
+                System.err.println("INVALID STATEMENT");
+                System.exit(-1);
+            }
+            System.out.println("Valid ref: " + variableDeclaration.getVariableName());
+            System.out.println(variableDeclaration.emit());
+            ++statementNumber;
         }
     }
 

@@ -3,14 +3,18 @@ package org.aaroncoplan.waterfall;
 import com.aaroncoplan.waterfall.WaterfallParser;
 
 public class VariableDeclaration {
+    private final Scope scope;
     private final String variableType;
     private final String variableName;
     private int intValue;
     private double doubleValue;
 
     public VariableDeclaration(
-        WaterfallParser.VariableDeclarationContext variableDeclarationContext
+        WaterfallParser.VariableDeclarationContext variableDeclarationContext,
+        Scope scope
     ) {
+        this.scope = scope;
+
         this.variableType = variableDeclarationContext.variableType().ID().getText();
         this.variableName = variableDeclarationContext.variableName().ID().getText();
 
@@ -25,6 +29,14 @@ public class VariableDeclaration {
         } else {
             throw new RuntimeException("UNRECOGNIZED TYPE: " + this.variableType);
         }
+    }
+
+    public Scope getScope() {
+        return scope;
+    }
+
+    public String getVariableName() {
+        return variableName;
     }
 
     public String emit() {
