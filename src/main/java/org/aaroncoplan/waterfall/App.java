@@ -31,31 +31,20 @@ public class App {
             }
             sc.close();
         } catch(FileNotFoundException e) {
-            System.err.format(
-                "File %s could not be found",
-                waterfallCodeFilePath
-            ).println();
+            System.err.format("File %s could not be found", waterfallCodeFilePath).println();
             System.exit(-1);
         }
         // parse using ANTLR
         final CharStream charStream = CharStreams.fromString(code.toString());
         final WaterfallLexer waterfallLexer = new WaterfallLexer(charStream);
-        final CommonTokenStream tokenStream = new CommonTokenStream(
-            waterfallLexer
-        );
+        final CommonTokenStream tokenStream = new CommonTokenStream(waterfallLexer);
 
-        final WaterfallParser waterfallParser = new WaterfallParser(
-            tokenStream
-        );
+        final WaterfallParser waterfallParser = new WaterfallParser(tokenStream);
         waterfallParser.removeErrorListeners();
-        SyntaxErrorListener errorListener = new SyntaxErrorListener(
-            waterfallCodeFilePath
-        );
+        SyntaxErrorListener errorListener = new SyntaxErrorListener(waterfallCodeFilePath);
         waterfallParser.addErrorListener(errorListener);
 
-        final WaterfallParser.ProgramContext programAST = waterfallParser.program(
-
-        );
+        final WaterfallParser.ProgramContext programAST = waterfallParser.program();
         System.out.println(programAST.toStringTree(waterfallParser));
 
         final List<String> syntaxErrors = errorListener.getSyntaxErrors();
@@ -66,26 +55,14 @@ public class App {
             }
             System.exit(-1);
         }
-        programAST.code().codeline().forEach(
-            clCtx -> {
-                WaterfallParser.VariableDeclarationContext variableDeclarationContext = clCtx.variableDeclaration(
-
-                );
+        List<WaterfallParser.CodelineContext> codelineContexts = programAST.code().codeline();
+        for (WaterfallParser.CodelineContext codelineContext : codelineContexts) {
+            if (codelineContext.variableDeclaration() != null) {
                 System.out.println(
-                    variableDeclarationContext.variableType().ID().getText()
+                    new VariableDeclaration(codelineContext.variableDeclaration()).emit()
                 );
-                System.out.println(
-                    variableDeclarationContext.variableName().ID().getText()
-                );
-                System.out.println(
-                    variableDeclarationContext.variableValue().INT_LITERAL()
-                );
-                System.out.println(
-                    variableDeclarationContext.variableValue().DEC_LITERAL()
-                );
-                System.out.println();
             }
-        );
+        }
     }
 
 }
