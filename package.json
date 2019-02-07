@@ -1,0 +1,12 @@
+{
+  "name": "waterfall",
+  "version": "0.0.1",
+  "repository": "git@github.com:AaronCoplan/waterfall.git",
+  "author": "AaronCoplan <afcoplan@gmail.com>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "prettier": "1.16.4",
+    "prettier-plugin-java": "0.0.10"
+  }
+}
