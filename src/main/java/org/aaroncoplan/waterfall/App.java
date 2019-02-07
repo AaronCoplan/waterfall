@@ -39,7 +39,7 @@ public class App {
 
         final WaterfallParser waterfallParser = new WaterfallParser(tokenStream);
         waterfallParser.removeErrorListeners();
-        ThrowingErrorListener errorListener = new ThrowingErrorListener(waterfallCodeFilePath);
+        SyntaxErrorListener errorListener = new SyntaxErrorListener(waterfallCodeFilePath);
         waterfallParser.addErrorListener(errorListener);
 
         final WaterfallParser.ProgramContext programAST = waterfallParser.program();
@@ -53,23 +53,3 @@ public class App {
     }
 }
 
-class ThrowingErrorListener extends BaseErrorListener {
-
-    private final String name;
-    private final List<String> syntaxErrors;
-
-    public ThrowingErrorListener(String name) {
-        this.name = name;
-        this.syntaxErrors = new ArrayList<String>();
-    }
-
-    public List<String> getSyntaxErrors() {
-        return syntaxErrors;
-    }
-
-    @Override
-    public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) throws ParseCancellationException {
-        final String errorMessage = name + " line " + line + ":" + charPositionInLine + " " + msg;
-        syntaxErrors.add(errorMessage);
-    }
-}
