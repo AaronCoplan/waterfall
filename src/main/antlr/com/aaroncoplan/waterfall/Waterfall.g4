@@ -32,7 +32,7 @@ variableDeclaration
 // Symbols
 
 ID
-    : ('a' .. 'z' | 'A' .. 'Z' | '_')+
+    : ('a' .. 'z' | 'A' .. 'Z') ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')*
     ;
 
 INT_LITERAL
