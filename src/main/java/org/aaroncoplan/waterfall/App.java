@@ -55,40 +55,67 @@ public class App {
         final Scope globalScope = new Scope(null);
 
         final List<WaterfallParser.CodelineContext> codelineContexts = programAST.code().codeline();
-        final List<VariableDeclaration> scopedAST = new ArrayList<VariableDeclaration>();
+        final List<Object> scopedAST = new ArrayList<Object>();
         // PASS 1
         int statementNumber = 0;
         for (WaterfallParser.CodelineContext codelineContext : codelineContexts) {
-            VariableDeclaration variableDeclaration = new VariableDeclaration(
-                codelineContext.variableDeclaration(),
-                globalScope
-            );
-            if (globalScope.getReference(variableDeclaration.getVariableName()) != null) {
-                System.err.println(
-                    "INVALID DECL, var already declared: " + variableDeclaration.getVariableName()
+            if (codelineContext.variableDeclaration() != null) {
+                VariableDeclaration variableDeclaration = new VariableDeclaration(
+                    codelineContext.variableDeclaration(),
+                    globalScope
                 );
-                System.exit(-1);
+                if (globalScope.getReference(variableDeclaration.getVariableName()) != null) {
+                    System.err.println(
+                        "INVALID DECL, var already declared: " + variableDeclaration.getVariableName(
+
+                        )
+                    );
+                    System.exit(-1);
+                }
+                globalScope.addReference(variableDeclaration.getVariableName(), statementNumber);
+
+                scopedAST.add(variableDeclaration);
+            } else if (codelineContext.variableAssignment() != null) {
+                VariableAssignment variableAssignment = new VariableAssignment(
+                    codelineContext.variableAssignment(),
+                    globalScope
+                );
+                scopedAST.add(variableAssignment);
+            } else {
+                throw new RuntimeException("Unknown statement type");
             }
-            globalScope.addReference(variableDeclaration.getVariableName(), statementNumber);
-
-            scopedAST.add(variableDeclaration);
-
             ++statementNumber;
         }
         globalScope.debugPrint();
 
         // PASS 2
         statementNumber = 0;
-        for (VariableDeclaration variableDeclaration : scopedAST) {
-            final Integer refLineNumber = variableDeclaration.getScope().getReference(
-                variableDeclaration.getVariableName()
-            );
-            if (refLineNumber == null || statementNumber < refLineNumber) {
-                System.err.println("INVALID STATEMENT");
-                System.exit(-1);
+        for (Object obj : scopedAST) {
+            if (obj instanceof VariableDeclaration) {
+                final VariableDeclaration variableDeclaration = (VariableDeclaration) obj;
+                final Integer refLineNumber = variableDeclaration.getScope().getReference(
+                    variableDeclaration.getVariableName()
+                );
+                if (refLineNumber == null || statementNumber < refLineNumber) {
+                    System.err.println("INVALID STATEMENT");
+                    System.exit(-1);
+                }
+                System.out.println("Valid ref: " + variableDeclaration.getVariableName());
+                System.out.println(variableDeclaration.emit());
+            } else if (obj instanceof VariableAssignment) {
+                final VariableAssignment variableAssignment = (VariableAssignment) obj;
+                final Integer refLineNumber = variableAssignment.getScope().getReference(
+                    variableAssignment.getVariableName()
+                );
+                if (refLineNumber == null || statementNumber < refLineNumber) {
+                    System.err.println("Using variable w/o or before declaration");
+                    System.exit(-1);
+                }
+                System.out.println("Valid assignment: " + variableAssignment.getVariableName());
+                //System.out.println(variableAssignment.emit());
+            } else {
+                throw new RuntimeException("Unknown obj type in Scoped AST");
             }
-            System.out.println("Valid ref: " + variableDeclaration.getVariableName());
-            System.out.println(variableDeclaration.emit());
             ++statementNumber;
         }
     }
