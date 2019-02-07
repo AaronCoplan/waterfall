@@ -10,3 +10,6 @@ build
 
 # Ignore generated src files from grammar
 src/generated
+
+# Ignore JS modules
+node_modules
