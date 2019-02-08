@@ -24,6 +24,7 @@ variableName
 variableValue
     : INT_LITERAL
     | DEC_LITERAL
+    | variableName
     ;
 
 variableDeclaration

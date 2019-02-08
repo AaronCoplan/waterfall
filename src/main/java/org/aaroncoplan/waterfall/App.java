@@ -101,7 +101,7 @@ public class App {
                     System.exit(-1);
                 }
                 System.out.println("Valid ref: " + variableDeclaration.getVariableName());
-                System.out.println(variableDeclaration.emit());
+                System.out.println("[EMIT] " + variableDeclaration.emit());
             } else if (obj instanceof VariableAssignment) {
                 final VariableAssignment variableAssignment = (VariableAssignment) obj;
                 final Integer refLineNumber = variableAssignment.getScope().getReference(

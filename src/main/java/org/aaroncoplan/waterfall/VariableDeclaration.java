@@ -8,6 +8,7 @@ public class VariableDeclaration {
     private final String variableName;
     private int intValue;
     private double doubleValue;
+    private String refValue = null;
 
     public VariableDeclaration(
         WaterfallParser.VariableDeclarationContext variableDeclarationContext,
@@ -19,13 +20,25 @@ public class VariableDeclaration {
         this.variableName = variableDeclarationContext.variableName().ID().getText();
 
         if ("int".equals(this.variableType)) {
-            intValue = Integer.parseInt(
-                variableDeclarationContext.variableValue().INT_LITERAL().getText()
-            );
+            if (variableDeclarationContext.variableValue().INT_LITERAL() != null) {
+                intValue = Integer.parseInt(
+                    variableDeclarationContext.variableValue().INT_LITERAL().getText()
+                );
+            } else if (variableDeclarationContext.variableValue().variableName() != null) {
+                refValue = variableDeclarationContext.variableValue().variableName().ID().getText();
+            } else {
+                throw new RuntimeException("Failed to handle something in VarDecl for int");
+            }
         } else if ("dec".equals(this.variableType)) {
-            doubleValue = Double.parseDouble(
-                variableDeclarationContext.variableValue().DEC_LITERAL().getText()
-            );
+            if (variableDeclarationContext.variableValue().DEC_LITERAL() != null) {
+                doubleValue = Double.parseDouble(
+                    variableDeclarationContext.variableValue().DEC_LITERAL().getText()
+                );
+            } else if (variableDeclarationContext.variableValue().variableName() != null) {
+                refValue = variableDeclarationContext.variableValue().variableName().ID().getText();
+            } else {
+                throw new RuntimeException("Failed to handle something in VarDecl for dec");
+            }
         } else {
             throw new RuntimeException("UNRECOGNIZED TYPE: " + this.variableType);
         }
@@ -41,9 +54,25 @@ public class VariableDeclaration {
 
     public String emit() {
         if ("int".equals(this.variableType)) {
-            return String.format("%s %s = %d;", "int", variableName, intValue);
+            if (refValue == null) {
+                return String.format("%s %s = %d;", "int", variableName, intValue);
+            } else {
+                if (scope.getReference(refValue) != null) {
+                    return String.format("%s %s = %s;", "int", variableName, refValue);
+                } else {
+                    throw new RuntimeException("REF DOES NOT EXIST");
+                }
+            }
         } else {
-            return String.format("%s %s = %f;", "double", variableName, doubleValue);
+            if (refValue == null) {
+                return String.format("%s %s = %f;", "double", variableName, doubleValue);
+            } else {
+                if (scope.getReference(refValue) != null) {
+                    return String.format("%s %s = %s;", "double", variableName, refValue);
+                } else {
+                    throw new RuntimeException("REF DOES NOT EXIST");
+                }
+            }
         }
     }
 
