@@ -1,17 +1,15 @@
 package org.aaroncoplan.waterfall;
 
-import com.aaroncoplan.waterfall.WaterfallLexer;
-import com.aaroncoplan.waterfall.WaterfallParser;
-
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 
+import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.helper.HelpScreenException;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
-import org.antlr.v4.runtime.*;
+import org.aaroncoplan.waterfall.parsing.FileParser;
+import org.aaroncoplan.waterfall.parsing.ParseResult;
 
 public class App {
 
@@ -124,7 +122,7 @@ public class App {
         }
         */
     {
-        final Namespace namespace = CommandLineArgParser.parse(args);
+        final Namespace namespace = parseCommandLineArgs(args);
 
         final Object files = namespace.get("files");
         if (files == null || !(files instanceof ArrayList)) {
@@ -136,6 +134,25 @@ public class App {
         for (String filePath : fileList) {
             final ParseResult parseResult = FileParser.parseFile(filePath);
             System.out.println(filePath);
+        }
+    }
+
+    private static Namespace parseCommandLineArgs(String[] args) {
+        final ArgumentParser argumentParser = ArgumentParsers.newFor("waterfall").build(
+
+        ).defaultHelp(true).description("Waterfall programming language");
+
+        argumentParser.addArgument("files").nargs("+").help("List of files to compile");
+
+        try {
+            return argumentParser.parseArgs(args);
+        } catch(ArgumentParserException e) {
+            if (!(e instanceof HelpScreenException)) {
+                argumentParser.printHelp();
+                System.out.println("[ERROR] " + e.getMessage());
+            }
+            System.exit(-1);
+            return null;
         }
     }
 

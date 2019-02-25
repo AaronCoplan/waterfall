@@ -1,4 +1,4 @@
-package org.aaroncoplan.waterfall;
+package org.aaroncoplan.waterfall.parsing;
 
 import com.aaroncoplan.waterfall.WaterfallParser;
 
