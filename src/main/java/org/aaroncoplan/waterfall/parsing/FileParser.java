@@ -8,6 +8,7 @@ import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Scanner;
 
+import org.aaroncoplan.waterfall.ErrorHandler;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -19,18 +20,15 @@ public class FileParser {
 
         final File codeFile = new File(filePath);
         if (!codeFile.exists()) {
-            System.out.println("[ERROR] File '" + filePath + "' does not exist");
-            System.exit(-1);
+            ErrorHandler.exit("File '%s' does not exist", filePath);
             return null;
         }
         if (!codeFile.canRead()) {
-            System.out.println("[ERROR] File '" + filePath + "' can not be read");
-            System.exit(-1);
+            ErrorHandler.exit("File '%s' cannot be read", filePath);
             return null;
         }
         if (!codeFile.isFile()) {
-            System.out.println("[ERROR] File '" + filePath + "' is not a file");
-            System.exit(-1);
+            ErrorHandler.exit("File '%s' is not a file", filePath);
             return null;
         }
         try {
@@ -40,8 +38,7 @@ public class FileParser {
             }
             scanner.close();
         } catch(FileNotFoundException e) {
-            System.out.println("[ERROR] File '" + filePath + "' does not exist");
-            System.exit(-1);
+            ErrorHandler.exit("File '%s' does not exist", filePath);
             return null;
         }
         final CharStream charStream = CharStreams.fromString(codeString.toString());

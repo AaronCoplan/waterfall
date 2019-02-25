@@ -22,8 +22,7 @@ public class App {
 
         final Object files = namespace.get("files");
         if (files == null || !(files instanceof ArrayList)) {
-            System.out.println("[ERROR] Files listed to compile are not a list of strings.");
-            System.exit(-1);
+            ErrorHandler.exit("[ERROR] Files listed to compile are not a list of strings.");
         }
         @SuppressWarnings("unchecked")
         ArrayList<String> fileList = (ArrayList<String>) files;
@@ -44,10 +43,10 @@ public class App {
             return argumentParser.parseArgs(args);
         } catch(ArgumentParserException e) {
             if (!(e instanceof HelpScreenException)) {
+                System.out.println(e.getMessage());
                 argumentParser.printHelp();
-                System.out.println("[ERROR] " + e.getMessage());
             }
-            System.exit(-1);
+            ErrorHandler.exit();
             return null;
         }
     }
