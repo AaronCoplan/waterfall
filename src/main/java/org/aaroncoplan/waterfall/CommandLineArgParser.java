@@ -8,7 +8,7 @@ import net.sourceforge.argparse4j.inf.Namespace;
 
 public class CommandLineArgParser {
 
-    public static void parse(String[] args) {
+    public static Namespace parse(String[] args) {
         final ArgumentParser argumentParser = ArgumentParsers.newFor("waterfall").build(
 
         ).defaultHelp(true).description("Waterfall programming language");
@@ -16,12 +16,14 @@ public class CommandLineArgParser {
         argumentParser.addArgument("files").nargs("+").help("List of files to compile");
 
         try {
-            final Namespace namespace = argumentParser.parseArgs(args);
-        } catch(HelpScreenException e) // do nothing
-        {} catch(ArgumentParserException e) {
-            argumentParser.printHelp();
-            System.out.println("[ERROR] " + e.getMessage());
+            return argumentParser.parseArgs(args);
+        } catch(ArgumentParserException e) {
+            if (!(e instanceof HelpScreenException)) {
+                argumentParser.printHelp();
+                System.out.println("[ERROR] " + e.getMessage());
+            }
             System.exit(-1);
+            return null;
         }
     }
 
