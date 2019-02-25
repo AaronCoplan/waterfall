@@ -72,3 +72,11 @@ idea {
         generatedSourceDirs += file('src/generated/java')
     }
 }
+
+// show test results in terminal
+test {
+    testLogging {
+        showStandardStreams = true
+        events "passed", "skipped", "failed"
+    }
+}
