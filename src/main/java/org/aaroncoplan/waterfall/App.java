@@ -13,10 +13,6 @@ import org.aaroncoplan.waterfall.parsing.ParseResult;
 
 public class App {
 
-    public String getGreeting() {
-        return "Hello world.";
-    }
-
     public static void main(String[] args) {
         final Namespace namespace = parseCommandLineArgs(args);
 
