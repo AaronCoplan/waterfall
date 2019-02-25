@@ -19,5 +19,8 @@ public class ParseResult {
         this.programAST = programAST;
     }
 
+    public boolean hasErrors() {
+        return syntaxErrors.size() > 0;
+    }
 }
 
