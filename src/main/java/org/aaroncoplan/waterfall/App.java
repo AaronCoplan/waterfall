@@ -18,6 +18,8 @@ public class App {
     }
 
     public static void main(String[] args) {
+        CommandLineArgParser.parse(args);
+        /*
         // open file and read it in
         final String waterfallCodeFilePath = args[0];
         final StringBuilder code = new StringBuilder();
@@ -118,6 +120,7 @@ public class App {
             }
             ++statementNumber;
         }
+        */
     }
 
 }
