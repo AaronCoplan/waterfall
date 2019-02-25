@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import net.sourceforge.argparse4j.inf.Namespace;
+
 import org.antlr.v4.runtime.*;
 
 public class App {
@@ -17,9 +19,9 @@ public class App {
         return "Hello world.";
     }
 
-    public static void main(String[] args) {
-        CommandLineArgParser.parse(args);
-        /*
+    public static void main(
+        String[] args
+    ) /*
         // open file and read it in
         final String waterfallCodeFilePath = args[0];
         final StringBuilder code = new StringBuilder();
@@ -121,6 +123,20 @@ public class App {
             ++statementNumber;
         }
         */
+    {
+        final Namespace namespace = CommandLineArgParser.parse(args);
+
+        final Object files = namespace.get("files");
+        if (files == null || !(files instanceof ArrayList)) {
+            System.out.println("[ERROR] Files listed to compile are not a list of strings.");
+            System.exit(-1);
+        }
+        @SuppressWarnings("unchecked")
+        ArrayList<String> fileList = (ArrayList<String>) files;
+        for (String filePath : fileList) {
+            final ParseResult parseResult = FileParser.parseFile(filePath);
+            System.out.println(filePath);
+        }
     }
 
 }
