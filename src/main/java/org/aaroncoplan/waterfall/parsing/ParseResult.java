@@ -30,5 +30,6 @@ public class ParseResult {
     public boolean hasErrors() {
         return syntaxErrors.size() > 0;
     }
+
 }
 
