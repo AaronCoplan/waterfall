@@ -17,9 +17,8 @@ public class App {
         return "Hello world.";
     }
 
-    public static void main(
-        String[] args
-    ) /*
+    public static void main(String[] args) {
+        /*
         // open file and read it in
         final String waterfallCodeFilePath = args[0];
         final StringBuilder code = new StringBuilder();
@@ -120,8 +119,8 @@ public class App {
             }
             ++statementNumber;
         }
+
         */
-    {
         final Namespace namespace = parseCommandLineArgs(args);
 
         final Object files = namespace.get("files");
