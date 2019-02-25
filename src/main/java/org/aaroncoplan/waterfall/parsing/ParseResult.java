@@ -19,5 +19,17 @@ public class ParseResult {
         this.programAST = programAST;
     }
 
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public WaterfallParser.ProgramContext getProgramAST() {
+        return programAST;
+    }
+
+    public boolean hasErrors() {
+        return syntaxErrors.size() > 0;
+    }
+
 }
 
