@@ -1,15 +1,15 @@
 package org.aaroncoplan.waterfall;
 
-import com.aaroncoplan.waterfall.WaterfallLexer;
-import com.aaroncoplan.waterfall.WaterfallParser;
-
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
 
-import org.antlr.v4.runtime.*;
+import net.sourceforge.argparse4j.ArgumentParsers;
+import net.sourceforge.argparse4j.helper.HelpScreenException;
+import net.sourceforge.argparse4j.inf.ArgumentParser;
+import net.sourceforge.argparse4j.inf.ArgumentParserException;
+import net.sourceforge.argparse4j.inf.Namespace;
+
+import org.aaroncoplan.waterfall.parsing.FileParser;
+import org.aaroncoplan.waterfall.parsing.ParseResult;
 
 public class App {
 
@@ -18,6 +18,7 @@ public class App {
     }
 
     public static void main(String[] args) {
+        /*
         // open file and read it in
         final String waterfallCodeFilePath = args[0];
         final StringBuilder code = new StringBuilder();
@@ -117,6 +118,40 @@ public class App {
                 throw new RuntimeException("Unknown obj type in Scoped AST");
             }
             ++statementNumber;
+        }
+
+        */
+        final Namespace namespace = parseCommandLineArgs(args);
+
+        final Object files = namespace.get("files");
+        if (files == null || !(files instanceof ArrayList)) {
+            System.out.println("[ERROR] Files listed to compile are not a list of strings.");
+            System.exit(-1);
+        }
+        @SuppressWarnings("unchecked")
+        ArrayList<String> fileList = (ArrayList<String>) files;
+        for (String filePath : fileList) {
+            final ParseResult parseResult = FileParser.parseFile(filePath);
+            System.out.println(filePath);
+        }
+    }
+
+    private static Namespace parseCommandLineArgs(String[] args) {
+        final ArgumentParser argumentParser = ArgumentParsers.newFor("waterfall").build(
+
+        ).defaultHelp(true).description("Waterfall programming language");
+
+        argumentParser.addArgument("files").nargs("+").help("List of files to compile");
+
+        try {
+            return argumentParser.parseArgs(args);
+        } catch(ArgumentParserException e) {
+            if (!(e instanceof HelpScreenException)) {
+                argumentParser.printHelp();
+                System.out.println("[ERROR] " + e.getMessage());
+            }
+            System.exit(-1);
+            return null;
         }
     }
 
