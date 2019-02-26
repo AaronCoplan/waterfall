@@ -1,0 +1,8 @@
+main {
+    int name = 123456789;
+    dec x1_1 = 33.125;
+    int z = goodbye;
+    int y = 44;
+    name = y;
+    int goodbye = 4;
+}
