@@ -15,7 +15,7 @@
 Assignments: `=`, `:=`
 Operators: `/`, `*`, `+`, `-`, `%`
 Primitive Types: `int`, `dec`, `bool`, `char`
-Control: `if`, `elif`, `else`, `for`, `while`
+Control: `if`, `elif`, `else`, `for`, `while`, `in`
 Conditionals / Comparators: `and`, `or`, `equals`, `<`, `>`, `<=`, `>=`
 Modifiers: `const`, `final`
 Functions: `func`, `returns`
@@ -42,12 +42,12 @@ func canBeFormed(char[] characters, char[] word) returns bool {
   const asciiOffset := 97
   const letterCounts := int[].create(26)
 
-  for(char c : characters) {
+  for(char c in characters) {
     const charVal := c castas int
     letterCounts[charVal - asciiOffset]++
   }
 
-  for(char c : word) {
+  for(char c in word) {
     const charVal := c castas int
     letterCounts[charVal - asciiOffset]--
     if(letterCounts[charVal - asciiOffset] < 0) {
