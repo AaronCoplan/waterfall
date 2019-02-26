@@ -1,41 +1,19 @@
 grammar Waterfall;
 
 program
-    : 'main {' code '}' EOF
+    : 'main {' codeBlock '}' NEWLINE? EOF
     ;
 
-code
+codeBlock
     : codeline*
     ;
 
 codeline
-    : variableDeclaration
-    | variableAssignment
+    : ID EQUALS INT_LITERAL NEWLINE
     ;
 
-variableType
-    : ID
-    ;
 
-variableName
-    : ID
-    ;
-
-variableValue
-    : INT_LITERAL
-    | DEC_LITERAL
-    | variableName
-    ;
-
-variableDeclaration
-    : variableType variableName EQUALS variableValue SEMICOLON
-    ;
-
-variableAssignment
-    : variableName EQUALS variableValue SEMICOLON
-    ;
-
-// Symbols
+// Lexer Symbols
 
 ID
     : ('a' .. 'z' | 'A' .. 'Z') ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')*
@@ -57,10 +35,6 @@ EQUALS
     : '='
     ;
 
-SEMICOLON
-    : ';'
-    ;
+NEWLINE:'\r'? '\n' ; // return newlines to parser (is end-statement signal)
 
-WHITESPACE
-    : [ \t\r\n]+ -> skip
-    ;
+WS : [ \t]+ -> skip ; // toss out whitespace
