@@ -12,6 +12,7 @@
 
 ### Syntax Design
 
+Assignments: `=`, `:=`
 Operators: `/`, `*`, `+`, `-`, `%`
 Primitive Types: `int`, `dec`, `bool`, `char`
 Control: `if`, `elif`, `else`, `for`, `while`
@@ -38,16 +39,16 @@ print(sum)
 **Determine whether a string can be formed from the characters in another.**
 ```
 func canBeFormed(char[] characters, char[] word) returns bool {
-  const int asciiOffset = 97
-  const int[] letterCounts = int[].new(26)
+  const asciiOffset := 97
+  const letterCounts := int[].new(26)
 
   for(char c : characters) {
-    const int charVal = c castas int
+    const charVal := c castas int
     letterCounts[charVal - asciiOffset]++
   }
 
   for(char c : word) {
-    const int charVal = c castas int
+    const charVal := c castas int
     letterCounts[charVal - asciiOffset]--
     if(letterCounts[charVal - asciiOffset] < 0) {
       return false
