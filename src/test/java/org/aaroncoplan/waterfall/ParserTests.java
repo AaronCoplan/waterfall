@@ -26,6 +26,10 @@ public class ParserTests {
 
         for(File f : shouldPassFiles) {
             final ParseResult parseResult = FileParser.parseFile(f.getPath());
+            if(parseResult.hasErrors()) {
+                System.out.println(f.getPath());
+                System.out.println(String.join("\n", parseResult.getSyntaxErrors()));
+            }
             Assert.assertFalse(parseResult.hasErrors());
             Assert.assertNotNull(parseResult.getFilePath());
             Assert.assertNotNull(parseResult.getProgramAST());
@@ -40,6 +44,9 @@ public class ParserTests {
 
         for(File f : shouldFailFiles) {
             final ParseResult parseResult = FileParser.parseFile(f.getPath());
+            if(!parseResult.hasErrors()) {
+                System.out.println(f.getPath());
+            }
             Assert.assertTrue(parseResult.hasErrors());
             Assert.assertNotNull(parseResult.getFilePath());
             Assert.assertNotNull(parseResult.getProgramAST());
