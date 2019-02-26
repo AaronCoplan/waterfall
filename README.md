@@ -40,7 +40,7 @@ print(sum)
 ```
 func canBeFormed(char[] characters, char[] word) returns bool {
   const asciiOffset := 97
-  const letterCounts := int[].new(26)
+  const letterCounts := int[].create(26)
 
   for(char c : characters) {
     const charVal := c castas int
