@@ -1,7 +1,7 @@
 grammar Waterfall;
 
 program
-    : 'main {' codeBlock '}' NEWLINE? EOF
+    : 'main {' NEWLINE codeBlock '}' NEWLINE? EOF
     ;
 
 codeBlock
