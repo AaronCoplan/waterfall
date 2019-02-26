@@ -19,7 +19,7 @@ Control: `if`, `elif`, `else`, `for`, `while`, `in`
 Conditionals / Comparators: `and`, `or`, `equals`, `<`, `>`, `<=`, `>=`
 Modifiers: `const`, `final`
 Functions: `func`, `returns`
-Containers: `module`, `type`
+Containers: `module`, `type`, `spec`
 Casting: `castas`
 Return: `return`
 
