@@ -9,7 +9,15 @@ codeBlock
     ;
 
 codeline
-    : ID EQUALS INT_LITERAL NEWLINE
+    : type ID EQUALS INT_LITERAL NEWLINE
+    ;
+
+type
+    : 'int'
+    | 'dec'
+    | 'char'
+    | 'bool'
+    | ID
     ;
 
 
@@ -37,4 +45,7 @@ EQUALS
 
 NEWLINE:'\r'? '\n' ; // return newlines to parser (is end-statement signal)
 
-WS : [ \t]+ -> skip ; // toss out whitespace
+// toss out whitespace
+WS
+    : [ \t]+ -> skip
+    ;
