@@ -2,8 +2,8 @@
 
 ### Setup
 
-1. `yarn install`
-2. `./gradlew build`
+1. Install JavaScript dependencies: `yarn install`
+2. Install Java dependencies and build the jar: `./gradlew build`
 
 ### Run
 
