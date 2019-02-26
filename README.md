@@ -7,4 +7,5 @@
 
 ### Run
 
-1. `java -jar build/libs/waterfall-0.0.1.jar <path to .wf file>`
+* Show usage information: `java -jar build/libs/waterfall-0.0.1.jar --help`
+* Compile file(s): `java -jar build/libs/waterfall-0.0.1.jar <file1> <file2> ...`
