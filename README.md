@@ -38,17 +38,18 @@ print(sum)
 **Determine whether a string can be formed from the characters in another.**
 ```
 func canBeFormed(char[] characters, char[] word) returns bool {
+  int asciiOffset = 97
   int[] letterCounts = int[].new(26)
 
   for(char c : characters) {
     int charVal = c castas int
-    letterCounts[charVal-97]++
+    letterCounts[charVal - asciiOffset]++
   }
 
   for(char c : word) {
     int charVal = c castas int
-    letterCounts[charVal-97]--
-    if(letterCounts[charVal-97] < 0) {
+    letterCounts[charVal - asciiOffset]--
+    if(letterCounts[charVal - asciiOffset] < 0) {
       return false;
     }
   }
