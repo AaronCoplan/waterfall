@@ -38,7 +38,7 @@ print(sum)
 **Determine whether a string can be formed from the characters in another.**
 ```
 func canBeFormed(char[] characters, char[] word) returns bool {
-  int[] letterCounts
+  int[] letterCounts = int[].new(26)
 
   for(char c : characters) {
     int charVal = c castas int
@@ -52,7 +52,7 @@ func canBeFormed(char[] characters, char[] word) returns bool {
       return false;
     }
   }
-  
+
   return true;
 }
 ```
