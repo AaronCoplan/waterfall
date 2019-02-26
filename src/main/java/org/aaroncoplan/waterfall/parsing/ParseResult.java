@@ -23,6 +23,10 @@ public class ParseResult {
         return filePath;
     }
 
+    public List<String> getSyntaxErrors() {
+        return syntaxErrors;
+    }
+
     public WaterfallParser.ProgramContext getProgramAST() {
         return programAST;
     }
