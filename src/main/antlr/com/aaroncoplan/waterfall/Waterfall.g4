@@ -5,7 +5,7 @@ program
     ;
 
 container
-    : (MODULE | TYPE | SPEC) ID LEFT_CURLY newline_s (variable_declaration | function_declaration)* RIGHT_CURLY
+    : module
     | type
     | spec
     ;
@@ -19,7 +19,7 @@ type
     ;
 
 spec
-    : SPEC ID LEFT_CURLY newline_s (function_signature newline_s)+ RIGHT_CURLY
+    : SPEC ID LEFT_CURLY newline_s (function_signature newline_s)* RIGHT_CURLY
     ;
 
 codeBlock
