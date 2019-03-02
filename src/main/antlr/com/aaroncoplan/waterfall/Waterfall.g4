@@ -41,6 +41,7 @@ newline_s
 
 // Language Keywords
 
+// Built in types
 INT
     : 'int'
     ;
@@ -55,6 +56,15 @@ CHAR
 
 BOOL
     : 'bool'
+    ;
+
+// Modifiers
+CONST
+    : 'const'
+    ;
+
+FINAL
+    : 'final'
     ;
 
 // Lexer Symbols
