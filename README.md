@@ -13,7 +13,7 @@
 ### Syntax Design
 
 - Assignments: `=`, `:=`
-- Operators: `/`, `*`, `+`, `-`, `%`
+- Operators: `/`, `*`, `+`, `-`, `%`, `^`
 - Primitive Types: `int`, `dec`, `bool`, `char`
 - Control: `if`, `elif`, `else`, `for`, `while`, `in`
 - Conditionals / Comparators: `and`, `or`, `equals`, `<`, `>`, `<=`, `>=`

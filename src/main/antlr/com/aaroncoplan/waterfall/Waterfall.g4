@@ -103,6 +103,30 @@ EQUALS
     : '='
     ;
 
+DIVIDE
+    : '/'
+    ;
+
+MULTIPLY
+    : '*'
+    ;
+
+ADD
+    : '+'
+    ;
+
+SUBTRACT
+    : '-'
+    ;
+
+MOD
+    : '%'
+    ;
+
+POW
+    : '^'
+    ;
+
 // return newlines to parser (is end-statement signal)
 NEWLINE
     : '\r'? '\n'
