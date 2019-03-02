@@ -15,11 +15,11 @@ codeline
     ;
 
 typed_variable_declaration_and_assignment
-    : type ID EQUALS INT_LITERAL
+    : modifier? type ID EQUALS INT_LITERAL
     ;
 
 inferred_variable_declaration_and_assignment
-    : ID COLON_EQUALS INT_LITERAL
+    : modifier? ID COLON_EQUALS INT_LITERAL
     ;
 
 variable_assignment
@@ -33,6 +33,12 @@ type
     | BOOL
     | ID
     ;
+
+modifier
+    : CONST
+    | FINAL
+    ;
+
 
 // at least one newline
 newline_s
