@@ -48,8 +48,14 @@ math_operator
     | POW
     ;
 
+value
+    : INT_LITERAL
+    | DEC_LITERAL
+    | ID
+    ;
+
 assignment_right_hand
-    : (INT_LITERAL | DEC_LITERAL | ID) (math_operator (INT_LITERAL | DEC_LITERAL | ID))*
+    : value (math_operator value)*
     ;
 
 // at least one newline
