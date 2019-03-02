@@ -15,15 +15,15 @@ codeline
     ;
 
 typed_variable_declaration_and_assignment
-    : modifier? type ID EQUALS INT_LITERAL
+    : modifier? type ID EQUALS assignment_right_hand
     ;
 
 inferred_variable_declaration_and_assignment
-    : modifier? ID COLON_EQUALS INT_LITERAL
+    : modifier? ID COLON_EQUALS assignment_right_hand
     ;
 
 variable_assignment
-    : ID EQUALS INT_LITERAL
+    : ID EQUALS assignment_right_hand
     ;
 
 type
@@ -39,6 +39,9 @@ modifier
     | FINAL
     ;
 
+assignment_right_hand
+    : INT_LITERAL
+    ;
 
 // at least one newline
 newline_s
