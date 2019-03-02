@@ -91,6 +91,18 @@ FINAL
     : 'final'
     ;
 
+AND
+    : 'and'
+    ;
+
+OR
+    : 'or'
+    ;
+
+CHECK_EQUAL
+    : 'equals'
+    ;
+
 // Lexer Symbols
 
 ID
