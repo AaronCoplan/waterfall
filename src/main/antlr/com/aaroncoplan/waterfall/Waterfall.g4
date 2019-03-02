@@ -41,6 +41,7 @@ modifier
 
 assignment_right_hand
     : INT_LITERAL
+    | DEC_LITERAL
     ;
 
 // at least one newline
