@@ -39,7 +39,7 @@ newline_s
     : NEWLINE NEWLINE*
     ;
 
-// Lexer Symbols
+// Language Keywords
 
 INT
     : 'int'
@@ -56,6 +56,8 @@ CHAR
 BOOL
     : 'bool'
     ;
+
+// Lexer Symbols
 
 ID
     : ('a' .. 'z' | 'A' .. 'Z') ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')*
