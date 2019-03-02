@@ -14,6 +14,7 @@ codeline
     | variable_assignment
     | if_statement
     | function_call_positional_args
+    | function_call_named_args
     ;
 
 typed_variable_declaration_and_assignment
@@ -33,7 +34,15 @@ if_statement
     ;
 
 function_call_positional_args
-    : ID LEFT_PARENS (ID (COMMA ID)*)? RIGHT_PARENS
+    : ID LEFT_PARENS (assignment_right_hand (COMMA assignment_right_hand)*)? RIGHT_PARENS
+    ;
+
+named_arg
+    : ID EQUALS assignment_right_hand
+    ;
+
+function_call_named_args
+    : ID LEFT_PARENS named_arg (COMMA named_arg)* RIGHT_PARENS
     ;
 
 type
