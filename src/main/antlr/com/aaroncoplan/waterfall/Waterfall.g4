@@ -20,6 +20,7 @@ type
     | ID
     ;
 
+// at least one newline
 newline_s
     : NEWLINE NEWLINE*
     ;

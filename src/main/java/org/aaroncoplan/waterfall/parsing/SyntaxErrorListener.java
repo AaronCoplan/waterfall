@@ -11,11 +11,11 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 class SyntaxErrorListener
     extends BaseErrorListener {
     private final String name;
-    private final List<String> syntaxErrors;
+    private final List<String> syntaxErrors = new ArrayList<String>();
 
     public SyntaxErrorListener(String name) {
         this.name = name;
-        this.syntaxErrors = new ArrayList<String>();
+        //this.syntaxErrors = new ArrayList<String>();
     }
 
     public List<String> getSyntaxErrors() {
