@@ -1,0 +1,6 @@
+main {
+    functionCall()
+    functionCall1Arg(arg)
+    functionCall2Args(arg, arg2)
+    functionCallManyArgs(arg, arg2, arg3)
+}

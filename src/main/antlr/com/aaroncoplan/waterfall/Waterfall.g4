@@ -13,6 +13,7 @@ codeline
     | inferred_variable_declaration_and_assignment
     | variable_assignment
     | if_statement
+    | function_call
     ;
 
 typed_variable_declaration_and_assignment
@@ -29,6 +30,10 @@ variable_assignment
 
 if_statement
     : IF LEFT_PARENS conditional RIGHT_PARENS LEFT_CURLY RIGHT_CURLY
+    ;
+
+function_call
+    : ID LEFT_PARENS (ID (COMMA ID)*)? RIGHT_PARENS
     ;
 
 type
@@ -208,6 +213,10 @@ LEFT_CURLY
 
 RIGHT_CURLY
     : '}'
+    ;
+
+COMMA
+    : ','
     ;
 
 // return newlines to parser (is end-statement signal)
