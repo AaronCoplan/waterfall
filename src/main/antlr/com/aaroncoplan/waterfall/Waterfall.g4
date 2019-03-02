@@ -1,7 +1,7 @@
 grammar Waterfall;
 
 program
-    : 'main {' NEWLINE codeBlock '}' NEWLINE? EOF
+    : 'main {' newline_s codeBlock '}' newline_s EOF
     ;
 
 codeBlock
@@ -9,7 +9,7 @@ codeBlock
     ;
 
 codeline
-    : type ID EQUALS INT_LITERAL NEWLINE
+    : type ID EQUALS INT_LITERAL newline_s
     ;
 
 type
@@ -20,6 +20,9 @@ type
     | ID
     ;
 
+newline_s
+    : NEWLINE NEWLINE*
+    ;
 
 // Lexer Symbols
 
