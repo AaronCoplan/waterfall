@@ -1,20 +1,34 @@
 grammar Waterfall;
 
 program
-    : 'main' LEFT_CURLY newline_s codeBlock RIGHT_CURLY newline_s EOF
+    : container newline_s EOF
+    ;
+
+container
+    : (MODULE | TYPE | SPEC) ID LEFT_CURLY newline_s (variable_declaration | function_declaration)* RIGHT_CURLY
     ;
 
 codeBlock
     : (codeline newline_s)*
     ;
 
-codeline
+variable_declaration
     : typed_variable_declaration_and_assignment
     | inferred_variable_declaration_and_assignment
-    | variable_assignment
-    | if_statement
+    ;
+
+function_declaration
+    : FUNC ID LEFT_PARENS (type ID (COMMA type ID)*)? RIGHT_PARENS RETURNS type LEFT_CURLY newline_s RIGHT_CURLY
+    ;
+
+codeline
+    : variable_assignment
     | function_call_positional_args
     | function_call_named_args
+    ;
+
+scoped_statement
+    : if_statement
     ;
 
 typed_variable_declaration_and_assignment
@@ -140,6 +154,26 @@ CHECK_EQUAL
 
 IF
     : 'if'
+    ;
+
+MODULE
+    : 'module'
+    ;
+
+TYPE
+    : 'type'
+    ;
+
+SPEC
+    : 'spec'
+    ;
+
+FUNC
+    : 'func'
+    ;
+
+RETURNS
+    : 'returns'
     ;
 
 // Lexer Symbols
