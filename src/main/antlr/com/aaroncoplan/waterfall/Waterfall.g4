@@ -72,7 +72,7 @@ comparator
     ;
 
 condition
-    : value comparator value
+    : assignment_right_hand comparator assignment_right_hand
     ;
 
 conditional
