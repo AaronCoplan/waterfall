@@ -27,10 +27,10 @@ variable_assignment
     ;
 
 type
-    : 'int'
-    | 'dec'
-    | 'char'
-    | 'bool'
+    : INT
+    | DEC
+    | CHAR
+    | BOOL
     | ID
     ;
 
@@ -40,6 +40,22 @@ newline_s
     ;
 
 // Lexer Symbols
+
+INT
+    : 'int'
+    ;
+
+DEC
+    : 'dec'
+    ;
+
+CHAR
+    : 'char'
+    ;
+
+BOOL
+    : 'bool'
+    ;
 
 ID
     : ('a' .. 'z' | 'A' .. 'Z') ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')*
