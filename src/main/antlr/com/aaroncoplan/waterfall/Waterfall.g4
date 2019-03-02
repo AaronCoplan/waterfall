@@ -153,6 +153,22 @@ POW
     : '^'
     ;
 
+LESS_THAN
+    : '<'
+    ;
+
+GREATER_THAN
+    : '>'
+    ;
+
+LESS_THAN_EQUALS
+    : '<='
+    ;
+
+GREATER_THAN_EQUALS
+    : '>='
+    ;
+
 // return newlines to parser (is end-statement signal)
 NEWLINE
     : '\r'? '\n'
