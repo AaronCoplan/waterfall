@@ -10,6 +10,7 @@ codeBlock
 
 codeline
     : type ID EQUALS INT_LITERAL newline_s
+    | ID COLON_EQUALS INT_LITERAL newline_s
     ;
 
 type
@@ -41,6 +42,10 @@ DEC_LITERAL
 
 DOT
     : '.'
+    ;
+
+COLON_EQUALS
+    : ':='
     ;
 
 EQUALS
