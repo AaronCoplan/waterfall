@@ -1,4 +1,0 @@
-main {
-    functionCall(a=1)
-    functionCall2(a=1, b=2)
-}

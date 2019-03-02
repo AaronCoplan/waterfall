@@ -1,3 +1,0 @@
-main {
-    functionCall(1, y=3)
-}

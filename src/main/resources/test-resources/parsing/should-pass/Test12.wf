@@ -1,3 +1,0 @@
-main {
-    if(sum % 3 equals 0 or sum % 5 equals 0){}
-}

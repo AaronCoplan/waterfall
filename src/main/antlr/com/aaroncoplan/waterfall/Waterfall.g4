@@ -6,6 +6,20 @@ program
 
 container
     : (MODULE | TYPE | SPEC) ID LEFT_CURLY newline_s (variable_declaration | function_declaration)* RIGHT_CURLY
+    | type
+    | spec
+    ;
+
+module
+    : MODULE ID LEFT_CURLY newline_s (function_declaration newline_s | variable_declaration newline_s)* RIGHT_CURLY
+    ;
+
+type
+    : TYPE ID LEFT_CURLY newline_s RIGHT_CURLY
+    ;
+
+spec
+    : SPEC ID LEFT_CURLY newline_s (function_signature newline_s)+ RIGHT_CURLY
     ;
 
 codeBlock
@@ -17,8 +31,12 @@ variable_declaration
     | inferred_variable_declaration_and_assignment
     ;
 
+function_signature
+    : FUNC ID LEFT_PARENS (variable_type ID (COMMA variable_type ID)*)? RIGHT_PARENS RETURNS variable_type
+    ;
+
 function_declaration
-    : FUNC ID LEFT_PARENS (type ID (COMMA type ID)*)? RIGHT_PARENS RETURNS type LEFT_CURLY newline_s RIGHT_CURLY
+    : function_signature LEFT_CURLY newline_s RIGHT_CURLY
     ;
 
 codeline
@@ -32,7 +50,7 @@ scoped_statement
     ;
 
 typed_variable_declaration_and_assignment
-    : modifier? type ID EQUALS assignment_right_hand
+    : modifier? variable_type ID EQUALS assignment_right_hand
     ;
 
 inferred_variable_declaration_and_assignment
@@ -59,7 +77,7 @@ function_call_named_args
     : ID LEFT_PARENS named_arg (COMMA named_arg)* RIGHT_PARENS
     ;
 
-type
+variable_type
     : INT
     | DEC
     | CHAR

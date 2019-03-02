@@ -1,4 +1,0 @@
-module main {
-    final dec x = 4
-    const int y = 3.3
-}

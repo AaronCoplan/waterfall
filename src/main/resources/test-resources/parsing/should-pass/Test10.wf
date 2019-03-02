@@ -1,5 +1,0 @@
-main {
-    const x := 4
-    const y := 6.6
-    int z = x / y * 4.4 % 6 + 3.3 - 2 ^ 88
-}
