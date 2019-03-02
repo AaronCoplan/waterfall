@@ -9,15 +9,15 @@ codeBlock
     ;
 
 codeline
-    : typed_declaration
-    | inferred_declaration
+    : typed_declaration_and_assignment
+    | inferred_declaration_and_assignment
     ;
 
-typed_declaration
+typed_declaration_and_assignment
     : type ID EQUALS INT_LITERAL
     ;
 
-inferred_declaration
+inferred_declaration_and_assignment
     : ID COLON_EQUALS INT_LITERAL
     ;
 
