@@ -11,7 +11,7 @@ container
     ;
 
 module
-    : MODULE ID LEFT_CURLY newline_s (function_declaration newline_s | variable_declaration newline_s)* RIGHT_CURLY
+    : MODULE ID LEFT_CURLY newline_s (function_declaration | variable_declaration)* RIGHT_CURLY
     ;
 
 type
@@ -20,10 +20,6 @@ type
 
 spec
     : SPEC ID LEFT_CURLY newline_s (function_signature newline_s)* RIGHT_CURLY
-    ;
-
-codeBlock
-    : (codeline newline_s)*
     ;
 
 variable_declaration
@@ -36,10 +32,10 @@ function_signature
     ;
 
 function_declaration
-    : function_signature LEFT_CURLY newline_s RIGHT_CURLY
+    : function_signature LEFT_CURLY newline_s (expression | scoped_statement | variable_declaration)* RIGHT_CURLY newline_s
     ;
 
-codeline
+expression
     : variable_assignment
     | function_call_positional_args
     | function_call_named_args
@@ -50,23 +46,23 @@ scoped_statement
     ;
 
 typed_variable_declaration_and_assignment
-    : modifier? variable_type ID EQUALS assignment_right_hand
+    : modifier? variable_type ID EQUALS assignment_right_hand newline_s
     ;
 
 inferred_variable_declaration_and_assignment
-    : modifier? ID COLON_EQUALS assignment_right_hand
+    : modifier? ID COLON_EQUALS assignment_right_hand newline_s
     ;
 
 variable_assignment
-    : ID EQUALS assignment_right_hand
+    : ID EQUALS assignment_right_hand newline_s
     ;
 
 if_statement
-    : IF LEFT_PARENS conditional RIGHT_PARENS LEFT_CURLY RIGHT_CURLY
+    : IF LEFT_PARENS conditional RIGHT_PARENS LEFT_CURLY RIGHT_CURLY newline_s
     ;
 
 function_call_positional_args
-    : ID LEFT_PARENS (assignment_right_hand (COMMA assignment_right_hand)*)? RIGHT_PARENS
+    : ID LEFT_PARENS (assignment_right_hand (COMMA assignment_right_hand)*)? RIGHT_PARENS newline_s
     ;
 
 named_arg
@@ -74,7 +70,7 @@ named_arg
     ;
 
 function_call_named_args
-    : ID LEFT_PARENS named_arg (COMMA named_arg)* RIGHT_PARENS
+    : ID LEFT_PARENS named_arg (COMMA named_arg)* RIGHT_PARENS newline_s
     ;
 
 variable_type
