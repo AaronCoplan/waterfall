@@ -39,9 +39,17 @@ modifier
     | FINAL
     ;
 
+math_operator
+    : ADD
+    | SUBTRACT
+    | MULTIPLY
+    | DIVIDE
+    | MOD
+    | POW
+    ;
+
 assignment_right_hand
-    : INT_LITERAL
-    | DEC_LITERAL
+    : (INT_LITERAL | DEC_LITERAL | ID) (math_operator (INT_LITERAL | DEC_LITERAL | ID))*
     ;
 
 // at least one newline
