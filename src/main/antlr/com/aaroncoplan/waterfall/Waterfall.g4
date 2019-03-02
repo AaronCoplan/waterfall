@@ -5,12 +5,20 @@ program
     ;
 
 codeBlock
-    : codeline*
+    : (codeline newline_s)*
     ;
 
 codeline
-    : type ID EQUALS INT_LITERAL newline_s
-    | ID COLON_EQUALS INT_LITERAL newline_s
+    : typed_declaration
+    | inferred_declaration
+    ;
+
+typed_declaration
+    : type ID EQUALS INT_LITERAL
+    ;
+
+inferred_declaration
+    : ID COLON_EQUALS INT_LITERAL
     ;
 
 type
@@ -52,9 +60,12 @@ EQUALS
     : '='
     ;
 
-NEWLINE:'\r'? '\n' ; // return newlines to parser (is end-statement signal)
+// return newlines to parser (is end-statement signal)
+NEWLINE
+    : '\r'? '\n'
+    ;
 
-// toss out whitespace
+// ignore whitespace
 WS
     : [ \t]+ -> skip
     ;
