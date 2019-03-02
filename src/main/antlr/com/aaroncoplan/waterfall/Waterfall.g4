@@ -1,7 +1,7 @@
 grammar Waterfall;
 
 program
-    : 'main {' newline_s codeBlock '}' newline_s EOF
+    : 'main' LEFT_CURLY newline_s codeBlock RIGHT_CURLY newline_s EOF
     ;
 
 codeBlock
@@ -12,6 +12,7 @@ codeline
     : typed_variable_declaration_and_assignment
     | inferred_variable_declaration_and_assignment
     | variable_assignment
+    | if_statement
     ;
 
 typed_variable_declaration_and_assignment
@@ -24,6 +25,10 @@ inferred_variable_declaration_and_assignment
 
 variable_assignment
     : ID EQUALS assignment_right_hand
+    ;
+
+if_statement
+    : IF LEFT_PARENS conditional RIGHT_PARENS LEFT_CURLY RIGHT_CURLY
     ;
 
 type
@@ -56,6 +61,22 @@ value
 
 assignment_right_hand
     : value (math_operator value)*
+    ;
+
+comparator
+    : CHECK_EQUAL
+    | LESS_THAN
+    | GREATER_THAN
+    | LESS_THAN_EQUALS
+    | GREATER_THAN_EQUALS
+    ;
+
+condition
+    : value comparator value
+    ;
+
+conditional
+    : condition ((AND | OR) condition)*
     ;
 
 // at least one newline
@@ -101,6 +122,10 @@ OR
 
 CHECK_EQUAL
     : 'equals'
+    ;
+
+IF
+    : 'if'
     ;
 
 // Lexer Symbols
@@ -167,6 +192,22 @@ LESS_THAN_EQUALS
 
 GREATER_THAN_EQUALS
     : '>='
+    ;
+
+LEFT_PARENS
+    : '('
+    ;
+
+RIGHT_PARENS
+    : ')'
+    ;
+
+LEFT_CURLY
+    : '{'
+    ;
+
+RIGHT_CURLY
+    : '}'
     ;
 
 // return newlines to parser (is end-statement signal)
