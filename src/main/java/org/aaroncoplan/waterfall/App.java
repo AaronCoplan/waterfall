@@ -23,7 +23,7 @@ public class App {
         final Namespace namespace = parseCommandLineArgs(args);
 
         final Object files = namespace.get("files");
-        if (files == null || !(files instanceof ArrayList)) {
+        if (!(files instanceof ArrayList)) {
             ErrorHandler.exit("[ERROR] Files listed to compile are not a list of strings.");
         }
         @SuppressWarnings("unchecked")
