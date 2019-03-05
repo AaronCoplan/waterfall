@@ -10,10 +10,16 @@ import net.sourceforge.argparse4j.inf.Namespace;
 
 import org.aaroncoplan.waterfall.parsing.FileParser;
 import org.aaroncoplan.waterfall.parsing.ParseResult;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class App {
+    private static final Logger logger = LogManager.getLogger(App.class);
 
     public static void main(String[] args) {
+        // this is just a test of the logger
+        logger.info("Starting Waterfall Compiler");
+
         final Namespace namespace = parseCommandLineArgs(args);
 
         final Object files = namespace.get("files");
