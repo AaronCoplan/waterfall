@@ -33,11 +33,15 @@ inferred_variable_declaration_and_assignment
 
 // <FUNCTION DECLARATIONS>
 function_signature
-    : FUNC ID LEFT_PARENS (variable_type ID (COMMA variable_type ID)*)? RIGHT_PARENS RETURNS variable_type newline_s
+    : FUNC ID LEFT_PARENS (variable_type ID (COMMA variable_type ID)*)? RIGHT_PARENS return_type? newline_s
     ;
 
 function_declaration
-    : FUNC ID LEFT_PARENS (variable_type ID (COMMA variable_type ID)*)? RIGHT_PARENS RETURNS variable_type LEFT_CURLY newline_s code_block RIGHT_CURLY newline_s
+    : FUNC ID LEFT_PARENS (variable_type ID (COMMA variable_type ID)*)? RIGHT_PARENS return_type? LEFT_CURLY newline_s code_block RIGHT_CURLY newline_s
+    ;
+
+return_type
+    : RETURNS variable_type
     ;
 // </FUNCTION DECLARATIONS>
 
@@ -68,7 +72,7 @@ conditional
     ;
 
 if_statement
-    : IF LEFT_PARENS condition RIGHT_PARENS LEFT_CURLY RIGHT_CURLY newline_s
+    : IF LEFT_PARENS condition RIGHT_PARENS LEFT_CURLY newline_s code_block RIGHT_CURLY newline_s
     ;
 
 elif_statement
