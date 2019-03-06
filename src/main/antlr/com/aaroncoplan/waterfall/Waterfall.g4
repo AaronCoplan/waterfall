@@ -51,6 +51,11 @@ block_child
     | function_call_named_args
     | conditional
     | variable_declaration
+    | return_statement
+    ;
+
+return_statement
+    : RETURN assignment_right_hand
     ;
 
 variable_assignment
@@ -208,6 +213,10 @@ SPEC
 
 FUNC
     : 'func'
+    ;
+
+RETURN
+    : 'return'
     ;
 
 RETURNS
