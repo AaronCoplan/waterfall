@@ -1,48 +1,25 @@
 grammar Waterfall;
 
 program
-    : container newline_s EOF
-    ;
-
-container
-    : module
-    | type
-    | spec
+    : (module | type | spec) EOF
     ;
 
 module
-    : MODULE ID LEFT_CURLY newline_s (function_declaration | variable_declaration)* RIGHT_CURLY
+    : MODULE ID LEFT_CURLY newline_s (function_declaration | variable_declaration)* RIGHT_CURLY newline_s
     ;
 
 type
-    : TYPE ID LEFT_CURLY newline_s RIGHT_CURLY
+    : TYPE ID LEFT_CURLY newline_s RIGHT_CURLY newline_s
     ;
 
 spec
-    : SPEC ID LEFT_CURLY newline_s (function_signature newline_s)* RIGHT_CURLY
+    : SPEC ID LEFT_CURLY newline_s (function_signature)* RIGHT_CURLY newline_s
     ;
 
+// <VARIABLE DECLARATIONS>
 variable_declaration
     : typed_variable_declaration_and_assignment
     | inferred_variable_declaration_and_assignment
-    ;
-
-function_signature
-    : FUNC ID LEFT_PARENS (variable_type ID (COMMA variable_type ID)*)? RIGHT_PARENS RETURNS variable_type
-    ;
-
-function_declaration
-    : function_signature LEFT_CURLY newline_s (expression | scoped_statement | variable_declaration)* RIGHT_CURLY newline_s
-    ;
-
-expression
-    : variable_assignment
-    | function_call_positional_args
-    | function_call_named_args
-    ;
-
-scoped_statement
-    : if_statement
     ;
 
 typed_variable_declaration_and_assignment
@@ -52,15 +29,53 @@ typed_variable_declaration_and_assignment
 inferred_variable_declaration_and_assignment
     : modifier? ID COLON_EQUALS assignment_right_hand newline_s
     ;
+// </VARIABLE DECLARATIONS>
+
+// <FUNCTION DECLARATIONS>
+function_signature
+    : FUNC ID LEFT_PARENS (variable_type ID (COMMA variable_type ID)*)? RIGHT_PARENS RETURNS variable_type newline_s
+    ;
+
+function_declaration
+    : FUNC ID LEFT_PARENS (variable_type ID (COMMA variable_type ID)*)? RIGHT_PARENS RETURNS variable_type LEFT_CURLY newline_s code_block RIGHT_CURLY newline_s
+    ;
+// </FUNCTION DECLARATIONS>
+
+code_block
+    : (block_child)*
+    ;
+
+block_child
+    : variable_assignment
+    | function_call_positional_args
+    | function_call_named_args
+    | conditional
+    | variable_declaration
+    ;
 
 variable_assignment
     : ID EQUALS assignment_right_hand newline_s
     ;
 
-if_statement
-    : IF LEFT_PARENS conditional RIGHT_PARENS LEFT_CURLY RIGHT_CURLY newline_s
+// <CONDITIONALS>
+conditional
+    : if_statement (elif_statement)* else_statement?
     ;
 
+if_statement
+    : IF LEFT_PARENS condition RIGHT_PARENS LEFT_CURLY RIGHT_CURLY newline_s
+    ;
+
+elif_statement
+    : ELIF LEFT_PARENS condition RIGHT_PARENS LEFT_CURLY RIGHT_CURLY newline_s
+    ;
+
+else_statement
+    : ELSE LEFT_CURLY RIGHT_CURLY newline_s
+    ;
+// </CONDITIONALS>
+
+// <FUNCTION CALLS>
 function_call_positional_args
     : ID LEFT_PARENS (assignment_right_hand (COMMA assignment_right_hand)*)? RIGHT_PARENS newline_s
     ;
@@ -72,6 +87,7 @@ named_arg
 function_call_named_args
     : ID LEFT_PARENS named_arg (COMMA named_arg)* RIGHT_PARENS newline_s
     ;
+// </FUNCTION CALLS>
 
 variable_type
     : INT
@@ -113,12 +129,12 @@ comparator
     | GREATER_THAN_EQUALS
     ;
 
-condition
+comparison
     : assignment_right_hand comparator assignment_right_hand
     ;
 
-conditional
-    : condition ((AND | OR) condition)*
+condition
+    : comparison ((AND | OR) comparison)*
     ;
 
 // at least one newline
@@ -168,6 +184,14 @@ CHECK_EQUAL
 
 IF
     : 'if'
+    ;
+
+ELSE
+    : 'else'
+    ;
+
+ELIF
+    : 'elif'
     ;
 
 MODULE
