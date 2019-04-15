@@ -26,9 +26,15 @@ public class App {
         @SuppressWarnings("unchecked")
         ArrayList<String> fileList = (ArrayList<String>) files;
         for (String filePath : fileList) {
-            final ParseResult parseResult = FileParser.parseFile(filePath);
             System.out.println(filePath);
-            System.out.println(parseResult.hasErrors());
+            final ParseResult parseResult = FileParser.parseFile(filePath);
+            if (parseResult.hasErrors()) {
+                ErrorHandler.exit(
+                    "[ERROR] File %s has %d errors.",
+                    filePath,
+                    parseResult.getSyntaxErrors().size()
+                );
+            }
         }
     }
 

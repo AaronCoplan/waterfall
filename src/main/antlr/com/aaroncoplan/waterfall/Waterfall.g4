@@ -5,7 +5,7 @@ program
     ;
 
 module
-    : MODULE ID LEFT_CURLY newline_s (function_declaration | variable_declaration)* RIGHT_CURLY newline_s
+    : MODULE ID LEFT_CURLY newline_s variable_declaration* function_declaration* RIGHT_CURLY newline_s
     ;
 
 type
