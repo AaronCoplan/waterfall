@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import net.sourceforge.argparse4j.inf.Namespace;
 
-import org.aaroncoplan.waterfall.argumentparsing.ArgumentParser;
+import org.aaroncoplan.waterfall.argumentparsing.ArgParser;
 import org.aaroncoplan.waterfall.parsing.FileParser;
 import org.aaroncoplan.waterfall.parsing.ParseResult;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +17,7 @@ public class App {
         // this is just a test of the logger
         logger.info("Starting Waterfall Compiler");
 
-        final Namespace namespace = ArgumentParser.parseCommandLineArgs(args);
+        final Namespace namespace = ArgParser.parseCommandLineArgs(args);
 
         final Object files = namespace.get("files");
         if (!(files instanceof ArrayList)) {
