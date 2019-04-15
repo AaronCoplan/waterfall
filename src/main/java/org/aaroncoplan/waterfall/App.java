@@ -2,12 +2,9 @@ package org.aaroncoplan.waterfall;
 
 import java.util.ArrayList;
 
-import net.sourceforge.argparse4j.ArgumentParsers;
-import net.sourceforge.argparse4j.helper.HelpScreenException;
-import net.sourceforge.argparse4j.inf.ArgumentParser;
-import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
+import org.aaroncoplan.waterfall.argumentparsing.ArgumentParser;
 import org.aaroncoplan.waterfall.parsing.FileParser;
 import org.aaroncoplan.waterfall.parsing.ParseResult;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +17,7 @@ public class App {
         // this is just a test of the logger
         logger.info("Starting Waterfall Compiler");
 
-        final Namespace namespace = parseCommandLineArgs(args);
+        final Namespace namespace = ArgumentParser.parseCommandLineArgs(args);
 
         final Object files = namespace.get("files");
         if (!(files instanceof ArrayList)) {
@@ -31,25 +28,7 @@ public class App {
         for (String filePath : fileList) {
             final ParseResult parseResult = FileParser.parseFile(filePath);
             System.out.println(filePath);
-        }
-    }
-
-    private static Namespace parseCommandLineArgs(String[] args) {
-        final ArgumentParser argumentParser = ArgumentParsers.newFor("waterfall").build(
-
-        ).defaultHelp(true).description("Waterfall programming language");
-
-        argumentParser.addArgument("files").nargs("+").help("List of files to compile");
-
-        try {
-            return argumentParser.parseArgs(args);
-        } catch(ArgumentParserException e) {
-            if (!(e instanceof HelpScreenException)) {
-                System.out.println(e.getMessage());
-                argumentParser.printHelp();
-            }
-            ErrorHandler.exit();
-            return null;
+            System.out.println(parseResult.hasErrors());
         }
     }
 
