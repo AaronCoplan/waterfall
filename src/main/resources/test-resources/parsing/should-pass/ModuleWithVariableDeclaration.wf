@@ -1,7 +1,0 @@
-module MM {
-    x := 1
-
-    func test(int i) returns dec {
-
-    }
-}
