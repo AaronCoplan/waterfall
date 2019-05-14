@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.aaroncoplan.waterfall.parser.ErrorHandler;
+import com.aaroncoplan.waterfall.parser.FileUtils;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -16,33 +17,10 @@ import org.antlr.v4.runtime.CommonTokenStream;
 public class FileParser {
 
     public static ParseResult parseFile(final String filePath) {
-        final StringBuilder codeString = new StringBuilder();
-
-        final File codeFile = new File(filePath);
-        if (!codeFile.exists()) {
-            ErrorHandler.exit("File '%s' does not exist", filePath);
-            return null;
-        }
-        if (!codeFile.canRead()) {
-            ErrorHandler.exit("File '%s' cannot be read", filePath);
-            return null;
-        }
-        if (!codeFile.isFile()) {
-            ErrorHandler.exit("File '%s' is not a file", filePath);
-            return null;
-        }
-        try {
-            Scanner scanner = new Scanner(codeFile);
-            while (scanner.hasNextLine()) {
-                codeString.append(scanner.nextLine() + "\n");
-            }
-            scanner.close();
-        } catch(FileNotFoundException e) {
-            ErrorHandler.exit("File '%s' does not exist", filePath);
-            return null;
-        }
-        final CharStream charStream = CharStreams.fromString(codeString.toString());
+        final String fileContents = FileUtils.readFile(filePath);
+        final CharStream charStream = CharStreams.fromString(fileContents);
         final WaterfallLexer waterfallLexer = new WaterfallLexer(charStream);
+        waterfallLexer.removeErrorListeners();
         final CommonTokenStream tokenStream = new CommonTokenStream(waterfallLexer);
 
         final WaterfallParser waterfallParser = new WaterfallParser(tokenStream);
