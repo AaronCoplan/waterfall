@@ -1,6 +1,9 @@
 
 dependencies {
-    compile project(':parser')
+    // command line argument parsing
+    implementation 'net.sourceforge.argparse4j:argparse4j:0.8.1'
+
+    implementation project(':parser')
 }
 
 jar {
@@ -8,5 +11,5 @@ jar {
     manifest {
         attributes 'Main-Class': 'com.aaroncoplan.waterfall.compiler.Main'
     }
-    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    from configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
 }

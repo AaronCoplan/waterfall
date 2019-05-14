@@ -1,4 +1,4 @@
-package com.aaroncoplan.waterfall.parser.argumentparsing;
+package com.aaroncoplan.waterfall.compiler;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.helper.HelpScreenException;
@@ -12,7 +12,7 @@ public class ArgParser {
 
     public static Namespace parseCommandLineArgs(String[] args) {
         final ArgumentParser argumentParser = ArgumentParsers.newFor(
-            "waterfall"
+                "waterfall"
         ).build().defaultHelp(true).description("Waterfall programming language");
         argumentParser.addArgument("files").nargs("+").help("List of files to compile");
 

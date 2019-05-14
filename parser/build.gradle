@@ -8,14 +8,11 @@ dependencies {
 
     // antlr runtime dependency
     implementation 'org.antlr:antlr4-runtime:4.7.1'
-
-    // command line argument parsing
-    implementation 'net.sourceforge.argparse4j:argparse4j:0.8.1'
 }
 
 jar {
     version = '0.0.1'
-    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    from configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
 }
 
 generateGrammarSource {
