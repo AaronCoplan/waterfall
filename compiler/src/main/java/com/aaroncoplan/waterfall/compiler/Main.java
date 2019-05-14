@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import com.aaroncoplan.waterfall.parser.ErrorHandler;
 import com.aaroncoplan.waterfall.parser.parsing.FileParser;
 import com.aaroncoplan.waterfall.parser.parsing.ParseResult;
+import javafx.util.Pair;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +18,15 @@ public class Main {
         // this is just a test of the logger
         logger.info("Starting Waterfall Compiler");
 
-        final Namespace namespace = ArgParser.parseCommandLineArgs(args);
+        final Pair<Namespace, String> argParseResult = ArgParser.parseCommandLineArgs(args);
+        final Namespace namespace = argParseResult.getKey();
+        final String errorMsg = argParseResult.getValue();
+        // if namespace is null, there is an error
+        // print out the error message and exit
+        if(namespace == null) {
+            System.out.println(errorMsg);
+            return;
+        }
 
         final Object files = namespace.get("files");
         if (!(files instanceof ArrayList)) {
