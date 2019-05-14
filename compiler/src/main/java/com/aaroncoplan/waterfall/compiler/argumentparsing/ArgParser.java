@@ -1,4 +1,4 @@
-package com.aaroncoplan.waterfall.compiler;
+package com.aaroncoplan.waterfall.compiler.argumentparsing;
 
 import javafx.util.Pair;
 import net.sourceforge.argparse4j.ArgumentParsers;
@@ -7,9 +7,9 @@ import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
-class ArgParser {
+public class ArgParser {
 
-    static Pair<Namespace, String> parseCommandLineArgs(String[] args) {
+    public static Pair<Arguments, String> parseCommandLineArgs(String[] args) {
         final ArgumentParser argumentParser = ArgumentParsers.newFor("waterfall")
                 .build()
                 .defaultHelp(true)
@@ -20,9 +20,10 @@ class ArgParser {
                 .help("List of files to compile");
 
         try {
-            return new Pair<>(argumentParser.parseArgs(args), null);
+            final Namespace namespace = argumentParser.parseArgs(args);
+            return new Pair<>(new Arguments(namespace.getList("files")), null);
         } catch(ArgumentParserException e) {
-            final String errorMessage = e instanceof HelpScreenException ? "" : String.format("%s\n%s", e.getMessage(), argumentParser.formatHelp());
+            final String errorMessage = e instanceof HelpScreenException ? "" : e.getMessage();
             return new Pair<>(null, errorMessage);
         }
     }
