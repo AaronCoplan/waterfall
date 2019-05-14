@@ -12,12 +12,12 @@ class SyntaxErrorListener extends BaseErrorListener {
     private final String fileName;
     private final List<String> syntaxErrors;
 
-    public SyntaxErrorListener(String fileName) {
+    SyntaxErrorListener(String fileName) {
         this.fileName = fileName;
         this.syntaxErrors = new ArrayList<>();
     }
 
-    public List<String> getSyntaxErrors() {
+    List<String> getSyntaxErrors() {
         return syntaxErrors;
     }
 
