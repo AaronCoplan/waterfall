@@ -1,4 +1,4 @@
-package com.aaroncoplan.waterfall.parser.parsing;
+package com.aaroncoplan.waterfall.parser;
 
 import com.aaroncoplan.waterfall.WaterfallParser;
 
@@ -9,7 +9,7 @@ public class ParseResult {
     private final List<String> syntaxErrors;
     private final WaterfallParser.ProgramContext programAST;
 
-    public ParseResult(String filePath, List<String> syntaxErrors, WaterfallParser.ProgramContext programAST) {
+    ParseResult(String filePath, List<String> syntaxErrors, WaterfallParser.ProgramContext programAST) {
         this.filePath = filePath;
         this.syntaxErrors = syntaxErrors;
         this.programAST = programAST;

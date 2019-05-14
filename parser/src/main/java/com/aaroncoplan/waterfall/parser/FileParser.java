@@ -1,11 +1,10 @@
-package com.aaroncoplan.waterfall.parser.parsing;
+package com.aaroncoplan.waterfall.parser;
 
 import com.aaroncoplan.waterfall.WaterfallLexer;
 import com.aaroncoplan.waterfall.WaterfallParser;
 
 import java.util.List;
 
-import com.aaroncoplan.waterfall.parser.FileUtils;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
