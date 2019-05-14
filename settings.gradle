@@ -9,3 +9,4 @@
 
 rootProject.name = 'waterfall'
 include 'parser'
+include 'compiler'
