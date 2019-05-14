@@ -1,10 +1,9 @@
 package com.aaroncoplan.waterfall.compiler;
 
-import java.util.ArrayList;
-
 import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
 import com.aaroncoplan.waterfall.parser.ErrorHandler;
+import com.aaroncoplan.waterfall.parser.FileUtils;
 import com.aaroncoplan.waterfall.parser.parsing.FileParser;
 import com.aaroncoplan.waterfall.parser.parsing.ParseResult;
 import javafx.util.Pair;
@@ -14,7 +13,10 @@ import org.apache.logging.log4j.Logger;
 
 public class Main {
 
+    private static final Logger logger = LogManager.getLogger(Main.class);
+
     public static void main(String[] args) {
+        logger.info("[START] Argument Parsing");
         final Pair<Arguments, String> argParseResult = ArgParser.parseCommandLineArgs(args);
         final Arguments arguments = argParseResult.getKey();
         final String errorMsg = argParseResult.getValue();
@@ -24,6 +26,17 @@ public class Main {
             System.out.println(errorMsg);
             return;
         }
+        logger.info("[END] Argument Parsing");
+
+        // first check that each of the files exists
+        logger.info("[START] Existence Check");
+        for(String filePath : arguments.getFiles()) {
+            if(!FileUtils.isReadableFile(filePath)) {
+                System.out.format("File %s is not a valid readable file on disk", filePath).println();
+                return;
+            }
+        }
+        logger.info("[END] Existence Check");
 
         for (String filePath : arguments.getFiles()) {
             System.out.println(filePath);
