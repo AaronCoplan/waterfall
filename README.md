@@ -12,16 +12,16 @@
 
 ### Syntax Design
 
-Assignments: `=`, `:=`
-Operators: `/`, `*`, `+`, `-`, `%`
-Primitive Types: `int`, `dec`, `bool`, `char`
-Control: `if`, `elif`, `else`, `for`, `while`, `in`
-Conditionals / Comparators: `and`, `or`, `equals`, `<`, `>`, `<=`, `>=`
-Modifiers: `const`, `final`
-Functions: `func`, `returns`
-Containers: `module`, `type`, `spec`
-Casting: `castas`
-Return: `return`
+- Assignments: `=`, `:=`
+- Operators: `/`, `*`, `+`, `-`, `%`, `^`
+- Primitive Types: `int`, `dec`, `bool`, `char`
+- Control: `if`, `elif`, `else`, `for`, `while`, `in`
+- Conditionals / Comparators: `and`, `or`, `equals`, `<`, `>`, `<=`, `>=`
+- Modifiers: `const`, `final`
+- Functions: `func`, `returns`
+- Containers: `module`, `type`, `spec`
+- Casting: `castas`
+- Return: `return`
 
 ### Examples
 

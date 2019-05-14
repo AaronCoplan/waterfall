@@ -1,0 +1,13 @@
+module SimpleIfTest {
+    int sum = 0
+
+    func doSomething() {
+        if(sum % 3 equals 0 or sum % 5 equals 0) {
+             sum = sum + num
+        }
+
+        print(sum)
+    }
+
+
+}

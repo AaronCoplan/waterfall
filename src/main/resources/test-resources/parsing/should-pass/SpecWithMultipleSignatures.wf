@@ -1,0 +1,5 @@
+spec TestSpec {
+    func add(int b, int d) returns int
+
+    func sqrt(dec x) returns dec
+}
