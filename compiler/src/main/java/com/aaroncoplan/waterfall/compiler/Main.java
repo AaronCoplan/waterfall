@@ -2,7 +2,6 @@ package com.aaroncoplan.waterfall.compiler;
 
 import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
-import com.aaroncoplan.waterfall.parser.ErrorHandler;
 import com.aaroncoplan.waterfall.parser.FileUtils;
 import com.aaroncoplan.waterfall.parser.parsing.FileParser;
 import com.aaroncoplan.waterfall.parser.parsing.ParseResult;

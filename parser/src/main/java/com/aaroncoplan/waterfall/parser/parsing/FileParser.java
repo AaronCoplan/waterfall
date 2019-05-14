@@ -3,12 +3,8 @@ package com.aaroncoplan.waterfall.parser.parsing;
 import com.aaroncoplan.waterfall.WaterfallLexer;
 import com.aaroncoplan.waterfall.WaterfallParser;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.List;
-import java.util.Scanner;
 
-import com.aaroncoplan.waterfall.parser.ErrorHandler;
 import com.aaroncoplan.waterfall.parser.FileUtils;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
