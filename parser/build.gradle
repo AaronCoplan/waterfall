@@ -1,0 +1,82 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id 'antlr'
+}
+
+dependencies {
+    // This dependency is found on compile classpath of this component and consumers.
+    implementation 'com.google.guava:guava:27.0.1-jre'
+
+    // antlr grammar dependency
+    antlr 'org.antlr:antlr4:4.7.1'
+
+    // antlr runtime dependency
+    implementation 'org.antlr:antlr4-runtime:4.7.1'
+
+    // command line argument parsing
+    compile 'net.sourceforge.argparse4j:argparse4j:0.8.1'
+    
+    // logging
+    compile 'org.apache.logging.log4j:log4j-api:2.11.2'
+    compile 'org.apache.logging.log4j:log4j-core:2.11.2'
+
+    // Use JUnit test framework
+    testImplementation 'junit:junit:4.12'
+}
+
+jar {
+    version = '0.0.1'
+    manifest {
+        attributes 'Main-Class': 'org.aaroncoplan.waterfall.App'
+    }
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+}
+
+generateGrammarSource {
+    arguments = ['-package', 'com.aaroncoplan.waterfall']
+    outputDirectory = file("${project.buildDir}/generated-src/main/java")
+    doLast {
+        copy {
+            from "${project.buildDir}/generated-src/main/java"
+            into "src/generated/java"
+        }
+    }
+}
+
+/* REMOVE CODE FORMATTING
+task formatCode(type: Exec) {
+    commandLine 'yarn', 'format'
+}
+// make sure we are reformatting each time we compile
+compileJava.dependsOn formatCode
+*/
+
+// ensure we generate the grammar source prior
+// to compiling project code
+compileJava.dependsOn generateGrammarSource
+compileJava {
+    source = ['build/generated-src/main/java', 'src/main/java']
+}
+
+// remove generated grammar source on clean
+task removeGeneratedSource(type: Delete) {
+    delete 'src/generated'
+}
+clean.dependsOn removeGeneratedSource
+
+// mark generated source as code for IntelliJ
+sourceSets.main.java.srcDirs += file("src/generated/java")
+idea {
+    module {
+        generatedSourceDirs += file('src/generated/java')
+    }
+}
+
+// show test results in terminal
+test {
+    testLogging {
+        showStandardStreams = true
+        events "passed", "skipped", "failed"
+    }
+}
