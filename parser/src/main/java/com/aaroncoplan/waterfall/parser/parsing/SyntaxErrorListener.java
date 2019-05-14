@@ -8,14 +8,13 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 
-class SyntaxErrorListener
-    extends BaseErrorListener {
-    private final String name;
-    private final List<String> syntaxErrors = new ArrayList<String>();
+class SyntaxErrorListener extends BaseErrorListener {
+    private final String fileName;
+    private final List<String> syntaxErrors;
 
-    public SyntaxErrorListener(String name) {
-        this.name = name;
-        //this.syntaxErrors = new ArrayList<String>();
+    public SyntaxErrorListener(String fileName) {
+        this.fileName = fileName;
+        this.syntaxErrors = new ArrayList<>();
     }
 
     public List<String> getSyntaxErrors() {
@@ -30,10 +29,8 @@ class SyntaxErrorListener
         int charPositionInLine,
         String msg,
         RecognitionException e
-    )
-        throws
-            ParseCancellationException {
-        final String errorMessage = name + " line " + line + ":" + charPositionInLine + " " + msg;
+    ) throws ParseCancellationException {
+        final String errorMessage = fileName + " line " + line + ":" + charPositionInLine + " " + msg;
         syntaxErrors.add(errorMessage);
     }
 

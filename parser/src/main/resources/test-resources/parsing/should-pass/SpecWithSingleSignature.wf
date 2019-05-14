@@ -1,3 +1,0 @@
-spec MySpec {
-    func add(int i, int b) returns int
-}

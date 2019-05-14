@@ -9,11 +9,7 @@ public class ParseResult {
     private final List<String> syntaxErrors;
     private final WaterfallParser.ProgramContext programAST;
 
-    public ParseResult(
-        String filePath,
-        List<String> syntaxErrors,
-        WaterfallParser.ProgramContext programAST
-    ) {
+    public ParseResult(String filePath, List<String> syntaxErrors, WaterfallParser.ProgramContext programAST) {
         this.filePath = filePath;
         this.syntaxErrors = syntaxErrors;
         this.programAST = programAST;

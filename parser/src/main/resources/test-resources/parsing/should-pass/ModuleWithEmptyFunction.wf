@@ -1,5 +1,0 @@
-module MyModule {
-    func add(int i, int j) returns int {
-
-    }
-}
