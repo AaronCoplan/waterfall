@@ -3,3 +3,25 @@ allprojects {
         mavenCentral()
     }
 }
+
+configure(subprojects) {
+    apply plugin: 'java'
+    apply plugin: 'idea'
+
+    dependencies {
+        // logging
+        implementation 'org.apache.logging.log4j:log4j-api:2.11.2'
+        implementation 'org.apache.logging.log4j:log4j-core:2.11.2'
+
+        // Use JUnit test framework
+        testImplementation 'junit:junit:4.12'
+    }
+
+    // show test results in terminal
+    test {
+        testLogging {
+            showStandardStreams = true
+            events "passed", "skipped", "failed"
+        }
+    }
+}
