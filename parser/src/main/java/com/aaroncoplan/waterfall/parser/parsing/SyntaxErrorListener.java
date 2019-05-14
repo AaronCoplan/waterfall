@@ -1,4 +1,4 @@
-package org.aaroncoplan.waterfall.parsing;
+package com.aaroncoplan.waterfall.parser.parsing;
 
 import java.util.ArrayList;
 import java.util.List;

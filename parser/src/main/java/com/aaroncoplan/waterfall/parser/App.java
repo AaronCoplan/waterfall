@@ -1,12 +1,12 @@
-package org.aaroncoplan.waterfall;
+package com.aaroncoplan.waterfall.parser;
 
 import java.util.ArrayList;
 
+import com.aaroncoplan.waterfall.parser.argumentparsing.ArgParser;
+import com.aaroncoplan.waterfall.parser.parsing.FileParser;
+import com.aaroncoplan.waterfall.parser.parsing.ParseResult;
 import net.sourceforge.argparse4j.inf.Namespace;
 
-import org.aaroncoplan.waterfall.argumentparsing.ArgParser;
-import org.aaroncoplan.waterfall.parsing.FileParser;
-import org.aaroncoplan.waterfall.parsing.ParseResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

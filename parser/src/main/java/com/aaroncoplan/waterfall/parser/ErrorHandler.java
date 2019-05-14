@@ -1,4 +1,4 @@
-package org.aaroncoplan.waterfall;
+package com.aaroncoplan.waterfall.parser;
 
 public class ErrorHandler {
 

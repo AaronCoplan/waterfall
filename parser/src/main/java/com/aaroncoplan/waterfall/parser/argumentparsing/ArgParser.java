@@ -1,4 +1,4 @@
-package org.aaroncoplan.waterfall.argumentparsing;
+package com.aaroncoplan.waterfall.parser.argumentparsing;
 
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.helper.HelpScreenException;
@@ -6,7 +6,7 @@ import net.sourceforge.argparse4j.inf.ArgumentParser;
 import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
-import org.aaroncoplan.waterfall.ErrorHandler;
+import com.aaroncoplan.waterfall.parser.ErrorHandler;
 
 public class ArgParser {
 

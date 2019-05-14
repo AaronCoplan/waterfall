@@ -1,14 +1,11 @@
-package org.aaroncoplan.waterfall;
+package com.aaroncoplan.waterfall.parser;
 
-import org.aaroncoplan.waterfall.parsing.FileParser;
-import org.aaroncoplan.waterfall.parsing.ParseResult;
+import com.aaroncoplan.waterfall.parser.parsing.FileParser;
+import com.aaroncoplan.waterfall.parser.parsing.ParseResult;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FilenameFilter;
-import java.util.List;
 
 public class ParserTests {
 
