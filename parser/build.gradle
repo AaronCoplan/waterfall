@@ -44,14 +44,6 @@ generateGrammarSource {
     }
 }
 
-/* REMOVE CODE FORMATTING
-task formatCode(type: Exec) {
-    commandLine 'yarn', 'format'
-}
-// make sure we are reformatting each time we compile
-compileJava.dependsOn formatCode
-*/
-
 // ensure we generate the grammar source prior
 // to compiling project code
 compileJava.dependsOn generateGrammarSource
