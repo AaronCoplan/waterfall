@@ -23,7 +23,7 @@ public class FileUtils {
         return new Pair<>(true, null);
     }
 
-    public static String readFile(final String filePath) {
+    static String readFile(final String filePath) {
         final StringBuilder contents = new StringBuilder();
         try {
             Scanner scanner = new Scanner(new File(filePath));
