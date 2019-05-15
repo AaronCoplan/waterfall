@@ -1,4 +1,6 @@
-grammar Waterfall;
+parser grammar Waterfall;
+
+options { tokenVocab = WaterfallLexer; }
 
 program
     : (module | type | spec) EOF

@@ -10,7 +10,8 @@ out
 .idea
 
 # Ignore generated src files from grammar
-src/generated
+parser/src/generated
+*.tokens
 
 # Ignore JS modules
 node_modules
