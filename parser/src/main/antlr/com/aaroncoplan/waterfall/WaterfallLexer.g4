@@ -1,3 +1,0 @@
-lexer grammar WaterfallLexer;
-
-PLUS: '+';
