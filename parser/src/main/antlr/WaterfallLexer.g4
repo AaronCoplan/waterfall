@@ -9,6 +9,9 @@ BOOL: 'bool';
 // language keywords
 MODULE: 'module';
 
+// modifiers
+CONST: 'const';
+
 // literals and identifiers
 ID: ('a' .. 'z' | 'A' .. 'Z') ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')*;
 INT_LITERAL: ('0' .. '9')+;

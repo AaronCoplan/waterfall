@@ -13,7 +13,11 @@ public class FileParser {
 
     public static ParseResult parseFile(final String filePath) {
         final String fileContents = FileUtils.readFile(filePath);
-        final CharStream charStream = CharStreams.fromString(fileContents);
+        return parseCodeString(filePath, fileContents);
+    }
+
+    private static ParseResult parseCodeString(final String filePath, final String codeString) {
+        final CharStream charStream = CharStreams.fromString(codeString);
         final WaterfallLexer waterfallLexer = new WaterfallLexer(charStream);
         waterfallLexer.removeErrorListeners();
         final CommonTokenStream tokenStream = new CommonTokenStream(waterfallLexer);
@@ -27,6 +31,5 @@ public class FileParser {
         final List<String> syntaxErrors = errorListener.getSyntaxErrors();
         return new ParseResult(filePath, syntaxErrors, programAST);
     }
-
 }
 
