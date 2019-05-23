@@ -7,13 +7,13 @@ program
     ;
 
 module
-    : MODULE ID NEWLINE* L_CURLY R_CURLY NEWLINE* // empty module
-    | MODULE ID NEWLINE* L_CURLY NEWLINE+ codeline* R_CURLY NEWLINE* // module containing code
+    : MODULE name=ID NEWLINE* L_CURLY R_CURLY NEWLINE* // empty module
+    | MODULE name=ID NEWLINE* L_CURLY NEWLINE+ codeline* R_CURLY NEWLINE* // module containing code
     ;
 
 codeline
-    : modifier* ID COLON_EQUALS INT_LITERAL NEWLINE+
-    | modifier* type=ID ID EQUALS INT_LITERAL NEWLINE+
+    : modifier* name=ID COLON_EQUALS INT_LITERAL NEWLINE+
+    | modifier* type=ID name=ID EQUALS INT_LITERAL NEWLINE+
     ;
 
 modifier
