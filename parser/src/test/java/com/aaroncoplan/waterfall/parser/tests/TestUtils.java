@@ -4,6 +4,8 @@ import com.aaroncoplan.waterfall.parser.FileParser;
 import com.aaroncoplan.waterfall.parser.ParseResult;
 import org.junit.Assert;
 
+import java.util.Arrays;
+
 public class TestUtils {
 
     private static ParseResult execParse(String code) {
@@ -19,8 +21,16 @@ public class TestUtils {
         Assert.assertFalse(result.hasErrors());
     }
 
+    public static void shouldPass(String[] code) {
+        Arrays.stream(code).forEach(TestUtils::shouldPass);
+    }
+
     public static void shouldFail(String code) {
         ParseResult result = execParse(code);
         Assert.assertTrue(result.hasErrors());
+    }
+
+    public static void shouldFail(String[] code) {
+        Arrays.stream(code).forEach(TestUtils::shouldFail);
     }
 }

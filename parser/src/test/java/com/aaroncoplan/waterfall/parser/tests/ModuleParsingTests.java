@@ -2,8 +2,6 @@ package com.aaroncoplan.waterfall.parser.tests;
 
 import org.junit.Test;
 
-import java.util.Arrays;
-
 public class ModuleParsingTests {
 
     @Test
@@ -24,7 +22,7 @@ public class ModuleParsingTests {
           "module a\n{\n\n}",
           "module b{\n\n\n\n}"
         };
-        Arrays.stream(code).forEach(TestUtils::shouldPass);
+        TestUtils.shouldPass(code);
     }
 
     @Test
@@ -34,7 +32,7 @@ public class ModuleParsingTests {
           "module $dollar$ign {}",
           "module A_B_&illegalcharampersand {}"
         };
-        Arrays.stream(code).forEach(TestUtils::shouldFail);
+        TestUtils.shouldFail(code);
     }
 
     @Test
