@@ -16,7 +16,7 @@ public class FileParser {
         return parseCodeString(filePath, fileContents);
     }
 
-    private static ParseResult parseCodeString(final String filePath, final String codeString) {
+    public static ParseResult parseCodeString(final String filePath, final String codeString) {
         final CharStream charStream = CharStreams.fromString(codeString);
         final WaterfallLexer waterfallLexer = new WaterfallLexer(charStream);
         waterfallLexer.removeErrorListeners();

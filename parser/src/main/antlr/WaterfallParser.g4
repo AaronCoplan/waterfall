@@ -7,7 +7,7 @@ program
     ;
 
 module
-    : MODULE ID L_CURLY codeline* R_CURLY
+    : MODULE ID NEWLINE* L_CURLY R_CURLY
     ;
 
 codeline
