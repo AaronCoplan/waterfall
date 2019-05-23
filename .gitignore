@@ -13,8 +13,8 @@ out
 parser/src/generated
 *.tokens
 
-# Ignore JS modules
-node_modules
-
 # Ignore logs
 logs/
+
+# Ignore Emacs temp files
+*~
