@@ -1,0 +1,5 @@
+module FunctionImplementationsModule {
+    func myFunc() {}
+    func myFunc2(type arg, type2 arg2) {}
+    func myFunc3(type1 arg1, type2 arg2, type3 arg3) returns type4 {}
+}
