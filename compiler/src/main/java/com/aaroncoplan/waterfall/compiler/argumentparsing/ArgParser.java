@@ -1,6 +1,6 @@
 package com.aaroncoplan.waterfall.compiler.argumentparsing;
 
-import javafx.util.Pair;
+import com.aaroncoplan.waterfall.parser.Pair;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.helper.HelpScreenException;
 import net.sourceforge.argparse4j.inf.ArgumentParser;

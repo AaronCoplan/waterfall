@@ -4,8 +4,8 @@ import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
 import com.aaroncoplan.waterfall.parser.FileUtils;
 import com.aaroncoplan.waterfall.parser.FileParser;
+import com.aaroncoplan.waterfall.parser.Pair;
 import com.aaroncoplan.waterfall.parser.ParseResult;
-import javafx.util.Pair;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,8 +20,8 @@ public class Main {
     public static void main(String[] args) {
         logger.info("[START] Argument Parsing");
         final Pair<Arguments, String> argParseResult = ArgParser.parseCommandLineArgs(args);
-        final Arguments arguments = argParseResult.getKey();
-        final String errorMsg = argParseResult.getValue();
+        final Arguments arguments = argParseResult.firstVal;
+        final String errorMsg = argParseResult.secondVal;
         // if namespace is null, there is an error
         // print out the error message and exit
         if(arguments == null) {
@@ -30,12 +30,12 @@ public class Main {
         }
         logger.info("[END] Argument Parsing");
 
-        // first check that each of the files exists
+        // firstVal check that each of the files exists
         logger.info("[START] Existence Check");
         for(String filePath : arguments.getFiles()) {
             final Pair<Boolean, String> fileCheckResult = FileUtils.isReadableFile(filePath);
-            if(!fileCheckResult.getKey()) {
-                System.out.println(fileCheckResult.getValue());
+            if(!fileCheckResult.firstVal) {
+                System.out.println(fileCheckResult.secondVal);
                 return;
             }
         }

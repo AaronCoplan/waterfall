@@ -1,7 +1,5 @@
 package com.aaroncoplan.waterfall.parser;
 
-import javafx.util.Pair;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
