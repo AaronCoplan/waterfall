@@ -17,7 +17,15 @@ topLevelDeclaration
     ;
 
 functionImplementation
-    : FUNCTION name=ID L_PARENS (argType=type argName=ID (COMMA argType=type argName=ID)*)? R_PARENS (RETURNS returnType=type)? L_CURLY R_CURLY NEWLINE+
+    : FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY R_CURLY NEWLINE+
+    ;
+
+typedArgumentList
+    : (typedArgument (COMMA typedArgument)*)
+    ;
+
+typedArgument
+    : type name=ID
     ;
 
 untypedVariableDeclarationAndAssignment

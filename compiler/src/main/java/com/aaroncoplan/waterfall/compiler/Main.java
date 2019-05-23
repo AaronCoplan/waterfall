@@ -11,6 +11,7 @@ import com.aaroncoplan.waterfall.parser.ParseResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,11 +69,22 @@ public class Main {
             WaterfallParser.ModuleContext module = ast.module();
 
             final String moduleName = module.name.getText();
-            System.out.println(moduleName);
+            System.out.println("Creating Symbol Table for Module: " + moduleName);
             for(WaterfallParser.TopLevelDeclarationContext topLevelDeclaration : module.topLevelDeclaration()) {
-                System.out.println(topLevelDeclaration.typedVariableDeclarationAndAssignment());
-                System.out.println(topLevelDeclaration.functionImplementation());
-                System.out.println(topLevelDeclaration.getText());
+                if(topLevelDeclaration.typedVariableDeclarationAndAssignment() != null) {
+                    WaterfallParser.TypedVariableDeclarationAndAssignmentContext typedVariableDeclarationAndAssignment = topLevelDeclaration.typedVariableDeclarationAndAssignment();
+
+                } else if(topLevelDeclaration.functionImplementation() != null) {
+                    WaterfallParser.FunctionImplementationContext functionImplementation = topLevelDeclaration.functionImplementation();
+                    String functionName = functionImplementation.name.getText();
+                    String returnType = functionImplementation.returnType == null ? null : functionImplementation.returnType.getText();
+                    List<WaterfallParser.TypedArgumentContext> typedArguments = functionImplementation.typedArgumentList() == null ? Collections.emptyList() : functionImplementation.typedArgumentList().typedArgument();
+                    typedArguments.forEach(arg -> {
+                        String argType = arg.type().getText();
+                        String argName = arg.name.getText();
+                        System.out.println(argType + " -> " + argName);
+                    });
+                }
             }
         }
         logger.info("[END] Top Level Symbol Table Creation");
