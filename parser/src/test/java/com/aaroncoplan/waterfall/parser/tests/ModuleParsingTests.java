@@ -19,12 +19,27 @@ public class ModuleParsingTests {
     }
 
     @Test
+    public void newlinesBetweenBrackets() {
+        final String[] code = new String[]{
+          "module a\n{\n\n}",
+          "module b{\n\n\n\n}"
+        };
+        Arrays.stream(code).forEach(TestUtils::shouldPass);
+    }
+
+    @Test
     public void testIllegalModuleNames() {
         final String[] code = new String[]{
-            "module 9startswithnumber {}",
-            "module $dollar$ign {}",
-            "module A_B_&illegalcharampersand {}"
+          "module 9startswithnumber {}",
+          "module $dollar$ign {}",
+          "module A_B_&illegalcharampersand {}"
         };
         Arrays.stream(code).forEach(TestUtils::shouldFail);
+    }
+
+    @Test
+    public void testSingleLineInModule() {
+        final String code = "module a\n{\n variable := 4\n }";
+        TestUtils.shouldPass(code);
     }
 }
