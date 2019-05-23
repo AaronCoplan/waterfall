@@ -18,7 +18,7 @@ public class ModuleParsingTests {
 
     @Test
     public void newlinesBetweenBrackets() {
-        final String[] code = new String[]{
+        final String[] code = {
           "module a\n{\n\n}",
           "module b{\n\n\n\n}"
         };
@@ -27,7 +27,7 @@ public class ModuleParsingTests {
 
     @Test
     public void testIllegalModuleNames() {
-        final String[] code = new String[]{
+        final String[] code = {
           "module 9startswithnumber {}",
           "module $dollar$ign {}",
           "module A_B_&illegalcharampersand {}"
@@ -37,7 +37,7 @@ public class ModuleParsingTests {
 
     @Test
     public void testSingleLineInModule() {
-        final String[] code = new String[]{
+        final String[] code = {
             "module a\n{\n variable1 := 4\n }",
             "module a\n{\n int variable2 = 5\n }"
         };
