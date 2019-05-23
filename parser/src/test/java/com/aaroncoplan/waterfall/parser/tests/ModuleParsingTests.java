@@ -37,7 +37,10 @@ public class ModuleParsingTests {
 
     @Test
     public void testSingleLineInModule() {
-        final String code = "module a\n{\n variable := 4\n }";
+        final String[] code = new String[]{
+            "module a\n{\n variable1 := 4\n }",
+            "module a\n{\n int variable2 = 5\n }"
+        };
         TestUtils.shouldPass(code);
     }
 }

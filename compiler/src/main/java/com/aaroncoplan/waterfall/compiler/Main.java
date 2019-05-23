@@ -69,9 +69,10 @@ public class Main {
 
             final String moduleName = module.name.getText();
             System.out.println(moduleName);
-            System.out.println(module.codeline().size());
-            for(WaterfallParser.CodelineContext codeline : module.codeline()) {
-                System.out.println(codeline.getText());
+            for(WaterfallParser.TopLevelDeclarationContext topLevelDeclaration : module.topLevelDeclaration()) {
+                System.out.println(topLevelDeclaration.typedVariableDeclarationAndAssignment());
+                System.out.println(topLevelDeclaration.untypedVariableDeclarationAndAssignment());
+                System.out.println(topLevelDeclaration.getText());
             }
         }
         logger.info("[END] Top Level Symbol Table Creation");

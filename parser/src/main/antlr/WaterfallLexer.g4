@@ -2,13 +2,14 @@ lexer grammar WaterfallLexer;
 
 // language keywords
 MODULE: 'module';
+FUNCTION: 'func';
+RETURNS: 'returns';
 
 // modifiers
 CONST: 'const';
 
 // literals and identifiers
 ID: ('a' .. 'z' | 'A' .. 'Z') (('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')+ ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'))?;
-TYPE: ID QUESTION_MARK?;
 INT_LITERAL: ('0' .. '9')+;
 DEC_LITERAL: ('0' .. '9')+ DOT ('0' .. '9')+;
 
