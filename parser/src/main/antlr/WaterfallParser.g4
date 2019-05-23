@@ -13,7 +13,7 @@ module
 
 codeline
     : modifier* name=ID COLON_EQUALS INT_LITERAL NEWLINE+
-    | modifier* type=ID name=ID EQUALS INT_LITERAL NEWLINE+
+    | modifier* type=TYPE name=ID EQUALS INT_LITERAL NEWLINE+
     ;
 
 modifier

@@ -65,10 +65,14 @@ public class Main {
         logger.info("[START] Top Level Symbol Table Creation");
         for(ParseResult parseResult : parseResultList) {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
+            WaterfallParser.ModuleContext module = ast.module();
 
-            final String moduleName = ast.module().name.getText();
+            final String moduleName = module.name.getText();
             System.out.println(moduleName);
-            System.out.println(ast.module().codeline());
+            System.out.println(module.codeline().size());
+            for(WaterfallParser.CodelineContext codeline : module.codeline()) {
+                System.out.println(codeline.getText());
+            }
         }
         logger.info("[END] Top Level Symbol Table Creation");
     }

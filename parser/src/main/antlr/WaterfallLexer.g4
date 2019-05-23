@@ -1,11 +1,5 @@
 lexer grammar WaterfallLexer;
 
-// built in types
-INT: 'int';
-DEC: 'dec';
-CHAR: 'char';
-BOOL: 'bool';
-
 // language keywords
 MODULE: 'module';
 
@@ -13,12 +7,14 @@ MODULE: 'module';
 CONST: 'const';
 
 // literals and identifiers
-ID: ('a' .. 'z' | 'A' .. 'Z') ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')*;
+ID: ('a' .. 'z' | 'A' .. 'Z') (('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')+ ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'))?;
+TYPE: ID QUESTION_MARK?;
 INT_LITERAL: ('0' .. '9')+;
 DEC_LITERAL: ('0' .. '9')+ DOT ('0' .. '9')+;
 
 // structural
 DOT: '.';
+QUESTION_MARK: '?';
 EQUALS: '=';
 COLON_EQUALS: ':=';
 COMMA: ',';
