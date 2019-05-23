@@ -7,8 +7,8 @@ program
     ;
 
 module
-    : MODULE ID NEWLINE* L_CURLY R_CURLY // empty module
-    | MODULE ID NEWLINE* L_CURLY NEWLINE+ codeline* R_CURLY // module containing code
+    : MODULE ID NEWLINE* L_CURLY R_CURLY NEWLINE* // empty module
+    | MODULE ID NEWLINE* L_CURLY NEWLINE+ codeline* R_CURLY NEWLINE* // module containing code
     ;
 
 codeline

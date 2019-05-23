@@ -61,7 +61,9 @@ public class Main {
         if(hasErrors) return;
         logger.info("[END] Syntax Errors Check");
 
-        System.out.println("NO SYNTAX ERRORS");
+        logger.info("[START] Top Level Symbol Table Creation");
+
+        logger.info("[END] Top Level Symbol Table Creation");
     }
 
 }
