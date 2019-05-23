@@ -1,5 +1,6 @@
 package com.aaroncoplan.waterfall.compiler;
 
+import com.aaroncoplan.waterfall.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
 import com.aaroncoplan.waterfall.parser.FileUtils;
@@ -62,7 +63,13 @@ public class Main {
         logger.info("[END] Syntax Errors Check");
 
         logger.info("[START] Top Level Symbol Table Creation");
+        for(ParseResult parseResult : parseResultList) {
+            WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
 
+            final String moduleName = ast.module().name.getText();
+            System.out.println(moduleName);
+            System.out.println(ast.module().codeline());
+        }
         logger.info("[END] Top Level Symbol Table Creation");
     }
 
