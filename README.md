@@ -2,7 +2,8 @@
 
 ### Setup
 
-1. Install Java dependencies and build the jar: `./gradlew build`
+1. Ensure Java and Java Compiler are installed
+2. Install Java dependencies and build the jar: `./gradlew build`
 
 ### Run
 
