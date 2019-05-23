@@ -12,8 +12,7 @@ module
     ;
 
 topLevelDeclaration
-    : untypedVariableDeclarationAndAssignment
-    | typedVariableDeclarationAndAssignment
+    : typedVariableDeclarationAndAssignment
     | functionImplementation
     ;
 

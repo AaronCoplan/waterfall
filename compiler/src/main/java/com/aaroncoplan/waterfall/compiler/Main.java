@@ -71,7 +71,6 @@ public class Main {
             System.out.println(moduleName);
             for(WaterfallParser.TopLevelDeclarationContext topLevelDeclaration : module.topLevelDeclaration()) {
                 System.out.println(topLevelDeclaration.typedVariableDeclarationAndAssignment());
-                System.out.println(topLevelDeclaration.untypedVariableDeclarationAndAssignment());
                 System.out.println(topLevelDeclaration.functionImplementation());
                 System.out.println(topLevelDeclaration.getText());
             }
