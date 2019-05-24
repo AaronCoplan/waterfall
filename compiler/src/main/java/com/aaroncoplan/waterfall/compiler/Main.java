@@ -16,6 +16,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -79,6 +80,33 @@ public class Main {
             symbolTableRegistry.put(module.name.getText(), symbolTable);
         }
         logger.info("[END] Top Level Symbol Table Creation");
+
+        logger.info("[START] Inline Verification and Translation");
+        for(ParseResult parseResult : parseResultList) {
+            WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
+            WaterfallParser.ModuleContext module = ast.module();
+            final SymbolTable symbolTable = symbolTableRegistry.get(module.name.getText());
+            module.topLevelDeclaration().forEach(tld -> {
+                if(tld.typedVariableDeclarationAndAssignment() != null) {
+                    final WaterfallParser.TypedVariableDeclarationAndAssignmentContext typedVariableDeclarationAndAssignment = tld.typedVariableDeclarationAndAssignment();
+                    String type = typedVariableDeclarationAndAssignment.type().getText();
+                    String name = typedVariableDeclarationAndAssignment.name.getText();
+                    int value = Integer.parseInt(typedVariableDeclarationAndAssignment.INT_LITERAL().getText());
+
+                    System.out.println(type);
+                    System.out.println(name);
+                    System.out.println(value);
+                } else if(tld.functionImplementation() != null) {
+                    final WaterfallParser.FunctionImplementationContext functionImplementation = tld.functionImplementation();
+                    FunctionImplementationHelper.FunctionImplementationData functionImplementationData = FunctionImplementationHelper.extractData(functionImplementation);
+
+                    System.out.println(functionImplementationData.returnType);
+                    System.out.println(functionImplementationData.name);
+                    System.out.println(functionImplementationData.typedArguments);
+                }
+            });
+        }
+        logger.info("[END] Inline Verification and Translation");
     }
 
 }

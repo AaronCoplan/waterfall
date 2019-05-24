@@ -9,4 +9,9 @@ public class Pair<K, V> {
         this.firstVal = firstVal;
         this.secondVal = secondVal;
     }
+
+    @Override
+    public String toString() {
+        return "(" + firstVal + ", " + secondVal + ")";
+    }
 }

@@ -1,6 +1,7 @@
 package com.aaroncoplan.waterfall.compiler.symboltables;
 
 import com.aaroncoplan.waterfall.WaterfallParser;
+import com.aaroncoplan.waterfall.compiler.FunctionImplementationHelper;
 import com.aaroncoplan.waterfall.parser.Pair;
 
 import java.util.Collections;
@@ -29,16 +30,13 @@ public class TopLevelSymbolTableGenerator {
 
             } else if(topLevelDeclaration.functionImplementation() != null) {
                 WaterfallParser.FunctionImplementationContext functionImplementation = topLevelDeclaration.functionImplementation();
-                String functionName = functionImplementation.name.getText();
-                String returnType = functionImplementation.returnType == null ? null : functionImplementation.returnType.getText();
-                List<WaterfallParser.TypedArgumentContext> typedArgumentsContext = functionImplementation.typedArgumentList() == null ? Collections.emptyList() : functionImplementation.typedArgumentList().typedArgument();
-                List<Pair<String, String>> typedArguments = typedArgumentsContext.stream().map(arg -> new Pair<>(arg.type().getText(), arg.name.getText())).collect(Collectors.toList());
+                FunctionImplementationHelper.FunctionImplementationData functionImplementationData = FunctionImplementationHelper.extractData(functionImplementation);
                 try {
-                    symbolTable.declare(functionName, returnType);
+                    symbolTable.declare(functionImplementationData.name, functionImplementationData.returnType);
                 } catch (DuplicateDeclarationException e) {
                     int line = functionImplementation.start.getLine();
                     int charPosition = functionImplementation.start.getCharPositionInLine();
-                    System.out.format("Duplicate declaration when declaring %s in %s at %d:%d", functionName, moduleName, line, charPosition).println();
+                    System.out.format("Duplicate declaration when declaring %s in %s at %d:%d", functionImplementationData.name, moduleName, line, charPosition).println();
                     return null;
                 }
             }
