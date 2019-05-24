@@ -1,4 +1,4 @@
-package com.aaroncoplan.waterfall.compiler;
+package com.aaroncoplan.waterfall.compiler.symboltables;
 
 import com.aaroncoplan.waterfall.WaterfallParser;
 import com.aaroncoplan.waterfall.parser.Pair;
@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 
 public class TopLevelSymbolTableGenerator {
 
-    static SymbolTable generateFromModule(WaterfallParser.ModuleContext module) {
+    public static SymbolTable generateFromModule(WaterfallParser.ModuleContext module) {
         final SymbolTable symbolTable = new SymbolTable(null);
         final String moduleName = module.name.getText();
 

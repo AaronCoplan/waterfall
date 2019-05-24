@@ -1,4 +1,4 @@
-package com.aaroncoplan.waterfall.compiler;
+package com.aaroncoplan.waterfall.compiler.symboltables;
 
 import java.util.HashMap;
 import java.util.Map;

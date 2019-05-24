@@ -3,6 +3,8 @@ package com.aaroncoplan.waterfall.compiler;
 import com.aaroncoplan.waterfall.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
+import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
+import com.aaroncoplan.waterfall.compiler.symboltables.TopLevelSymbolTableGenerator;
 import com.aaroncoplan.waterfall.parser.FileUtils;
 import com.aaroncoplan.waterfall.parser.FileParser;
 import com.aaroncoplan.waterfall.parser.Pair;
