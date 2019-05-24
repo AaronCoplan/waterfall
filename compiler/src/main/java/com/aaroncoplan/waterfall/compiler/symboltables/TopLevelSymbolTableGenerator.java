@@ -1,12 +1,7 @@
 package com.aaroncoplan.waterfall.compiler.symboltables;
 
 import com.aaroncoplan.waterfall.WaterfallParser;
-import com.aaroncoplan.waterfall.compiler.FunctionImplementationHelper;
-import com.aaroncoplan.waterfall.parser.Pair;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.aaroncoplan.waterfall.compiler.helpers.FunctionImplementationHelper;
 
 public class TopLevelSymbolTableGenerator {
 
