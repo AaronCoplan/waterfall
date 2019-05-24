@@ -19,6 +19,11 @@ topLevelDeclaration
 statement
     : typedVariableDeclarationAndAssignment
     | untypedVariableDeclarationAndAssignment
+    | variableAssignment
+    ;
+
+variableAssignment
+    : name=ID EQUALS INT_LITERAL NEWLINE+
     ;
 
 untypedVariableDeclarationAndAssignment

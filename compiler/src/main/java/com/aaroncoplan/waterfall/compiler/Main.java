@@ -70,7 +70,6 @@ public class Main {
 
             final String moduleName = module.name.getText();
 
-            System.out.println("Creating Symbol Table for Module: " + moduleName);
             final SymbolTable symbolTable = new SymbolTable(null);
 
             for(WaterfallParser.TopLevelDeclarationContext topLevelDeclaration : module.topLevelDeclaration()) {
