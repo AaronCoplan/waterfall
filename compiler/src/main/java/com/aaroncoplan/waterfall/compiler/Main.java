@@ -11,7 +11,9 @@ import com.aaroncoplan.waterfall.parser.ParseResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -63,10 +65,16 @@ public class Main {
         logger.info("[END] Syntax Errors Check");
 
         logger.info("[START] Top Level Symbol Table Creation");
+        Map<String, SymbolTable> symbolTableRegistry = new HashMap<>();
         for(ParseResult parseResult : parseResultList) {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
             WaterfallParser.ModuleContext module = ast.module();
             final SymbolTable symbolTable = TopLevelSymbolTableGenerator.generateFromModule(module);
+            if(symbolTableRegistry.containsKey(module.name.getText())) {
+                System.out.format("Error: the name %s already exists!", module.name.getText()).println();
+                return;
+            }
+            symbolTableRegistry.put(module.name.getText(), symbolTable);
         }
         logger.info("[END] Top Level Symbol Table Creation");
     }
