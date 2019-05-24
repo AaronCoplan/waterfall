@@ -34,4 +34,10 @@ public class FunctionImplementationParsingTests {
         };
         TestUtils.shouldPass(code);
     }
+
+    @Test
+    public void withBody() {
+        final String code = "module m {\nfunc myFunc(type1 arg1) returns type2 {\n x := 5\n}\n}";
+        TestUtils.shouldPass(code);
+    }
 }

@@ -7,7 +7,7 @@ program
     ;
 
 module
-    : MODULE name=ID NEWLINE* L_CURLY R_CURLY NEWLINE* // empty module
+    : MODULE name=ID NEWLINE* L_CURLY NEWLINE* R_CURLY NEWLINE* // empty module
     | MODULE name=ID NEWLINE* L_CURLY NEWLINE+ topLevelDeclaration* R_CURLY NEWLINE* // module containing code
     ;
 
@@ -16,16 +16,9 @@ topLevelDeclaration
     | functionImplementation
     ;
 
-functionImplementation
-    : FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY R_CURLY NEWLINE+
-    ;
-
-typedArgumentList
-    : (typedArgument (COMMA typedArgument)*)
-    ;
-
-typedArgument
-    : type name=ID
+statement
+    : typedVariableDeclarationAndAssignment
+    | untypedVariableDeclarationAndAssignment
     ;
 
 untypedVariableDeclarationAndAssignment
@@ -34,6 +27,19 @@ untypedVariableDeclarationAndAssignment
 
 typedVariableDeclarationAndAssignment
     : modifier* type name=ID EQUALS INT_LITERAL NEWLINE+
+    ;
+
+functionImplementation
+    : FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY NEWLINE* R_CURLY NEWLINE+
+    | FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY NEWLINE+ statement* R_CURLY NEWLINE+
+    ;
+
+typedArgumentList
+    : (typedArgument (COMMA typedArgument)*)
+    ;
+
+typedArgument
+    : type name=ID
     ;
 
 type
