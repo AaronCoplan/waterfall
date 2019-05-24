@@ -11,7 +11,6 @@ import com.aaroncoplan.waterfall.parser.ParseResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -67,7 +66,7 @@ public class Main {
         for(ParseResult parseResult : parseResultList) {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
             WaterfallParser.ModuleContext module = ast.module();
-            final SymbolTable symbolTable = SymbolTableGenerator.generateFromModule(module);
+            final SymbolTable symbolTable = TopLevelSymbolTableGenerator.generateFromModule(module);
         }
         logger.info("[END] Top Level Symbol Table Creation");
     }

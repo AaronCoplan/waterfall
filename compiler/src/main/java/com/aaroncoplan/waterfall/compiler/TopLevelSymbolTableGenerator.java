@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SymbolTableGenerator {
+public class TopLevelSymbolTableGenerator {
 
     static SymbolTable generateFromModule(WaterfallParser.ModuleContext module) {
         final SymbolTable symbolTable = new SymbolTable(null);
