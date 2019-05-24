@@ -21,7 +21,7 @@ public class FunctionImplementationHelper {
         public final String name, returnType;
         public final List<Pair<String, String>> typedArguments;
 
-        public FunctionImplementationData(String name, String returnType, List<Pair<String, String>> typedArguments) {
+        private FunctionImplementationData(String name, String returnType, List<Pair<String, String>> typedArguments) {
             this.name = name;
             this.returnType = returnType;
             this.typedArguments = typedArguments;

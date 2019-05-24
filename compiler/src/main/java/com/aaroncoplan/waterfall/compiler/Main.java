@@ -4,6 +4,7 @@ import com.aaroncoplan.waterfall.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
 import com.aaroncoplan.waterfall.compiler.helpers.FunctionImplementationHelper;
+import com.aaroncoplan.waterfall.compiler.helpers.TypedVariableDeclarationAndAssignmentHelper;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.symboltables.TopLevelSymbolTableGenerator;
 import com.aaroncoplan.waterfall.parser.FileUtils;
@@ -89,13 +90,11 @@ public class Main {
             module.topLevelDeclaration().forEach(tld -> {
                 if(tld.typedVariableDeclarationAndAssignment() != null) {
                     final WaterfallParser.TypedVariableDeclarationAndAssignmentContext typedVariableDeclarationAndAssignment = tld.typedVariableDeclarationAndAssignment();
-                    String type = typedVariableDeclarationAndAssignment.type().getText();
-                    String name = typedVariableDeclarationAndAssignment.name.getText();
-                    int value = Integer.parseInt(typedVariableDeclarationAndAssignment.INT_LITERAL().getText());
+                    TypedVariableDeclarationAndAssignmentHelper.TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = TypedVariableDeclarationAndAssignmentHelper.extractData(typedVariableDeclarationAndAssignment);
 
-                    System.out.println(type);
-                    System.out.println(name);
-                    System.out.println(value);
+                    System.out.println(typedVariableDeclarationAndAssignmentData.type);
+                    System.out.println(typedVariableDeclarationAndAssignmentData.name);
+                    System.out.println(typedVariableDeclarationAndAssignmentData.value);
                 } else if(tld.functionImplementation() != null) {
                     final WaterfallParser.FunctionImplementationContext functionImplementation = tld.functionImplementation();
                     FunctionImplementationHelper.FunctionImplementationData functionImplementationData = FunctionImplementationHelper.extractData(functionImplementation);

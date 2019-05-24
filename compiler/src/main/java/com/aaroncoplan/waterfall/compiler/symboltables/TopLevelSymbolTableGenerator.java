@@ -2,6 +2,7 @@ package com.aaroncoplan.waterfall.compiler.symboltables;
 
 import com.aaroncoplan.waterfall.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.helpers.FunctionImplementationHelper;
+import com.aaroncoplan.waterfall.compiler.helpers.TypedVariableDeclarationAndAssignmentHelper;
 
 public class TopLevelSymbolTableGenerator {
 
@@ -12,14 +13,13 @@ public class TopLevelSymbolTableGenerator {
         for(WaterfallParser.TopLevelDeclarationContext topLevelDeclaration : module.topLevelDeclaration()) {
             if(topLevelDeclaration.typedVariableDeclarationAndAssignment() != null) {
                 WaterfallParser.TypedVariableDeclarationAndAssignmentContext typedVariableDeclarationAndAssignment = topLevelDeclaration.typedVariableDeclarationAndAssignment();
-                String variableType = typedVariableDeclarationAndAssignment.type().getText();
-                String variableName = typedVariableDeclarationAndAssignment.name.getText();
+                TypedVariableDeclarationAndAssignmentHelper.TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = TypedVariableDeclarationAndAssignmentHelper.extractData(typedVariableDeclarationAndAssignment);
                 try{
-                    symbolTable.declare(variableName, variableType);
+                    symbolTable.declare(typedVariableDeclarationAndAssignmentData.name, typedVariableDeclarationAndAssignmentData.type);
                 } catch (DuplicateDeclarationException e) {
                     int line = typedVariableDeclarationAndAssignment.start.getLine();
                     int charPosition = typedVariableDeclarationAndAssignment.start.getCharPositionInLine();
-                    System.out.format("Duplicate declaration when declaring %s in %s at %d:%d", variableName, moduleName, line, charPosition).println();
+                    System.out.format("Duplicate declaration when declaring %s in %s at %d:%d", typedVariableDeclarationAndAssignmentData.name, moduleName, line, charPosition).println();
                     return null;
                 }
 
