@@ -1,7 +1,9 @@
 package com.aaroncoplan.waterfall.compiler.symboltables;
 
 import com.aaroncoplan.waterfall.WaterfallParser;
+import com.aaroncoplan.waterfall.compiler.helpers.FunctionImplementationData;
 import com.aaroncoplan.waterfall.compiler.helpers.FunctionImplementationHelper;
+import com.aaroncoplan.waterfall.compiler.helpers.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.helpers.TypedVariableDeclarationAndAssignmentHelper;
 
 public class TopLevelSymbolTableGenerator {
@@ -13,7 +15,7 @@ public class TopLevelSymbolTableGenerator {
         for(WaterfallParser.TopLevelDeclarationContext topLevelDeclaration : module.topLevelDeclaration()) {
             if(topLevelDeclaration.typedVariableDeclarationAndAssignment() != null) {
                 WaterfallParser.TypedVariableDeclarationAndAssignmentContext typedVariableDeclarationAndAssignment = topLevelDeclaration.typedVariableDeclarationAndAssignment();
-                TypedVariableDeclarationAndAssignmentHelper.TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = TypedVariableDeclarationAndAssignmentHelper.extractData(typedVariableDeclarationAndAssignment);
+                TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = TypedVariableDeclarationAndAssignmentHelper.extractData(typedVariableDeclarationAndAssignment);
                 try{
                     symbolTable.declare(typedVariableDeclarationAndAssignmentData.name, typedVariableDeclarationAndAssignmentData.type);
                 } catch (DuplicateDeclarationException e) {
@@ -25,7 +27,7 @@ public class TopLevelSymbolTableGenerator {
 
             } else if(topLevelDeclaration.functionImplementation() != null) {
                 WaterfallParser.FunctionImplementationContext functionImplementation = topLevelDeclaration.functionImplementation();
-                FunctionImplementationHelper.FunctionImplementationData functionImplementationData = FunctionImplementationHelper.extractData(functionImplementation);
+                FunctionImplementationData functionImplementationData = FunctionImplementationHelper.extractData(functionImplementation);
                 try {
                     symbolTable.declare(functionImplementationData.name, functionImplementationData.returnType);
                 } catch (DuplicateDeclarationException e) {

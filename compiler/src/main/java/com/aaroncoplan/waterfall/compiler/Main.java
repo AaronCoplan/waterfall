@@ -3,7 +3,9 @@ package com.aaroncoplan.waterfall.compiler;
 import com.aaroncoplan.waterfall.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
+import com.aaroncoplan.waterfall.compiler.helpers.FunctionImplementationData;
 import com.aaroncoplan.waterfall.compiler.helpers.FunctionImplementationHelper;
+import com.aaroncoplan.waterfall.compiler.helpers.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.helpers.TypedVariableDeclarationAndAssignmentHelper;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.symboltables.TopLevelSymbolTableGenerator;
@@ -90,18 +92,21 @@ public class Main {
             module.topLevelDeclaration().forEach(tld -> {
                 if(tld.typedVariableDeclarationAndAssignment() != null) {
                     final WaterfallParser.TypedVariableDeclarationAndAssignmentContext typedVariableDeclarationAndAssignment = tld.typedVariableDeclarationAndAssignment();
-                    TypedVariableDeclarationAndAssignmentHelper.TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = TypedVariableDeclarationAndAssignmentHelper.extractData(typedVariableDeclarationAndAssignment);
+                    TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = TypedVariableDeclarationAndAssignmentHelper.extractData(typedVariableDeclarationAndAssignment);
 
                     System.out.println(typedVariableDeclarationAndAssignmentData.type);
                     System.out.println(typedVariableDeclarationAndAssignmentData.name);
                     System.out.println(typedVariableDeclarationAndAssignmentData.value);
                 } else if(tld.functionImplementation() != null) {
                     final WaterfallParser.FunctionImplementationContext functionImplementation = tld.functionImplementation();
-                    FunctionImplementationHelper.FunctionImplementationData functionImplementationData = FunctionImplementationHelper.extractData(functionImplementation);
+                    FunctionImplementationData functionImplementationData = FunctionImplementationHelper.extractData(functionImplementation);
 
                     System.out.println(functionImplementationData.returnType);
                     System.out.println(functionImplementationData.name);
                     System.out.println(functionImplementationData.typedArguments);
+
+                    List<WaterfallParser.StatementContext> functionBodyStatements = functionImplementation.statement();
+
                 }
             });
         }

@@ -8,17 +8,7 @@ public class TypedVariableDeclarationAndAssignmentHelper {
         String variableType = typedVariableDeclarationAndAssignment.type().getText();
         String variableName = typedVariableDeclarationAndAssignment.name.getText();
         int value  = Integer.parseInt(typedVariableDeclarationAndAssignment.INT_LITERAL().getText());
-        return new TypedVariableDeclarationAndAssignmentHelper().new TypedVariableDeclarationAndAssignmentData(variableName, variableType, value);
+        return new TypedVariableDeclarationAndAssignmentData(variableName, variableType, value);
     }
 
-    public class TypedVariableDeclarationAndAssignmentData {
-        public final String name, type;
-        public final int value;
-
-        private TypedVariableDeclarationAndAssignmentData(String name, String type, int value) {
-            this.name = name;
-            this.type = type;
-            this.value = value;
-        }
-    }
 }
