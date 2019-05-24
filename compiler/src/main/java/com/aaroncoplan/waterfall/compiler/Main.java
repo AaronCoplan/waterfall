@@ -67,41 +67,7 @@ public class Main {
         for(ParseResult parseResult : parseResultList) {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
             WaterfallParser.ModuleContext module = ast.module();
-
-            final String moduleName = module.name.getText();
-
-            final SymbolTable symbolTable = new SymbolTable(null);
-
-            for(WaterfallParser.TopLevelDeclarationContext topLevelDeclaration : module.topLevelDeclaration()) {
-                if(topLevelDeclaration.typedVariableDeclarationAndAssignment() != null) {
-                    WaterfallParser.TypedVariableDeclarationAndAssignmentContext typedVariableDeclarationAndAssignment = topLevelDeclaration.typedVariableDeclarationAndAssignment();
-                    String variableType = typedVariableDeclarationAndAssignment.type().getText();
-                    String variableName = typedVariableDeclarationAndAssignment.name.getText();
-                    try{
-                        symbolTable.declare(variableName, variableType);
-                    } catch (DuplicateDeclarationException e) {
-                        int line = typedVariableDeclarationAndAssignment.start.getLine();
-                        int charPosition = typedVariableDeclarationAndAssignment.start.getCharPositionInLine();
-                        System.out.format("Duplicate declaration when declaring %s in %s at %d:%d", variableName, moduleName, line, charPosition).println();
-                        return;
-                    }
-
-                } else if(topLevelDeclaration.functionImplementation() != null) {
-                    WaterfallParser.FunctionImplementationContext functionImplementation = topLevelDeclaration.functionImplementation();
-                    String functionName = functionImplementation.name.getText();
-                    String returnType = functionImplementation.returnType == null ? null : functionImplementation.returnType.getText();
-                    List<WaterfallParser.TypedArgumentContext> typedArgumentsContext = functionImplementation.typedArgumentList() == null ? Collections.emptyList() : functionImplementation.typedArgumentList().typedArgument();
-                    List<Pair<String, String>> typedArguments = typedArgumentsContext.stream().map(arg -> new Pair<>(arg.type().getText(), arg.name.getText())).collect(Collectors.toList());
-                    try {
-                        symbolTable.declare(functionName, returnType);
-                    } catch (DuplicateDeclarationException e) {
-                        int line = functionImplementation.start.getLine();
-                        int charPosition = functionImplementation.start.getCharPositionInLine();
-                        System.out.format("Duplicate declaration when declaring %s in %s at %d:%d", functionName, moduleName, line, charPosition).println();
-                        return;
-                    }
-                }
-            }
+            final SymbolTable symbolTable = SymbolTableGenerator.generateFromModule(module);
         }
         logger.info("[END] Top Level Symbol Table Creation");
     }
