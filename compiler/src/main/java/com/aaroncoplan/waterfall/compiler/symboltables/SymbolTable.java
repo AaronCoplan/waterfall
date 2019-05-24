@@ -8,12 +8,12 @@ public class SymbolTable {
     private final SymbolTable parentSymbolTable;
     private final Map<String, Object> nameToInfoMap;
 
-    public SymbolTable(SymbolTable parentSymbolTable) {
+    SymbolTable(SymbolTable parentSymbolTable) {
         this.parentSymbolTable = parentSymbolTable;
         this.nameToInfoMap = new HashMap<>();
     }
 
-    public void declare(String key, Object info) throws DuplicateDeclarationException {
+    void declare(String key, Object info) throws DuplicateDeclarationException {
         // check if it's already been declared in higher scope
         if(parentSymbolTable != null) {
             Object parentInfo = parentSymbolTable.lookup(key);
@@ -27,7 +27,7 @@ public class SymbolTable {
         nameToInfoMap.put(key, info);
     }
 
-    public Object lookup(String key) {
+    private Object lookup(String key) {
         Object info = nameToInfoMap.get(key);
         if(info != null) return info;
         if(parentSymbolTable == null) return null;
