@@ -3,10 +3,8 @@ package com.aaroncoplan.waterfall.compiler;
 import com.aaroncoplan.waterfall.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
-import com.aaroncoplan.waterfall.compiler.helpers.FunctionImplementationData;
-import com.aaroncoplan.waterfall.compiler.helpers.FunctionImplementationHelper;
-import com.aaroncoplan.waterfall.compiler.helpers.TypedVariableDeclarationAndAssignmentData;
-import com.aaroncoplan.waterfall.compiler.helpers.TypedVariableDeclarationAndAssignmentHelper;
+import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData;
+import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.symboltables.TopLevelSymbolTableGenerator;
 import com.aaroncoplan.waterfall.parser.FileUtils;
@@ -75,7 +73,8 @@ public class Main {
         for(ParseResult parseResult : parseResultList) {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
             WaterfallParser.ModuleContext module = ast.module();
-            final SymbolTable symbolTable = TopLevelSymbolTableGenerator.generateFromModule(module);
+            final SymbolTable symbolTable = TopLevelSymbolTableGenerator.generateFromModule(parseResult.getFilePath(), module);
+            if(symbolTable == null) return;
             if(symbolTableRegistry.containsKey(module.name.getText())) {
                 System.out.format("Error: the name %s already exists!", module.name.getText()).println();
                 return;
@@ -91,21 +90,19 @@ public class Main {
             final SymbolTable symbolTable = symbolTableRegistry.get(module.name.getText());
             module.topLevelDeclaration().forEach(tld -> {
                 if(tld.typedVariableDeclarationAndAssignment() != null) {
-                    final WaterfallParser.TypedVariableDeclarationAndAssignmentContext typedVariableDeclarationAndAssignment = tld.typedVariableDeclarationAndAssignment();
-                    TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = TypedVariableDeclarationAndAssignmentHelper.extractData(typedVariableDeclarationAndAssignment);
+                    TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = new TypedVariableDeclarationAndAssignmentData(parseResult.getFilePath(), tld.typedVariableDeclarationAndAssignment());
 
                     System.out.println(typedVariableDeclarationAndAssignmentData.type);
                     System.out.println(typedVariableDeclarationAndAssignmentData.name);
                     System.out.println(typedVariableDeclarationAndAssignmentData.value);
                 } else if(tld.functionImplementation() != null) {
-                    final WaterfallParser.FunctionImplementationContext functionImplementation = tld.functionImplementation();
-                    FunctionImplementationData functionImplementationData = FunctionImplementationHelper.extractData(functionImplementation);
+                    FunctionImplementationData functionImplementationData = new FunctionImplementationData(parseResult.getFilePath(), tld.functionImplementation());
 
                     System.out.println(functionImplementationData.returnType);
                     System.out.println(functionImplementationData.name);
                     System.out.println(functionImplementationData.typedArguments);
 
-                    List<WaterfallParser.StatementContext> functionBodyStatements = functionImplementation.statement();
+                    List<WaterfallParser.StatementContext> functionBodyStatements = tld.functionImplementation().statement();
 
                 }
             });
