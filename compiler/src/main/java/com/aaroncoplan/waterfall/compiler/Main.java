@@ -5,6 +5,7 @@ import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
+import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.symboltables.TopLevelSymbolTableGenerator;
 import com.aaroncoplan.waterfall.parser.FileUtils;
@@ -88,24 +89,41 @@ public class Main {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
             WaterfallParser.ModuleContext module = ast.module();
             final SymbolTable symbolTable = symbolTableRegistry.get(module.name.getText());
-            module.topLevelDeclaration().forEach(tld -> {
+
+            for(WaterfallParser.TopLevelDeclarationContext tld : module.topLevelDeclaration()){
                 if(tld.typedVariableDeclarationAndAssignment() != null) {
                     TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = new TypedVariableDeclarationAndAssignmentData(parseResult.getFilePath(), tld.typedVariableDeclarationAndAssignment());
 
-                    System.out.println(typedVariableDeclarationAndAssignmentData.type);
-                    System.out.println(typedVariableDeclarationAndAssignmentData.name);
-                    System.out.println(typedVariableDeclarationAndAssignmentData.value);
+                    VerificationResult verificationResult = typedVariableDeclarationAndAssignmentData.verify();
+                    if(!verificationResult.isSuccessful()) {
+                        System.out.format("%s in %s", verificationResult.getErrorMessage(), typedVariableDeclarationAndAssignmentData.getSourcePosition().generateMessage());
+                        return;
+                    }
+
+                    String translation = typedVariableDeclarationAndAssignmentData.translate();
+                    System.out.println("Translation:");
+                    System.out.println(translation);
                 } else if(tld.functionImplementation() != null) {
                     FunctionImplementationData functionImplementationData = new FunctionImplementationData(parseResult.getFilePath(), tld.functionImplementation());
 
-                    System.out.println(functionImplementationData.returnType);
-                    System.out.println(functionImplementationData.name);
-                    System.out.println(functionImplementationData.typedArguments);
+                    VerificationResult verificationResult = functionImplementationData.verify();
+                    if(!verificationResult.isSuccessful()) {
+                        System.out.format("%s in %s", verificationResult.getErrorMessage(), functionImplementationData.getSourcePosition().generateMessage());
+                        return;
+                    }
+
+                    String translation = functionImplementationData.translate();
+                    System.out.println("Translation:");
+                    System.out.println(translation);
+
+                    //System.out.println(functionImplementationData.returnType);
+                    //System.out.println(functionImplementationData.name);
+                    //System.out.println(functionImplementationData.typedArguments);
 
                     List<WaterfallParser.StatementContext> functionBodyStatements = tld.functionImplementation().statement();
 
                 }
-            });
+            }
         }
         logger.info("[END] Inline Verification and Translation");
     }

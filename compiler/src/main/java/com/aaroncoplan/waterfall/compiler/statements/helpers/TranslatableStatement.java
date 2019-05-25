@@ -11,6 +11,9 @@ public abstract class TranslatableStatement {
         this.sourcePosition = new SourcePosition(filePath, parserRuleContext.start.getLine(), parserRuleContext.start.getCharPositionInLine());
     }
 
+    public abstract VerificationResult verify();
+    public abstract String translate();
+
     public SourcePosition getSourcePosition() {
         return sourcePosition;
     }
