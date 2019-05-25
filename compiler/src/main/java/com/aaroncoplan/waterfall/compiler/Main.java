@@ -8,6 +8,7 @@ import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAnd
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.symboltables.TopLevelSymbolTableGenerator;
+import com.aaroncoplan.waterfall.compiler.target.Container;
 import com.aaroncoplan.waterfall.parser.FileUtils;
 import com.aaroncoplan.waterfall.parser.FileParser;
 import com.aaroncoplan.waterfall.parser.Pair;
@@ -89,6 +90,7 @@ public class Main {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
             WaterfallParser.ModuleContext module = ast.module();
             final SymbolTable symbolTable = symbolTableRegistry.get(module.name.getText());
+            final Container compilationContainer = new Container();
 
             for(WaterfallParser.TopLevelDeclarationContext tld : module.topLevelDeclaration()){
                 if(tld.typedVariableDeclarationAndAssignment() != null) {
@@ -101,8 +103,8 @@ public class Main {
                     }
 
                     String translation = typedVariableDeclarationAndAssignmentData.translate();
-                    System.out.println("Translation:");
-                    System.out.println(translation);
+                    compilationContainer.appendDeclaration(translation);
+
                 } else if(tld.functionImplementation() != null) {
                     FunctionImplementationData functionImplementationData = new FunctionImplementationData(parseResult.getFilePath(), tld.functionImplementation());
 
@@ -113,8 +115,7 @@ public class Main {
                     }
 
                     String translation = functionImplementationData.translate();
-                    System.out.println("Translation:");
-                    System.out.println(translation);
+                    compilationContainer.appendFunction(translation);
 
                     //System.out.println(functionImplementationData.returnType);
                     //System.out.println(functionImplementationData.name);
@@ -124,6 +125,8 @@ public class Main {
 
                 }
             }
+
+            System.out.println(compilationContainer.generate());
         }
         logger.info("[END] Inline Verification and Translation");
     }
