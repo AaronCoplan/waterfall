@@ -38,7 +38,7 @@ public class FunctionImplementationData extends TranslatableStatement {
     @Override
     public String translate() {
         final String translatedReturnType = returnType == null ? "void" : returnType;
-        final String args = String.join(", ", typedArguments.stream().map(arg -> String.format("%s %s", arg.firstVal, arg.secondVal)).collect(Collectors.toList()));
+        final String args = typedArguments.stream().map(arg -> String.format("%s %s", arg.firstVal, arg.secondVal)).collect(Collectors.joining(", "));
         return String.format("%s %s(%s) {}", translatedReturnType, name, args);
     }
 }
