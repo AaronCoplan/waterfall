@@ -116,13 +116,6 @@ public class Main {
 
                     String translation = functionImplementationData.translate();
                     compilationContainer.appendFunction(translation);
-
-                    //System.out.println(functionImplementationData.returnType);
-                    //System.out.println(functionImplementationData.name);
-                    //System.out.println(functionImplementationData.typedArguments);
-
-                    List<WaterfallParser.StatementContext> functionBodyStatements = tld.functionImplementation().statement();
-
                 }
             }
 
