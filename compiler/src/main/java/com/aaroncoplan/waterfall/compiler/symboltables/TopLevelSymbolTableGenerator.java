@@ -9,7 +9,6 @@ public class TopLevelSymbolTableGenerator {
 
     public static SymbolTable generateFromModule(final String filePath, WaterfallParser.ModuleContext module) {
         final SymbolTable symbolTable = new SymbolTable(null);
-        final String moduleName = module.name.getText();
 
         for(WaterfallParser.TopLevelDeclarationContext topLevelDeclaration : module.topLevelDeclaration()) {
             if(topLevelDeclaration.typedVariableDeclarationAndAssignment() != null) {
@@ -18,7 +17,7 @@ public class TopLevelSymbolTableGenerator {
                     symbolTable.declare(typedVariableDeclarationAndAssignmentData.name, typedVariableDeclarationAndAssignmentData.type);
                 } catch (DuplicateDeclarationException e) {
                     final SourcePosition sourcePosition = typedVariableDeclarationAndAssignmentData.getSourcePosition();
-                    System.out.format("Duplicate declaration when declaring %s in %s at %d:%d", typedVariableDeclarationAndAssignmentData.name, moduleName, sourcePosition.getLine(), sourcePosition.getColumn()).println();
+                    System.out.format("Duplicate declaration when declaring %s in %s", typedVariableDeclarationAndAssignmentData.name, sourcePosition.generateMessage()).println();
                     return null;
                 }
 
@@ -28,7 +27,7 @@ public class TopLevelSymbolTableGenerator {
                     symbolTable.declare(functionImplementationData.name, functionImplementationData.returnType);
                 } catch (DuplicateDeclarationException e) {
                     final SourcePosition sourcePosition = functionImplementationData.getSourcePosition();
-                    System.out.format("Duplicate declaration when declaring %s in %s at %d:%d", functionImplementationData.name, moduleName, sourcePosition.getLine(), sourcePosition.getColumn()).println();
+                    System.out.format("Duplicate declaration when declaring %s in %s", functionImplementationData.name, sourcePosition.generateMessage()).println();
                     return null;
                 }
             }

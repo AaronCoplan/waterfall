@@ -11,15 +11,7 @@ public class SourcePosition {
         this.column = column;
     }
 
-    public String getFileName() {
-        return fileName;
-    }
-
-    public int getLine() {
-        return line;
-    }
-
-    public int getColumn() {
-        return column;
+    public String generateMessage() {
+        return String.format("%s at %d:%d", fileName, line, column);
     }
 }
