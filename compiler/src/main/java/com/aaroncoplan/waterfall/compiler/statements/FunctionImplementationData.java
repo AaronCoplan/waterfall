@@ -5,6 +5,8 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.SourcePosition;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.Translatable;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
+import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException;
+import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.parser.Pair;
 
 import java.util.Collections;
@@ -37,17 +39,27 @@ public class FunctionImplementationData extends TranslatableStatement {
     }
 
     @Override
-    public VerificationResult verify() {
+    public VerificationResult verify(SymbolTable symbolTable) {
         if(returnType != null && !"int".equals(returnType)) {
             return new VerificationResult(false, "Illegal return type " + returnType);
         }
+
+        // create a symbol table and declare the arguments
+        SymbolTable functionSymbolTable = new SymbolTable(symbolTable);
         for(Pair<String, String> arg : typedArguments) {
             if(!"int".equals(arg.firstVal)) {
                 return new VerificationResult(false, "Illegal argument type " + arg.firstVal + " for arg " + arg.secondVal);
+            } else {
+                try {
+                    functionSymbolTable.declare(arg.secondVal, arg.firstVal);
+                } catch(DuplicateDeclarationException e) {
+                    return new VerificationResult(false, "Could not declare function arg " + arg.secondVal + ", name already taken!");
+                }
             }
         }
+
         for(TranslatableStatement translatableStatement : statements) {
-            VerificationResult verificationResult = translatableStatement.verify();
+            VerificationResult verificationResult = translatableStatement.verify(functionSymbolTable);
             if(!verificationResult.isSuccessful()) {
                 return verificationResult;
             }

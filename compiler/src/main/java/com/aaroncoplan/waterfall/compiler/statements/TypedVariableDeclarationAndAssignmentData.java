@@ -2,6 +2,7 @@ package com.aaroncoplan.waterfall.compiler.statements;
 
 import com.aaroncoplan.waterfall.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
+import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 
 public class TypedVariableDeclarationAndAssignmentData extends StatementData {
     public final String name, type;
@@ -15,7 +16,7 @@ public class TypedVariableDeclarationAndAssignmentData extends StatementData {
     }
 
     @Override
-    public VerificationResult verify() {
+    public VerificationResult verify(SymbolTable symbolTable) {
         if("int".equals(type)) {
             return new VerificationResult(true, null);
         } else {

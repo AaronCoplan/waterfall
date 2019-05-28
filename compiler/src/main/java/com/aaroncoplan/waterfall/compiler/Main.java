@@ -96,7 +96,7 @@ public class Main {
                 if(tld.typedVariableDeclarationAndAssignment() != null) {
                     TypedVariableDeclarationAndAssignmentData typedVariableDeclarationAndAssignmentData = new TypedVariableDeclarationAndAssignmentData(parseResult.getFilePath(), tld.typedVariableDeclarationAndAssignment());
 
-                    VerificationResult verificationResult = typedVariableDeclarationAndAssignmentData.verify();
+                    VerificationResult verificationResult = typedVariableDeclarationAndAssignmentData.verify(symbolTable);
                     if(!verificationResult.isSuccessful()) {
                         System.out.format("%s in %s", verificationResult.getErrorMessage(), typedVariableDeclarationAndAssignmentData.getSourcePosition().generateMessage());
                         return;
@@ -108,7 +108,7 @@ public class Main {
                 } else if(tld.functionImplementation() != null) {
                     FunctionImplementationData functionImplementationData = new FunctionImplementationData(parseResult.getFilePath(), tld.functionImplementation());
 
-                    VerificationResult verificationResult = functionImplementationData.verify();
+                    VerificationResult verificationResult = functionImplementationData.verify(symbolTable);
                     if(!verificationResult.isSuccessful()) {
                         System.out.format("%s in %s", verificationResult.getErrorMessage(), functionImplementationData.getSourcePosition().generateMessage());
                         return;

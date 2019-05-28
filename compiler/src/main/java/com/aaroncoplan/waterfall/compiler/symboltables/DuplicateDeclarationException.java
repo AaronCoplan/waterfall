@@ -1,3 +1,3 @@
 package com.aaroncoplan.waterfall.compiler.symboltables;
 
-class DuplicateDeclarationException extends Exception {}
+public class DuplicateDeclarationException extends Exception {}
