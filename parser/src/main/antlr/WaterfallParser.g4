@@ -35,8 +35,8 @@ typedVariableDeclarationAndAssignment
     ;
 
 functionImplementation
-    : FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY NEWLINE* R_CURLY NEWLINE+
-    | FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY NEWLINE+ statement* R_CURLY NEWLINE+
+    : FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY NEWLINE* R_CURLY NEWLINE+ // empty function
+    | FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY NEWLINE+ statement* R_CURLY NEWLINE+ // function containing code
     ;
 
 typedArgumentList
