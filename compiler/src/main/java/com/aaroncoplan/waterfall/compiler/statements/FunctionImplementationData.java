@@ -58,6 +58,7 @@ public class FunctionImplementationData extends TranslatableStatement {
             }
         }
 
+        // translate code within function body
         for(TranslatableStatement translatableStatement : statements) {
             VerificationResult verificationResult = translatableStatement.verify(functionSymbolTable);
             if(!verificationResult.isSuccessful()) {

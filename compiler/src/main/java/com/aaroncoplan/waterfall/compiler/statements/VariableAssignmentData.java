@@ -1,10 +1,11 @@
 package com.aaroncoplan.waterfall.compiler.statements;
 
 import com.aaroncoplan.waterfall.WaterfallParser;
+import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 
-public class VariableAssignmentData extends StatementData {
+public class VariableAssignmentData extends TranslatableStatement {
     public final String name;
     public final int value;
 
