@@ -1,8 +1,6 @@
 package com.aaroncoplan.waterfall.compiler.statements;
 
 import com.aaroncoplan.waterfall.generated.WaterfallParser;
-import com.aaroncoplan.waterfall.compiler.statements.helpers.SourcePosition;
-import com.aaroncoplan.waterfall.compiler.statements.helpers.Translatable;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException;
