@@ -76,7 +76,7 @@ public class Main {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
             WaterfallParser.ModuleContext module = ast.module();
             final SymbolTable symbolTable = TopLevelSymbolTableGenerator.generateFromModule(parseResult.getFilePath(), module);
-            if(symbolTable == null) return;
+            if(symbolTable == null) return;            
             if(symbolTableRegistry.containsKey(module.name.getText())) {
                 System.out.format("Error: the name %s already exists!", module.name.getText()).println();
                 return;

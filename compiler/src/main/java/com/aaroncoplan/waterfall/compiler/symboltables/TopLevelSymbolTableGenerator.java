@@ -1,6 +1,6 @@
 package com.aaroncoplan.waterfall.compiler.symboltables;
 
-import com.aaroncoplan.waterfall.WaterfallParser;
+import com.aaroncoplan.waterfall.generated.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.SourcePosition;

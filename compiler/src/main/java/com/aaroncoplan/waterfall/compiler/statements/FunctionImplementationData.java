@@ -1,6 +1,6 @@
 package com.aaroncoplan.waterfall.compiler.statements;
 
-import com.aaroncoplan.waterfall.WaterfallParser;
+import com.aaroncoplan.waterfall.generated.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.SourcePosition;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.Translatable;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
