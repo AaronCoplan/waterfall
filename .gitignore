@@ -16,7 +16,7 @@ out
 bin/
 
 # Ignore generated src files from grammar
-parser/src/generated
+generated/
 *.tokens
 
 # Ignore logs

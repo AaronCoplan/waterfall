@@ -1,7 +1,7 @@
 package com.aaroncoplan.waterfall.parser;
 
-import com.aaroncoplan.waterfall.WaterfallLexer;
-import com.aaroncoplan.waterfall.WaterfallParser;
+import com.aaroncoplan.waterfall.generated.WaterfallLexer;
+import com.aaroncoplan.waterfall.generated.WaterfallParser;
 
 import java.util.List;
 

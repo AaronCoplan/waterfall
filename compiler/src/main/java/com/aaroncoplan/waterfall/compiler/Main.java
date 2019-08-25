@@ -1,6 +1,6 @@
 package com.aaroncoplan.waterfall.compiler;
 
-import com.aaroncoplan.waterfall.WaterfallParser;
+import com.aaroncoplan.waterfall.generated.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.Arguments;
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData;

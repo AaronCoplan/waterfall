@@ -16,12 +16,12 @@ jar {
 }
 
 generateGrammarSource {
-    arguments = ['-package', 'com.aaroncoplan.waterfall']
+    arguments = ['-package', 'com.aaroncoplan.waterfall.generated']
     outputDirectory = file("${project.buildDir}/generated-src/main/java")
     doLast {
         copy {
             from "${project.buildDir}/generated-src/main/java"
-            into "src/generated/java"
+            into "src/main/java/com/aaroncoplan/waterfall/generated"
         }
     }
 }
@@ -30,19 +30,19 @@ generateGrammarSource {
 // to compiling project code
 compileJava.dependsOn generateGrammarSource
 compileJava {
-    source = ['build/generated-src/main/java', 'src/main/java']
+    source = ['src/main/java']
 }
 
 // remove generated grammar source on clean
 task removeGeneratedSource(type: Delete) {
-    delete 'src/generated'
+    delete 'src/main/java/com/aaroncoplan/waterfall/generated'
 }
 clean.dependsOn removeGeneratedSource
 
 // mark generated source as code for IntelliJ
-sourceSets.main.java.srcDirs += file("src/generated/java")
+sourceSets.main.java.srcDirs += file("src/main/java/com/aaroncoplan/waterfall/generated")
 idea {
     module {
-        generatedSourceDirs += file('src/generated/java')
+        generatedSourceDirs += file('src/main/java/com/aaroncoplan/waterfall/generated')
     }
 }
