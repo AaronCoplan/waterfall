@@ -9,6 +9,12 @@ out
 *.iml
 .idea
 
+# Ignore VSCode files
+.classpath
+.project
+.settings/
+bin/
+
 # Ignore generated src files from grammar
 parser/src/generated
 *.tokens
