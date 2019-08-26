@@ -1,7 +1,6 @@
 package com.aaroncoplan.waterfall.parser.tests;
 
 import org.junit.Test;
-import org.junit.Assert;
 
 public class FunctionCallTest {
 
