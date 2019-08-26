@@ -19,7 +19,8 @@ topLevelDeclaration
 statement
     : typedVariableDeclarationAndAssignment
     | untypedVariableDeclarationAndAssignment
-    | variableAssignment    
+    | variableAssignment
+    | functionCall NEWLINE+     
     ;
 
 variableAssignment
@@ -79,6 +80,11 @@ lambdaFunction
 functionCall
     : moduleFunctionCall
     | objectFunctionCall
+    | localFunctionCall
+    ;
+
+localFunctionCall
+    : functionName=ID L_PARENS functionCallArguments? R_PARENS
     ;
 
 moduleFunctionCall

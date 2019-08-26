@@ -23,5 +23,5 @@ public class AssignmentExpressionTests {
             "squareRoot := Math::squareRoot(number = 16, root = 2)",            
         };        
         TestUtils.shouldPass(Arrays.stream(codeLines).map(line -> String.format(template, line)).collect(Collectors.toList()));
-    }
+    }    
 }
