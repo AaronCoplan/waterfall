@@ -43,8 +43,8 @@ elifBlock
     ;
 
 elseBlock
-    : ELSE L_PARENS expression R_PARENS emptyBlock
-    | ELSE L_PARENS expression R_PARENS statementBlock
+    : ELSE emptyBlock
+    | ELSE statementBlock
     ;
 
 variableAssignment
