@@ -5,6 +5,7 @@ import com.aaroncoplan.waterfall.parser.ParseResult;
 import org.junit.Assert;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class TestUtils {
 
@@ -25,6 +26,10 @@ public class TestUtils {
         Arrays.stream(code).forEach(TestUtils::shouldPass);
     }
 
+    public static void shouldPass(List<String> code) {
+        code.stream().forEach(TestUtils::shouldPass);
+    }
+
     public static void shouldFail(String code) {
         ParseResult result = execParse(code);
         Assert.assertTrue(result.hasErrors());
@@ -32,5 +37,9 @@ public class TestUtils {
 
     public static void shouldFail(String[] code) {
         Arrays.stream(code).forEach(TestUtils::shouldFail);
+    }
+
+    public static void shouldFail(List<String> code) {
+        code.stream().forEach(TestUtils::shouldFail);
     }
 }

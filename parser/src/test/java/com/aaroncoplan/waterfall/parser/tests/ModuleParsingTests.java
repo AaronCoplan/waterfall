@@ -17,6 +17,12 @@ public class ModuleParsingTests {
     }
 
     @Test
+    public void bracketTwoNewlinesAway() {
+        final String code = "module a\n\n{}";
+        TestUtils.shouldFail(code);
+    }
+
+    @Test
     public void newlinesBetweenBrackets() {
         final String[] code = {
           "module a\n{\n\n}",
