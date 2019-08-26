@@ -20,7 +20,13 @@ statement
     : typedVariableDeclarationAndAssignment
     | untypedVariableDeclarationAndAssignment
     | variableAssignment
-    | functionCall NEWLINE+     
+    | functionCall NEWLINE+
+    | ifBlock
+    ;
+
+ifBlock
+    : IF L_PARENS expression R_PARENS L_CURLY NEWLINE* R_CURLY NEWLINE+
+    | IF L_PARENS expression R_PARENS L_CURLY NEWLINE+ statement* R_CURLY NEWLINE+
     ;
 
 variableAssignment
