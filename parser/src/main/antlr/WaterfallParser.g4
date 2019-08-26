@@ -24,9 +24,27 @@ statement
     | ifBlock
     ;
 
+emptyBlock
+    : L_CURLY NEWLINE* R_CURLY
+    ;
+
+statementBlock
+    : L_CURLY NEWLINE+ statement* R_CURLY
+    ;
+
 ifBlock
-    : IF L_PARENS expression R_PARENS L_CURLY NEWLINE* R_CURLY NEWLINE+
-    | IF L_PARENS expression R_PARENS L_CURLY NEWLINE+ statement* R_CURLY NEWLINE+
+    : IF L_PARENS expression R_PARENS emptyBlock elifBlock* elseBlock? NEWLINE+
+    | IF L_PARENS expression R_PARENS statementBlock elifBlock* elseBlock? NEWLINE+
+    ;
+
+elifBlock
+    : ELIF L_PARENS expression R_PARENS emptyBlock
+    | ELIF L_PARENS expression R_PARENS statementBlock
+    ;
+
+elseBlock
+    : ELSE L_PARENS expression R_PARENS emptyBlock
+    | ELSE L_PARENS expression R_PARENS statementBlock
     ;
 
 variableAssignment
@@ -42,8 +60,8 @@ typedVariableDeclarationAndAssignment
     ;
 
 functionImplementation
-    : FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY NEWLINE* R_CURLY NEWLINE+ // empty function
-    | FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? L_CURLY NEWLINE+ statement* R_CURLY NEWLINE+ // function containing code
+    : FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? emptyBlock NEWLINE+ // empty function
+    | FUNCTION name=ID L_PARENS typedArgumentList? R_PARENS (RETURNS returnType=type)? statementBlock NEWLINE+ // function containing code
     ;
 
 typedArgumentList
@@ -71,11 +89,11 @@ expression
     ;
 
 bundleLiteral
-    : PIPE expression (COMMA expression)* PIPE
+    : PIPE positionalArgumentList PIPE
     ;
 
 arrayLiteral
-    : L_BRACKET expression (COMMA expression)* R_BRACKET
+    : L_BRACKET positionalArgumentList R_BRACKET
     ;
 
 lambdaFunction
@@ -103,10 +121,10 @@ objectFunctionCall
 
 functionCallArguments
     : namedArguments
-    | positionalArguments
+    | positionalArguments=positionalArgumentList
     ;
 
-positionalArguments
+positionalArgumentList
     : value=expression (COMMA value=expression)*
     ;
 
