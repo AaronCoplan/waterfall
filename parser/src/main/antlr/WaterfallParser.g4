@@ -22,6 +22,7 @@ statement
     | variableAssignment
     | functionCall NEWLINE+
     | ifBlock
+    | forBlock
     ;
 
 emptyBlock
@@ -30,6 +31,15 @@ emptyBlock
 
 statementBlock
     : L_CURLY NEWLINE+ statement* R_CURLY
+    ;
+
+forBlock
+    : forInBlock NEWLINE+
+    ;
+
+forInBlock
+    : FOR L_PARENS name=ID IN collection=ID R_PARENS emptyBlock
+    | FOR L_PARENS name=ID IN collection=ID R_PARENS statementBlock
     ;
 
 ifBlock
