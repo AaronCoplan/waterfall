@@ -1,4 +1,0 @@
-module DuplicateFunctionDeclarationsModule {
-    func add(int x, int y) returns int {}
-    func add(int x, int y) returns int {}
-}

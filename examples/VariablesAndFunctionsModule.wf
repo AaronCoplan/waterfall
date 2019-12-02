@@ -1,6 +1,0 @@
-module VariablesAndFunctionsModule {
-    const int x = 4
-    int y = 55
-
-    func add(int a, int b) returns int {}
-}

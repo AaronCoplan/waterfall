@@ -1,4 +1,0 @@
-#!/bin/bash
-
-gdate +"[JVM  ] %Y-%m-%d %H:%M:%S.%3N"
-java -jar compiler/build/libs/compiler-0.0.1.jar $@

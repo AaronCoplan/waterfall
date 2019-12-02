@@ -1,5 +1,0 @@
-module FunctionImplementationsModule {
-    func myFunc() {}
-    func myFunc2(int arg, int arg2) {}
-    func myFunc3(int arg1, int arg2, int arg3) returns int {}
-}

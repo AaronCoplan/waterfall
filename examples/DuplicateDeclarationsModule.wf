@@ -1,5 +1,0 @@
-module DuplicateDeclarationsModule {
-    const int add = 55
-
-    func add(int a, int b) returns int {}
-}

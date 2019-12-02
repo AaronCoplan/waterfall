@@ -1,3 +1,0 @@
-module VariableDeclarationsModule {
-    int x = 4
-}
