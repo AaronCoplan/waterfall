@@ -4,21 +4,25 @@ options { tokenVocab = WaterfallLexer; }
 
 program
     : module EOF
-    | emptyModule EOF
-    ;
-
-emptyModule
-    : MODULE L_CURLY R_CURLY
     ;
 
 module
-    : MODULE L_CURLY function R_CURLY
+    : MODULE name=ID L_CURLY function* R_CURLY
     ;
 
 function
-    : FUNCTION functionName=ID L_PARENS type=ID name=ID R_PARENS (RETURNS returnType=ID)? L_CURLY R_CURLY
+    : FUNCTION functionName=ID L_PARENS parameterList? R_PARENS (RETURNS returnType=type)? L_CURLY R_CURLY
     ;
 
-functionBody
-    : ID C_EQUALS INT_LITERAL SEMICOLON
+parameterList
+    : parameter (COMMA parameter)*
+    ;
+
+parameter
+    : type name=ID
+    ;
+
+type
+    : ID
+    | ID L_BRACKET R_BRACKET
     ;
