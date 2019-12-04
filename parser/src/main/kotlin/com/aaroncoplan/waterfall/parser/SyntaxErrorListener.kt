@@ -22,12 +22,12 @@ class SyntaxErrorListener : BaseErrorListener {
 
     @Throws(ParseCancellationException::class)
     override fun syntaxError(
-        recognizer:Recognizer<*, *>,
-        offendingSymbol:Any,
-        line:Int,
-        charPositionInLine:Int,
-        msg:String,
-        e:RecognitionException
+        recognizer: Recognizer<*, *>?,
+        offendingSymbol: Any?,
+        line: Int,
+        charPositionInLine: Int,
+        msg: String?,
+        e: RecognitionException?
     ) {
         val errorMessage = filepath + " line " + line + ":" + charPositionInLine + " " + msg                
         syntaxErrors.add(errorMessage)

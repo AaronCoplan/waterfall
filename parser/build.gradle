@@ -19,7 +19,10 @@ repositories {
 
 dependencies {
     antlr 'org.antlr:antlr4:4.7.1'
+    implementation 'org.antlr:antlr4-runtime:4.7.1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.3.50"
+    testImplementation 'junit:junit:4.12'
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.3.50"
 }
 
 generateGrammarSource {
@@ -40,3 +43,9 @@ task removeGeneratedSource(type: Delete) {
 }
 
 clean.dependsOn removeGeneratedSource
+
+sourceSets {
+    main.kotlin.srcDirs = ['src/main/kotlin']
+    main.java.srcDirs = ['src/main/kotlin/com/aaroncoplan/waterfall/parser/generated']
+    test.kotlin.srcDirs = ['src/test/kotlin']
+}
