@@ -15,6 +15,7 @@ out
 .settings/
 bin/
 .antlr/
+.vscode/
 
 # Ignore generated src files from grammar
 generated/
