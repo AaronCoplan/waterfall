@@ -11,7 +11,29 @@ module
     ;
 
 function
-    : FUNCTION functionName=ID L_PARENS parameterList? R_PARENS (RETURNS returnType=type)? L_CURLY R_CURLY
+    : FUNCTION functionName=ID L_PARENS parameterList? R_PARENS (RETURNS returnType=type)? L_CURLY statementBlock? R_CURLY
+    ;
+
+statementBlock
+    : statement+
+    ;
+
+statement
+    : variableAssignment
+    | typedVariableAssignment
+    | variableReassignment    
+    ;
+
+variableAssignment
+    : name=ID C_EQUALS value SEMICOLON
+    ;
+
+typedVariableAssignment
+    : type name=ID EQUALS value SEMICOLON
+    ;
+
+variableReassignment
+    : name=ID EQUALS value SEMICOLON
     ;
 
 parameterList
@@ -20,6 +42,12 @@ parameterList
 
 parameter
     : type name=ID
+    ;
+
+value
+    : INT_LITERAL
+    | DEC_LITERAL
+    | STRING_LITERAL
     ;
 
 type
