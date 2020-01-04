@@ -250,4 +250,26 @@ class FunctionBodyTest : ParserTest() {
             )
         )
     }
+
+    @Test
+    fun testReturnWithoutReturnValuePasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                return; 
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testReturnLiteralValuePasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                return 1; 
+                """
+            )
+        )
+    }
 }

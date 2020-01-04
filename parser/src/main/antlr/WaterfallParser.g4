@@ -23,6 +23,11 @@ statement
     | typedVariableAssignment
     | variableReassignment
     | functionCall
+    | returnStatement
+    ;
+
+returnStatement
+    : RETURN value? SEMICOLON
     ;
 
 variableAssignment
