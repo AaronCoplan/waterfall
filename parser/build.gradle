@@ -45,9 +45,9 @@ task removeGeneratedSource(type: Delete) {
 clean.dependsOn removeGeneratedSource
 
 sourceSets {
-    main.kotlin.srcDirs = ['src/main/kotlin']
-    main.java.srcDirs = ['src/main/kotlin/com/aaroncoplan/waterfall/parser/generated']
-    test.kotlin.srcDirs = ['src/test/kotlin']
+    main.kotlin.srcDirs += 'src/main/kotlin'
+    main.java.srcDirs += 'src/main/kotlin/com/aaroncoplan/waterfall/parser/generated'
+    test.kotlin.srcDirs += 'src/test/kotlin'
 }
 
 test {
