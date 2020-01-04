@@ -8,7 +8,7 @@ open class ParserTest {
 
     fun assertParsePasses(code: String) {
         val errors = parse(code)
-        if(!errors.isEmpty()) {
+        if(errors.isNotEmpty()) {
             print(errors)
         }
         Assert.assertTrue(errors.isEmpty())
