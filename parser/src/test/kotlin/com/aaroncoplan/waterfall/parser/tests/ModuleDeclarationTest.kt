@@ -1,5 +1,6 @@
-package com.aaroncoplan.parsertests.test
+package com.aaroncoplan.waterfall.parser.tests
 
+import com.aaroncoplan.waterfall.parser.tests.ParserTest
 import org.junit.Test
 
 class ModuleDeclarationTest : ParserTest() {

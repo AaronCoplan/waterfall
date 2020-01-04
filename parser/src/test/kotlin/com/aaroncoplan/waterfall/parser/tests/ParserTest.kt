@@ -1,4 +1,4 @@
-package com.aaroncoplan.parsertests.test
+package com.aaroncoplan.waterfall.parser.tests
 
 import org.junit.Assert
 
