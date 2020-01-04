@@ -1,7 +1,6 @@
 package com.aaroncoplan.waterfall.parser.tests
 
 import org.junit.Test
-import org.junit.experimental.theories.suppliers.TestedOn
 
 class FunctionBodyTest : ParserTest() {
     private fun wrapInFunction(code: String): String {        
