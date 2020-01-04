@@ -1,6 +1,7 @@
 package com.aaroncoplan.waterfall.parser.tests
 
 import org.junit.Test
+import org.junit.experimental.theories.suppliers.TestedOn
 
 class FunctionBodyTest : ParserTest() {
     private fun wrapInFunction(code: String): String {        
@@ -115,6 +116,138 @@ class FunctionBodyTest : ParserTest() {
                 """
                 string msg = `hello`;
                 """       
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithNoArgumentsPasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                print();    
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithSingleVariableArgumentPasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                print(variableName);
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithMultipleVariableArgumentsPasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                print(var1, var2, var3);    
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithSingleLiteralArgumentPasses() {
+        assertParsePasses(
+            wrapInFunction(
+            """
+                print(`I am a string`);
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithMultipleLiteralArgumentsPasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                print(1, 2, 3); 
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithMultipleVariableAndLiteralArgumentsPasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                print(1, myVar1, 2, myVar2, `hello`); 
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithSingleVariableNamedArgumentPasses() {
+        assertParsePasses(
+            wrapInFunction(
+            """
+                print(myArg=variableName);
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithMultipleVariableNamedArgumentsPasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                print(arg1=var1, arg2=var2, arg3=var3); 
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithSingleLiteralNamedArgumentPasses() {
+        assertParsePasses(
+            wrapInFunction(
+            """
+                print(myString=`I am a string`);
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithMultipleLiteralNamedArgumentsPasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                print(int1=1, int2=2, int3=3); 
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithMultipleVariableAndLiteralNamedArgumentsPasses() {
+        assertParsePasses(
+            wrapInFunction(
+                """
+                print(int1=1, arg1=var1, string1=`hello`, var2=var2); 
+                """
+            )
+        )
+    }
+
+    @Test
+    fun testFunctionCallWithMixedArgumentsAndNamedArgumentsFails() {
+        assertParseFails(
+            wrapInFunction(
+                """
+                print(123, `mystring`, arg2=2); 
+                """
             )
         )
     }

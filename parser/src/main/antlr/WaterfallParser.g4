@@ -21,7 +21,8 @@ statementBlock
 statement
     : variableAssignment
     | typedVariableAssignment
-    | variableReassignment    
+    | variableReassignment
+    | functionCall
     ;
 
 variableAssignment
@@ -34,6 +35,27 @@ typedVariableAssignment
 
 variableReassignment
     : name=ID EQUALS value SEMICOLON
+    ;
+
+functionCall
+    : name=ID L_PARENS (argumentList | namedArgumentList)? R_PARENS SEMICOLON
+    ;
+
+argumentList
+    : argument (COMMA argument)*
+    ;
+
+namedArgumentList
+    : namedArgument (COMMA namedArgument)*
+    ;
+
+namedArgument
+    : name=ID EQUALS argument
+    ;
+
+argument
+    : name=ID
+    | value
     ;
 
 parameterList
