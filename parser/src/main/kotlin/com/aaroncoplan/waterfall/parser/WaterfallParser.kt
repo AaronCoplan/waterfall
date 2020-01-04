@@ -29,6 +29,6 @@ fun parseCodeString(filepath: String, contents: String): ParseResult {
     parser.removeErrorListeners()
     parser.addErrorListener(syntaxErrorListener)
 
-    val ast = parser.program();    
+    val ast = parser.program()
     return ParseResult(filepath, syntaxErrorListener.getSyntaxErrors(), ast)
 }
