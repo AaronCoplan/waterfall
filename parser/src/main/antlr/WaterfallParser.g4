@@ -11,7 +11,7 @@ module
     ;
 
 function
-    : FUNCTION functionName=ID L_PARENS parameterList? R_PARENS (RETURNS returnType=type)? L_CURLY statementBlock? R_CURLY
+    : FUNCTION name=ID L_PARENS parameterList? R_PARENS (RETURNS returnType=type)? L_CURLY statementBlock? R_CURLY
     ;
 
 statementBlock
@@ -78,6 +78,10 @@ value
     ;
 
 type
-    : ID
-    | ID L_BRACKET R_BRACKET
+    : name=ID
+    | arrayType
+    ;
+
+arrayType
+    : name=ID L_BRACKET R_BRACKET
     ;

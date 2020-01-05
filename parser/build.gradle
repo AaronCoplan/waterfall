@@ -51,10 +51,3 @@ sourceSets {
     main.java.srcDirs += 'src/main/kotlin/com/aaroncoplan/waterfall/parser/generated'
     test.kotlin.srcDirs += 'src/test/kotlin'
 }
-
-test {
-    testLogging {
-        showStandardStreams = true
-        events "passed", "skipped", "failed"
-    }
-}
