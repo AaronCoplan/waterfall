@@ -34,7 +34,7 @@ public class FunctionImplementationData extends TranslatableStatement {
 
     @Override
     public VerificationResult verify(SymbolTable symbolTable) {
-        if (returnType != null && !PrimitiveTypes.isPrimitive(returnType)) {
+        if (returnType != null && !PrimitiveTypes.isPrimitiveOrArray(returnType)) {
             return new VerificationResult(false,
                     "Illegal return type '" + returnType + "'. Known: " + PrimitiveTypes.ALL);
         }
@@ -48,7 +48,7 @@ public class FunctionImplementationData extends TranslatableStatement {
 
         SymbolTable functionSymbolTable = new SymbolTable(symbolTable);
         for (Pair<String, String> arg : typedArguments) {
-            if (!PrimitiveTypes.isPrimitive(arg.firstVal)) {
+            if (!PrimitiveTypes.isPrimitiveOrArray(arg.firstVal)) {
                 return new VerificationResult(false,
                         "Illegal argument type '" + arg.firstVal + "' for arg " + arg.secondVal
                                 + ". Known: " + PrimitiveTypes.ALL);

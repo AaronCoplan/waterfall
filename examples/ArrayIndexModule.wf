@@ -1,5 +1,5 @@
 module ArrayIndexModule {
-    func first(int idx) returns int {
+    func first(int[] arr, int idx) returns int {
         int x = arr[0]
         int y = arr[idx]
         int z = arr[idx]

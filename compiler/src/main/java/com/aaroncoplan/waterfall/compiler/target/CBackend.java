@@ -71,10 +71,14 @@ public class CBackend implements CodeGenerator {
 
     /**
      * Map a Waterfall type name to its C equivalent and request any header it needs.
-     * Unknown types pass through; gcc -fsyntax-only will reject them.
+     * Array types ({@code T[]}) map to pointers ({@code T*}). Unknown types pass
+     * through; gcc -fsyntax-only will reject them.
      */
     private String cType(String wfType) {
         if (wfType == null) return "void";
+        if (PrimitiveTypes.isArray(wfType)) {
+            return cType(PrimitiveTypes.elementType(wfType)) + " *";
+        }
         switch (wfType) {
             case PrimitiveTypes.INT:  return "int";
             case PrimitiveTypes.DEC:  return "double";

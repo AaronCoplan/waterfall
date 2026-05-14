@@ -21,15 +21,16 @@ C accept them because their lowercase booleans are first-class; Python's
 to `ExpressionData`. Python's case-translation hack removed. See
 `examples/BoolLiteralsModule.wf`.
 
-### G2. No array type in the grammar
-**Today:** `arr[i]` is a valid expression (Phase 6f), but the user can't
-declare `int[] arr = ...`. Compounds like `int[].create(26)` in the README
-example don't parse. The `ArrayIndexModule` C golden is skipped by
-`CRuntimeCheckTest` because `arr` can't be declared.
-**Fix:** Extend `type: QUESTION_MARK? ID (L_BRACKET R_BRACKET)?` and teach
-`TypedVar` + `FunctionImpl` verifiers to accept the suffix. Per-target type
-mapping: JS/Python → ignored; C → `<elt> arr[]` or `<elt>* arr`.
-**Where flagged:** `CRuntimeCheckTest.gccAcceptsGolden`, `notes/PHASE-6f`.
+### ~~G2. No array type in the grammar~~ (closed in phase 8f)
+~~**Today:** `arr[i]` is a valid expression (Phase 6f), but the user can't
+declare `int[] arr = ...`.~~
+**Fix landed:** Extended `type` grammar rule to `QUESTION_MARK? ID (L_BRACKET R_BRACKET)?`.
+`PrimitiveTypes` gained `isArray(String)`, `isPrimitiveOrArray(String)`, and
+`elementType(String)` helpers. The C backend's `cType` now maps `T[]` → `T*`.
+JS and Python drop the type entirely as usual. ArrayIndexModule's `arr` is
+now an explicit `int[]` parameter; CRuntimeCheckTest's skip is dropped.
+New `ArrayParamsModule.wf` exercises array-typed parameters and a return
+type, plus a `castas dec[]` cast.
 
 ### ~~G3. Function-body symbol-table declarations~~ (closed in phase 8e)
 ~~**Today:** Function-body `int x = 1` decls don't `declare()` into the
@@ -60,10 +61,13 @@ symbol table.
 once G1 and G4 land.
 **Where flagged:** `IfBlockData.verify`, `ForBlockData.verify`.
 
-### G6. `castas` only accepts a single-token primitive type
-**Today:** Grammar's `type: QUESTION_MARK? ID;`. `int castas dec` works,
-but `castas dec[]` doesn't (no array types per G2).
-**Fix:** Comes for free once G2 lands.
+### ~~G6. `castas` only accepts a single-token primitive type~~ (closed in phase 8f)
+~~**Today:** Grammar's `type: QUESTION_MARK? ID;`. `int castas dec` works,
+but `castas dec[]` doesn't.~~
+**Fix landed:** Free with `G2` — the `type` rule is shared. Backends:
+  - C: emits `((T *)(operand))` for array casts.
+  - JS / Python: array-typed casts are no-ops (types are dropped); the
+    operand passes through unchanged.
 
 ---
 

@@ -99,7 +99,7 @@ typedArgument
     ;
 
 type
-    : QUESTION_MARK? ID
+    : QUESTION_MARK? ID (L_BRACKET R_BRACKET)?
     ;
 
 expression

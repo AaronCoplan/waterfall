@@ -34,9 +34,9 @@ public class TypedVariableDeclarationAndAssignmentData extends TranslatableState
 
     @Override
     public VerificationResult verify(SymbolTable symbolTable) {
-        if (!PrimitiveTypes.isPrimitive(type)) {
+        if (!PrimitiveTypes.isPrimitiveOrArray(type)) {
             return new VerificationResult(false,
-                    "Type '" + type + "' is not a recognized primitive. Known: " + PrimitiveTypes.ALL);
+                    "Type '" + type + "' is not a recognized primitive or primitive array. Known: " + PrimitiveTypes.ALL);
         }
         try {
             symbolTable.declare(name, type);

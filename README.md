@@ -105,7 +105,7 @@ downstream work. After these, the `canBeFormed` example above stops being
 aspirational and starts to parse.
 
 - ~~`G1`~~ — first-class `true` / `false` literals (deletes the Python identifier case-translation hack). _(closed in phase 8a)_
-- `G2` — array types in the grammar (`int[]`, `char[]`); unblocks `C1`, `C4`, and `canBeFormed`.
+- ~~`G2`~~ — array types in the grammar (`int[]`, `char[]`); unblocks `C1`, `C4`, and `canBeFormed`. _(closed in phase 8f)_
 - ~~`G3`~~ — function-body symbol-table scoping (declare inner vars into their scope). _(closed in phase 8e)_
 
 **Phase 9 — Type system depth.** Builds on phase 8. The verifier graduates from
@@ -114,7 +114,7 @@ expressions.
 
 - `G4` — cross-expression type inference (calls, identifiers, arithmetic).
 - `G5` — condition type-checking on `if` / `while` / `for` (depends on `G1` + `G4`).
-- `G6` — `castas` with array target types (free once `G2` lands).
+- ~~`G6`~~ — `castas` with array target types (free once `G2` lands). _(closed in phase 8f)_
 
 **Phase 10 — Cross-target semantic decisions.** Each item needs an explicit
 design call before per-backend implementation can land — what is a bundle, how

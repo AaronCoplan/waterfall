@@ -174,13 +174,18 @@ public class PythonBackend implements CodeGenerator {
             case ARRAY_INDEX:
                 return e.arrayIndex.target + "[" + emitExpression(e.arrayIndex.index) + "]";
             case CAST: {
+                // Array-typed casts (`castas int[]`) have no Python conversion — Python lists
+                // are dynamically typed. Emit the operand untouched.
+                if (e.castTargetType.endsWith("[]")) {
+                    return emitExpression(e.castOperand);
+                }
                 String fn;
                 switch (e.castTargetType) {
                     case "int":  fn = "int"; break;
                     case "dec":  fn = "float"; break;
                     case "bool": fn = "bool"; break;
                     case "char": fn = "str"; break;
-                    default:     fn = "/* castas " + e.castTargetType + " */"; break;
+                    default:     return emitExpression(e.castOperand);
                 }
                 return fn + "(" + emitExpression(e.castOperand) + ")";
             }

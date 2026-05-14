@@ -1,0 +1,13 @@
+// module ArrayParamsModule
+function sumFirstTwo(xs) {
+    return (xs[0] + xs[1]);
+}
+
+function asDecArray(xs) {
+    return xs;
+}
+
+function firstBool(flags) {
+    return flags[0];
+}
+

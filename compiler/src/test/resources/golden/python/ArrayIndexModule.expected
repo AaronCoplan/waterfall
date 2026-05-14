@@ -1,5 +1,5 @@
 # module ArrayIndexModule
-def first(idx):
+def first(arr, idx):
     x = arr[0]
     y = arr[idx]
     z = arr[idx]
