@@ -99,15 +99,18 @@ parameter-name lookup against the function definition (requires symbol-table
 work).
 **Where flagged:** Every backend's `emitFunctionCall` (named-args branch).
 
-### U4. String literals
-**Today:** Backtick-delimited in source. JS keeps backticks (template
+### ~~U4. String literals~~ (closed in phase 8h)
+~~**Today:** Backtick-delimited in source. JS keeps backticks (template
 literals); Python and C strip them and emit double-quoted; no escape
-resolution. No example currently exercises strings.
-**Fix:** Add an escape-handling helper and a `STRING_LITERAL.text()` accessor
-that returns the unwrapped+unescaped string. Each backend re-escapes
-according to its rules.
-**Where flagged:** `emitExpression` (STRING_LITERAL branch) in every
-backend.
+resolution.~~
+**Fix landed:** New `StringLiteralText` helper with `unescape(backtickedSource)`
+and `escapeFor(raw, quoteChar)`. Source escapes recognized: `\``, `\\`,
+`\n`, `\r`, `\t`. All three real-target backends now go through
+`unescape -> escapeFor('"')`, switching JS off template literals for
+simplicity. Legacy emits source text verbatim. New
+`examples/StringLiteralsModule.wf` covers plain strings, embedded
+quotes, newline/tab escapes, and an escaped backtick. All goldens
+verified by their language's runtime check.
 
 ---
 

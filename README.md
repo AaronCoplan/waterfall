@@ -123,7 +123,7 @@ does a C lambda lower, what's the named-arg ABI per target.
 - `U1` — bundle semantics (tuple / struct / tagged record).
 - `U2` — lambdas in C (lift to static functions in the same translation unit).
 - `U3` — named-argument ABI per target.
-- `U4` — string-literal escape handling.
+- ~~`U4`~~ — string-literal escape handling. _(closed in phase 8h)_
 - `C1` — C `for...in` lowering (requires `G2`).
 - `C3` — C method dispatch (requires class/struct support — the biggest design call).
 

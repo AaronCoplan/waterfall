@@ -12,6 +12,7 @@ import com.aaroncoplan.waterfall.compiler.statements.IncrementStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.LambdaFunctionData;
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst;
 import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
+import com.aaroncoplan.waterfall.compiler.statements.StringLiteralText;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.UntypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.VariableAssignmentData;
@@ -138,10 +139,11 @@ public class JavaScriptBackend implements CodeGenerator {
             case IDENTIFIER:
                 return e.literalText;
             case STRING_LITERAL:
-                // Source string literals are backtick-delimited; JS template literals also
-                // use backticks. Source text already includes them. TODO(audit): if a
-                // literal contains ${ it needs escaping — none of the current examples do.
-                return e.literalText;
+                // Decode the source's backticked form and re-emit as a JS double-quoted
+                // string. (Template literals would also be valid but invite ${...}
+                // interpolation surprises; plain quoted strings are simpler.)
+                return StringLiteralText.escapeFor(
+                        StringLiteralText.unescape(e.literalText), '"');
             case LAMBDA: return emitLambda(e.lambda);
             case BUNDLE: return emitBundleLiteral(e.bundle);
             case ARRAY: return emitArrayLiteral(e.array);

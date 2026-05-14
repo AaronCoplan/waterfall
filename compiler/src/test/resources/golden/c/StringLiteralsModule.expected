@@ -1,0 +1,21 @@
+// module StringLiteralsModule
+char plain(void) {
+    char * greeting = "hello";
+    return greeting[0];
+}
+
+char quoted(void) {
+    char * withQuote = "she said \"yes\"";
+    return withQuote[0];
+}
+
+char escapes(void) {
+    char * multi = "line one\nline two\twith tab";
+    return multi[0];
+}
+
+char backtickInside(void) {
+    char * tick = "before`after";
+    return tick[0];
+}
+

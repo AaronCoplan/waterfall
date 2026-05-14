@@ -1,0 +1,21 @@
+module StringLiteralsModule {
+    func plain() returns char {
+        char[] greeting = `hello`
+        return greeting[0]
+    }
+
+    func quoted() returns char {
+        char[] withQuote = `she said "yes"`
+        return withQuote[0]
+    }
+
+    func escapes() returns char {
+        char[] multi = `line one\nline two\twith tab`
+        return multi[0]
+    }
+
+    func backtickInside() returns char {
+        char[] tick = `before\`after`
+        return tick[0]
+    }
+}

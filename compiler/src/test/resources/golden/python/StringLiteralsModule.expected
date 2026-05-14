@@ -1,0 +1,20 @@
+# module StringLiteralsModule
+def plain():
+    greeting = "hello"
+    return greeting[0]
+
+
+def quoted():
+    withQuote = "she said \"yes\""
+    return withQuote[0]
+
+
+def escapes():
+    multi = "line one\nline two\twith tab"
+    return multi[0]
+
+
+def backtickInside():
+    tick = "before`after"
+    return tick[0]
+

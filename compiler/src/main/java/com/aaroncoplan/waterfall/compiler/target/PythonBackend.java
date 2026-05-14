@@ -12,6 +12,7 @@ import com.aaroncoplan.waterfall.compiler.statements.IncrementStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.LambdaFunctionData;
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst;
 import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
+import com.aaroncoplan.waterfall.compiler.statements.StringLiteralText;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.UntypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.VariableAssignmentData;
@@ -158,15 +159,8 @@ public class PythonBackend implements CodeGenerator {
             case IDENTIFIER:
                 return e.literalText;
             case STRING_LITERAL:
-                // Source: `...` backtick-delimited. Python uses single/double quotes.
-                // TODO(audit): only strips the backticks; doesn't escape embedded " or
-                // resolve \\ escapes. None of the current examples exercise strings.
-                if (e.literalText.length() >= 2
-                        && e.literalText.charAt(0) == '`'
-                        && e.literalText.charAt(e.literalText.length() - 1) == '`') {
-                    return "\"" + e.literalText.substring(1, e.literalText.length() - 1) + "\"";
-                }
-                return e.literalText;
+                return StringLiteralText.escapeFor(
+                        StringLiteralText.unescape(e.literalText), '"');
             case LAMBDA: return emitLambda(e.lambda);
             case BUNDLE: return emitBundleLiteral(e.bundle);
             case ARRAY: return emitArrayLiteral(e.array);
