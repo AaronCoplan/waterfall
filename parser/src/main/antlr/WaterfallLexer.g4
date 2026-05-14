@@ -26,6 +26,7 @@ CASTAS: 'castas';
 
 // other reserved words (also before ID)
 NULL: 'NULL';
+BOOL_LITERAL: 'true' | 'false';
 
 // literals and identifiers
 ID: ('a' .. 'z' | 'A' .. 'Z') (('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')+ ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'))?;

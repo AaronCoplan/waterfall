@@ -104,7 +104,7 @@ which records the best-guess we took today and the cleanest fix path.
 downstream work. After these, the `canBeFormed` example above stops being
 aspirational and starts to parse.
 
-- `G1` — first-class `true` / `false` literals (deletes the Python identifier case-translation hack).
+- ~~`G1`~~ — first-class `true` / `false` literals (deletes the Python identifier case-translation hack). _(closed in phase 8a)_
 - `G2` — array types in the grammar (`int[]`, `char[]`); unblocks `C1`, `C4`, and `canBeFormed`.
 - `G3` — function-body symbol-table scoping (declare inner vars into their scope).
 

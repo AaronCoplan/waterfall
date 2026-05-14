@@ -6,6 +6,7 @@ public class ExpressionData {
 
     public enum Kind {
         NULL_LITERAL,
+        BOOL_LITERAL,
         INT_LITERAL,
         DEC_LITERAL,
         STRING_LITERAL,
@@ -68,6 +69,7 @@ public class ExpressionData {
         FunctionCallData fc = null;
         ArrayIndexData ai = null;
         if (ctx.NULL() != null) { k = Kind.NULL_LITERAL; text = ctx.NULL().getText(); }
+        else if (ctx.BOOL_LITERAL() != null) { k = Kind.BOOL_LITERAL; text = ctx.BOOL_LITERAL().getText(); }
         else if (ctx.INT_LITERAL() != null) { k = Kind.INT_LITERAL; text = ctx.INT_LITERAL().getText(); }
         else if (ctx.DEC_LITERAL() != null) { k = Kind.DEC_LITERAL; text = ctx.DEC_LITERAL().getText(); }
         else if (ctx.STRING_LITERAL() != null) { k = Kind.STRING_LITERAL; text = ctx.STRING_LITERAL().getText(); }

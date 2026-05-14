@@ -133,15 +133,11 @@ public class PythonBackend implements CodeGenerator {
     public String emitExpression(ExpressionData e) {
         switch (e.kind) {
             case NULL_LITERAL: return "None";
+            case BOOL_LITERAL:
+                return "true".equals(e.literalText) ? "True" : "False";
             case INT_LITERAL:
             case DEC_LITERAL:
-                return e.literalText;
             case IDENTIFIER:
-                // TODO(audit): no first-class bool literals in the grammar yet, so the
-                // identifiers `true`/`false` are case-translated to Python's `True`/`False`.
-                // A real fix is to add BOOL_LITERAL tokens.
-                if ("true".equals(e.literalText)) return "True";
-                if ("false".equals(e.literalText)) return "False";
                 return e.literalText;
             case STRING_LITERAL:
                 // Source: `...` backtick-delimited. Python uses single/double quotes.

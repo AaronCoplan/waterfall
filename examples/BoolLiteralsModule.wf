@@ -1,0 +1,10 @@
+module BoolLiteralsModule {
+    func check(int n) returns bool {
+        bool isPositive = true
+        bool isZero = false
+        if(isPositive) {
+            return true
+        }
+        return false
+    }
+}

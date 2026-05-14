@@ -159,6 +159,10 @@ public class CBackend implements CodeGenerator {
     public String emitExpression(ExpressionData e) {
         switch (e.kind) {
             case NULL_LITERAL: return "NULL";
+            case BOOL_LITERAL:
+                // <stdbool.h> is already in the always-included set today; phase 8c will
+                // switch this to a demand-driven add.
+                return e.literalText;
             case INT_LITERAL:
             case DEC_LITERAL:
             case IDENTIFIER:

@@ -104,6 +104,7 @@ type
 
 expression
     : NULL
+    | BOOL_LITERAL
     | INT_LITERAL
     | DEC_LITERAL
     | STRING_LITERAL

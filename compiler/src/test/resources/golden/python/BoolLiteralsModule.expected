@@ -1,0 +1,8 @@
+# module BoolLiteralsModule
+def check(n):
+    isPositive = True
+    isZero = False
+    if isPositive:
+        return True
+    return False
+

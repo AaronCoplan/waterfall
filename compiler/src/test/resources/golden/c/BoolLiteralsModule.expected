@@ -1,0 +1,12 @@
+// module BoolLiteralsModule
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+bool check(int n) {
+    bool isPositive = true;
+    bool isZero = false;
+    if (isPositive) {return true;}
+    return false;
+}
+

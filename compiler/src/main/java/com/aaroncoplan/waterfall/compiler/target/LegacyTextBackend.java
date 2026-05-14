@@ -122,6 +122,7 @@ public class LegacyTextBackend implements CodeGenerator {
     public String emitExpression(ExpressionData e) {
         switch (e.kind) {
             case NULL_LITERAL: return "NULL";
+            case BOOL_LITERAL: return e.literalText;
             case INT_LITERAL:
             case DEC_LITERAL:
             case IDENTIFIER:

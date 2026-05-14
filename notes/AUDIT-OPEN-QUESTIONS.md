@@ -11,15 +11,15 @@ For per-phase context, see `notes/PHASE-{1..5}-decisions.md`.
 
 ## Grammar / front-end
 
-### G1. No first-class `true` / `false` literals
-**Today:** Source identifiers `true` and `false` are parsed as `ID`s. JS and
+### ~~G1. No first-class `true` / `false` literals~~ (closed in phase 8a)
+~~**Today:** Source identifiers `true` and `false` are parsed as `ID`s. JS and
 C accept them because their lowercase booleans are first-class; Python's
 `PythonBackend.emitExpression` case-translates the identifier text to
-`True` / `False`.
-**Fix:** Add `BOOL_LITERAL: 'true' | 'false';` tokens to the lexer; add a
-`BOOL_LITERAL` alternative to `expression`; a new `Kind.BOOL_LITERAL` in
-`ExpressionData`. Drop the case-translation hack.
-**Where flagged:** `PythonBackend.java` (emitExpression IDENTIFIER branch).
+`True` / `False`.~~
+**Fix landed:** Added `BOOL_LITERAL: 'true' | 'false';` to the lexer (before
+`ID`), a `BOOL_LITERAL` alternative to `expression`, and `Kind.BOOL_LITERAL`
+to `ExpressionData`. Python's case-translation hack removed. See
+`examples/BoolLiteralsModule.wf`.
 
 ### G2. No array type in the grammar
 **Today:** `arr[i]` is a valid expression (Phase 6f), but the user can't
