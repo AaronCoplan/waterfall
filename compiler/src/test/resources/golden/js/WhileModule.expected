@@ -1,0 +1,10 @@
+// module WhileModule
+function countdown(start) {
+    let n = start;
+    while (n) {let x = n;}
+}
+
+function waitForever() {
+    while (true) {doSomething();}
+}
+

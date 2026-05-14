@@ -1,0 +1,13 @@
+module ReturnModule {
+    func one() returns int {
+        return 1
+    }
+
+    func nothing() {
+        return
+    }
+
+    func add(int a, int b) returns int {
+        return a
+    }
+}

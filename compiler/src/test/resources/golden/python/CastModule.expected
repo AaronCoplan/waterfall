@@ -1,0 +1,6 @@
+# module CastModule
+def transform(n):
+    asDec = float(n)
+    asInt = int(asDec)
+    return asInt
+

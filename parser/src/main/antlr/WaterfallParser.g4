@@ -23,6 +23,22 @@ statement
     | functionCall NEWLINE+
     | ifBlock
     | forBlock
+    | whileBlock
+    | returnStatement
+    | incrementStatement
+    ;
+
+incrementStatement
+    : name=ID op=(PLUS_PLUS | MINUS_MINUS) NEWLINE+
+    ;
+
+whileBlock
+    : WHILE L_PARENS expression R_PARENS emptyBlock NEWLINE+
+    | WHILE L_PARENS expression R_PARENS statementBlock NEWLINE+
+    ;
+
+returnStatement
+    : RETURN expression? NEWLINE+
     ;
 
 emptyBlock
@@ -58,7 +74,7 @@ elseBlock
     ;
 
 variableAssignment
-    : name=ID EQUALS INT_LITERAL NEWLINE+
+    : name=ID op=(EQUALS | PLUS_EQUALS | MINUS_EQUALS | TIMES_EQUALS | DIVIDE_EQUALS | MOD_EQUALS) expression NEWLINE+
     ;
 
 untypedVariableDeclarationAndAssignment
@@ -83,11 +99,12 @@ typedArgument
     ;
 
 type
-    : QUESTION_MARK? ID
+    : QUESTION_MARK? ID (L_BRACKET R_BRACKET)?
     ;
 
 expression
     : NULL
+    | BOOL_LITERAL
     | INT_LITERAL
     | DEC_LITERAL
     | STRING_LITERAL
@@ -95,7 +112,20 @@ expression
     | bundleLiteral
     | arrayLiteral
     | functionCall
+    | arrayIndex
     | name=ID
+    | expression CASTAS castTarget=type
+    | left=expression op=POW right=expression
+    | left=expression op=(TIMES | DIVIDE | MOD) right=expression
+    | left=expression op=(PLUS | MINUS) right=expression
+    | left=expression op=(LESS_THAN | GREATER_THAN | LESS_THAN_EQUAL | GREATER_THAN_EQUAL) right=expression
+    | left=expression op=EQUALS_OP right=expression
+    | left=expression op=AND right=expression
+    | left=expression op=OR right=expression
+    ;
+
+arrayIndex
+    : target=ID L_BRACKET index=expression R_BRACKET
     ;
 
 bundleLiteral

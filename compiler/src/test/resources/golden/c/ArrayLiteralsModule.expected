@@ -1,0 +1,18 @@
+// module ArrayLiteralsModule
+#include <stdbool.h>
+
+int intArr(void) {
+    int * xs = (int[]){1, 2, 3};
+    return xs[0];
+}
+
+double decArr(void) {
+    double * ys = (double[]){1.5, 2.5};
+    return ys[0];
+}
+
+bool boolArr(void) {
+    bool * flags = (bool[]){true, false};
+    return flags[0];
+}
+

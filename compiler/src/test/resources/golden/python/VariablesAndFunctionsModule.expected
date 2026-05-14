@@ -1,0 +1,8 @@
+# module VariablesAndFunctionsModule
+from typing import Final
+x: Final = 4
+y = 55
+
+def add(a, b):
+    pass
+

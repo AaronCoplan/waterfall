@@ -1,0 +1,8 @@
+# module FunctionWithBodyModule
+flag = 0
+
+def doSomething():
+    x = 14
+    flag = 1
+    y = 7
+

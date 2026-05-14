@@ -1,0 +1,7 @@
+// module CastModule
+int transform(int n) {
+    double asDec = ((double)(n));
+    int asInt = ((int)(asDec));
+    return asInt;
+}
+

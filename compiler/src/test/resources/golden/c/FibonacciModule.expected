@@ -1,0 +1,14 @@
+// module FibonacciModule
+int fib(int n) {
+    if ((n < 2)) {return n;}
+    return (fib((n - 1)) + fib((n - 2)));
+}
+
+int sumOfFibs(int upTo) {
+    int total = 0;
+    int i = 0;
+    while ((i < upTo)) {total += fib(i);
+i++;}
+    return total;
+}
+

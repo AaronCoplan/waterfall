@@ -1,0 +1,13 @@
+// module ReturnModule
+int one(void) {
+    return 1;
+}
+
+void nothing(void) {
+    return;
+}
+
+int add(int a, int b) {
+    return a;
+}
+

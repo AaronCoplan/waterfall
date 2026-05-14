@@ -1,0 +1,16 @@
+// module ArrayLiteralsModule
+function intArr() {
+    let xs = [1, 2, 3];
+    return xs[0];
+}
+
+function decArr() {
+    let ys = [1.5, 2.5];
+    return ys[0];
+}
+
+function boolArr() {
+    let flags = [true, false];
+    return flags[0];
+}
+

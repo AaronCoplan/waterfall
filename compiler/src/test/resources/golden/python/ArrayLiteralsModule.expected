@@ -1,0 +1,15 @@
+# module ArrayLiteralsModule
+def intArr():
+    xs = [1, 2, 3]
+    return xs[0]
+
+
+def decArr():
+    ys = [1.5, 2.5]
+    return ys[0]
+
+
+def boolArr():
+    flags = [True, False]
+    return flags[0]
+

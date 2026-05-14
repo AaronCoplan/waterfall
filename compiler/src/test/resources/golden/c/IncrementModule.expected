@@ -1,0 +1,8 @@
+// module IncrementModule
+void count(void) {
+    int n = 0;
+    n++;
+    n++;
+    n--;
+}
+

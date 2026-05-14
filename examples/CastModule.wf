@@ -1,0 +1,7 @@
+module CastModule {
+    func transform(int n) returns int {
+        dec asDec = n castas dec
+        int asInt = asDec castas int
+        return asInt
+    }
+}

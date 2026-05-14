@@ -1,0 +1,18 @@
+module ControlFlowModule {
+    func describe(int n) {
+        if(n) {
+            int a = 1
+        } elif(n) {
+            int b = 2
+        } else {
+            int c = 3
+        }
+
+        for(item in things) {
+            int x = item
+        }
+
+        doSomething()
+        Other::helper(1, 2)
+    }
+}

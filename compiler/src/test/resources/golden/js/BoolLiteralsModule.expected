@@ -1,0 +1,8 @@
+// module BoolLiteralsModule
+function check(n) {
+    let isPositive = true;
+    let isZero = false;
+    if (isPositive) {return true;}
+    return false;
+}
+

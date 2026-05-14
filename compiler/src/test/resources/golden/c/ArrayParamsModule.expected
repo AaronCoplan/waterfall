@@ -1,0 +1,15 @@
+// module ArrayParamsModule
+#include <stdbool.h>
+
+int sumFirstTwo(int * xs) {
+    return (xs[0] + xs[1]);
+}
+
+double * asDecArray(int * xs) {
+    return ((double *)(xs));
+}
+
+bool firstBool(bool * flags) {
+    return flags[0];
+}
+

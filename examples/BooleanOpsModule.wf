@@ -1,0 +1,18 @@
+module BooleanOpsModule {
+    func check(int a, int b) returns int {
+        if(a equals b) {
+            return a
+        } elif(a and b) {
+            return a
+        } else {
+            return b
+        }
+    }
+
+    func combined(int x, int y, int z) returns int {
+        if(x and y or z) {
+            return x
+        }
+        return z
+    }
+}

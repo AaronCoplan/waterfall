@@ -1,0 +1,3 @@
+// module VariableDeclarationsModule
+let x = 4;
+

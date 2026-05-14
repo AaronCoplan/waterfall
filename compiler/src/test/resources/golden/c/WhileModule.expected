@@ -1,0 +1,12 @@
+// module WhileModule
+#include <stdbool.h>
+
+void countdown(int start) {
+    int n = start;
+    while (n) {int x = n;}
+}
+
+void waitForever(void) {
+    while (true) {doSomething();}
+}
+

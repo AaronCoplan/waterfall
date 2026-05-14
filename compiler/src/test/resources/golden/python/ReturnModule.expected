@@ -1,0 +1,12 @@
+# module ReturnModule
+def one():
+    return 1
+
+
+def nothing():
+    return
+
+
+def add(a, b):
+    return a
+

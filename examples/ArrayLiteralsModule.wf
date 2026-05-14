@@ -1,0 +1,16 @@
+module ArrayLiteralsModule {
+    func intArr() returns int {
+        int[] xs = [1, 2, 3]
+        return xs[0]
+    }
+
+    func decArr() returns dec {
+        dec[] ys = [1.5, 2.5]
+        return ys[0]
+    }
+
+    func boolArr() returns bool {
+        bool[] flags = [true, false]
+        return flags[0]
+    }
+}

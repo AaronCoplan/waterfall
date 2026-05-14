@@ -1,0 +1,8 @@
+// module ArrayIndexModule
+int first(int * arr, int idx) {
+    int x = arr[0];
+    int y = arr[idx];
+    int z = arr[idx];
+    return z;
+}
+

@@ -4,6 +4,7 @@ lexer grammar WaterfallLexer;
 MODULE: 'module';
 FUNCTION: 'func';
 RETURNS: 'returns';
+RETURN: 'return';
 
 // modifiers
 CONST: 'const';
@@ -15,13 +16,26 @@ ELIF: 'elif';
 ELSE: 'else';
 FOR: 'for';
 IN: 'in';
+WHILE: 'while';
+
+// boolean operators (must be defined BEFORE ID so the lexer picks them on ties)
+AND: 'and';
+OR: 'or';
+EQUALS_OP: 'equals';
+CASTAS: 'castas';
+
+// other reserved words (also before ID)
+NULL: 'NULL';
+BOOL_LITERAL: 'true' | 'false';
 
 // literals and identifiers
-ID: ('a' .. 'z' | 'A' .. 'Z') (('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')+ ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'))?;
+// Identifier: letter, optionally followed by (letter|digit|underscore)* ending in letter|digit.
+// (The original rule used `+` instead of `*` for the middle group, which silently rejected
+// 2-character identifiers like `go`.)
+ID: ('a' .. 'z' | 'A' .. 'Z') (('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')* ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'))?;
 INT_LITERAL: ('0' .. '9')+;
 DEC_LITERAL: ('0' .. '9')+ DOT ('0' .. '9')+;
 STRING_LITERAL: '`' ( '\\`' | ~('\n'|'\r') )*? '`';
-NULL: 'NULL';
 
 // structural
 DOT: '.';
@@ -46,6 +60,17 @@ MOD: '%';
 POW: '^';
 TIMES: '*';
 DIVIDE: '/';
+
+// compound assignment
+PLUS_EQUALS: '+=';
+MINUS_EQUALS: '-=';
+TIMES_EQUALS: '*=';
+DIVIDE_EQUALS: '/=';
+MOD_EQUALS: '%=';
+
+// increment / decrement
+PLUS_PLUS: '++';
+MINUS_MINUS: '--';
 
 // comparators
 LESS_THAN: '<';

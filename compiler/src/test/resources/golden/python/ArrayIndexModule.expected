@@ -1,0 +1,7 @@
+# module ArrayIndexModule
+def first(arr, idx):
+    x = arr[0]
+    y = arr[idx]
+    z = arr[idx]
+    return z
+

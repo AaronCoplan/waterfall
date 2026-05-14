@@ -1,0 +1,3 @@
+int sumFirstTwo(int[] xs) {return (xs[0] + xs[1]);}
+dec[] asDecArray(int[] xs) {return (xs castas dec[]);}
+bool firstBool(bool[] flags) {return flags[0];}

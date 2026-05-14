@@ -1,0 +1,8 @@
+// module ArrayIndexModule
+function first(arr, idx) {
+    let x = arr[0];
+    let y = arr[idx];
+    let z = arr[idx];
+    return z;
+}
+

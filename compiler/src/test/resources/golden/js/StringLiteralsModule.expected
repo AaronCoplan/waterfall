@@ -1,0 +1,21 @@
+// module StringLiteralsModule
+function plain() {
+    let greeting = "hello";
+    return greeting[0];
+}
+
+function quoted() {
+    let withQuote = "she said \"yes\"";
+    return withQuote[0];
+}
+
+function escapes() {
+    let multi = "line one\nline two\twith tab";
+    return multi[0];
+}
+
+function backtickInside() {
+    let tick = "before`after";
+    return tick[0];
+}
+

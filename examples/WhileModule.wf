@@ -1,0 +1,14 @@
+module WhileModule {
+    func countdown(int start) {
+        int n = start
+        while(n) {
+            int x = n
+        }
+    }
+
+    func waitForever() {
+        while(true) {
+            doSomething()
+        }
+    }
+}

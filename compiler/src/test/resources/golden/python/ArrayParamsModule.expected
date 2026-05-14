@@ -1,0 +1,12 @@
+# module ArrayParamsModule
+def sumFirstTwo(xs):
+    return (xs[0] + xs[1])
+
+
+def asDecArray(xs):
+    return xs
+
+
+def firstBool(flags):
+    return flags[0]
+

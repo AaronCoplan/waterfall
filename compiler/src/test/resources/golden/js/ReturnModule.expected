@@ -1,0 +1,13 @@
+// module ReturnModule
+function one() {
+    return 1;
+}
+
+function nothing() {
+    return;
+}
+
+function add(a, b) {
+    return a;
+}
+
