@@ -10,6 +10,7 @@ import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData;
 import com.aaroncoplan.waterfall.compiler.statements.IfBlockData;
 import com.aaroncoplan.waterfall.compiler.statements.LambdaFunctionData;
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst;
+import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.UntypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.VariableAssignmentData;
@@ -106,6 +107,11 @@ public class PythonBackend implements CodeGenerator {
     @Override
     public String emitFunctionCallStatement(FunctionCallStatementData s) {
         return emitFunctionCall(s.call);
+    }
+
+    @Override
+    public String emitReturnStatement(ReturnStatementData s) {
+        return s.value == null ? "return" : "return " + emitExpression(s.value);
     }
 
     @Override

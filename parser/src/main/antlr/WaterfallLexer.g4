@@ -4,6 +4,7 @@ lexer grammar WaterfallLexer;
 MODULE: 'module';
 FUNCTION: 'func';
 RETURNS: 'returns';
+RETURN: 'return';
 
 // modifiers
 CONST: 'const';

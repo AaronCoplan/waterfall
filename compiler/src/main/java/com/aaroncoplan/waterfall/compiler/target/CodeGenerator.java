@@ -10,6 +10,7 @@ import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData;
 import com.aaroncoplan.waterfall.compiler.statements.IfBlockData;
 import com.aaroncoplan.waterfall.compiler.statements.LambdaFunctionData;
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst;
+import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.UntypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.VariableAssignmentData;
@@ -34,6 +35,7 @@ public interface CodeGenerator {
     String emitIfBlock(IfBlockData s);
     String emitForBlock(ForBlockData s);
     String emitFunctionCallStatement(FunctionCallStatementData s);
+    String emitReturnStatement(ReturnStatementData s);
 
     // Expressions and helpers
     String emitExpression(ExpressionData e);

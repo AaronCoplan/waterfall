@@ -23,6 +23,11 @@ statement
     | functionCall NEWLINE+
     | ifBlock
     | forBlock
+    | returnStatement
+    ;
+
+returnStatement
+    : RETURN expression? NEWLINE+
     ;
 
 emptyBlock
