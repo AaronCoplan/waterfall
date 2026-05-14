@@ -1,0 +1,15 @@
+# module BooleanOpsModule
+def check(a, b):
+    if (a == b):
+        return a
+    elif (a and b):
+        return a
+    else:
+        return b
+
+
+def combined(x, y, z):
+    if ((x and y) or z):
+        return x
+    return z
+

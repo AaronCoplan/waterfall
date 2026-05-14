@@ -1,0 +1,14 @@
+// module BooleanOpsModule
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+int check(int a, int b) {
+    if ((a == b)) {return a;} else if ((a && b)) {return a;} else {return b;}
+}
+
+int combined(int x, int y, int z) {
+    if (((x && y) || z)) {return x;}
+    return z;
+}
+

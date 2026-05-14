@@ -149,6 +149,16 @@ public class PythonBackend implements CodeGenerator {
             case BUNDLE: return emitBundleLiteral(e.bundle);
             case ARRAY: return emitArrayLiteral(e.array);
             case FUNCTION_CALL: return emitFunctionCall(e.functionCall);
+            case BINARY_OP: {
+                String pyOp;
+                switch (e.op) {
+                    case "and": pyOp = "and"; break;
+                    case "or":  pyOp = "or"; break;
+                    case "equals": pyOp = "=="; break;
+                    default: throw new RuntimeException("Unrecognized binary op " + e.op);
+                }
+                return "(" + emitExpression(e.left) + " " + pyOp + " " + emitExpression(e.right) + ")";
+            }
             default: throw new RuntimeException("Unrecognized expression kind " + e.kind);
         }
     }

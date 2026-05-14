@@ -18,12 +18,19 @@ FOR: 'for';
 IN: 'in';
 WHILE: 'while';
 
+// boolean operators (must be defined BEFORE ID so the lexer picks them on ties)
+AND: 'and';
+OR: 'or';
+EQUALS_OP: 'equals';
+
+// other reserved words (also before ID)
+NULL: 'NULL';
+
 // literals and identifiers
 ID: ('a' .. 'z' | 'A' .. 'Z') (('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')+ ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'))?;
 INT_LITERAL: ('0' .. '9')+;
 DEC_LITERAL: ('0' .. '9')+ DOT ('0' .. '9')+;
 STRING_LITERAL: '`' ( '\\`' | ~('\n'|'\r') )*? '`';
-NULL: 'NULL';
 
 // structural
 DOT: '.';

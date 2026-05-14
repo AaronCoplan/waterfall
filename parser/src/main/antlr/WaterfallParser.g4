@@ -107,6 +107,9 @@ expression
     | arrayLiteral
     | functionCall
     | name=ID
+    | left=expression op=EQUALS_OP right=expression
+    | left=expression op=AND right=expression
+    | left=expression op=OR right=expression
     ;
 
 bundleLiteral

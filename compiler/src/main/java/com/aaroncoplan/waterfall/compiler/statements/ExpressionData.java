@@ -14,16 +14,33 @@ public class ExpressionData {
         BUNDLE,
         ARRAY,
         FUNCTION_CALL,
+        BINARY_OP,
     }
 
     public final Kind kind;
-    public final String literalText;          // for NULL/INT/DEC/STRING/IDENTIFIER
-    public final LambdaFunctionData lambda;   // LAMBDA only
-    public final BundleLiteralData bundle;    // BUNDLE only
-    public final ArrayLiteralData array;      // ARRAY only
+    public final String literalText;            // NULL/INT/DEC/STRING/IDENTIFIER
+    public final LambdaFunctionData lambda;     // LAMBDA only
+    public final BundleLiteralData bundle;      // BUNDLE only
+    public final ArrayLiteralData array;        // ARRAY only
     public final FunctionCallData functionCall; // FUNCTION_CALL only
+    public final String op;                     // BINARY_OP only: "and" / "or" / "equals"
+    public final ExpressionData left;           // BINARY_OP only
+    public final ExpressionData right;          // BINARY_OP only
 
     public ExpressionData(String filePath, WaterfallParser.ExpressionContext ctx) {
+        if (ctx.op != null) {
+            this.kind = Kind.BINARY_OP;
+            this.op = ctx.op.getText();
+            this.left = new ExpressionData(filePath, ctx.left);
+            this.right = new ExpressionData(filePath, ctx.right);
+            this.literalText = null;
+            this.lambda = null; this.bundle = null; this.array = null; this.functionCall = null;
+            return;
+        }
+        // No-op default for binary fields when this is a leaf.
+        this.op = null;
+        this.left = null;
+        this.right = null;
         if (ctx.NULL() != null) {
             this.kind = Kind.NULL_LITERAL;
             this.literalText = ctx.NULL().getText();
@@ -68,5 +85,4 @@ public class ExpressionData {
             throw new RuntimeException("Unrecognized expression alternative");
         }
     }
-
 }

@@ -169,6 +169,16 @@ public class CBackend implements CodeGenerator {
             case BUNDLE: return emitBundleLiteral(e.bundle);
             case ARRAY: return emitArrayLiteral(e.array);
             case FUNCTION_CALL: return emitFunctionCall(e.functionCall);
+            case BINARY_OP: {
+                String cOp;
+                switch (e.op) {
+                    case "and": cOp = "&&"; break;
+                    case "or":  cOp = "||"; break;
+                    case "equals": cOp = "=="; break;
+                    default: throw new RuntimeException("Unrecognized binary op " + e.op);
+                }
+                return "(" + emitExpression(e.left) + " " + cOp + " " + emitExpression(e.right) + ")";
+            }
             default: throw new RuntimeException("Unrecognized expression kind " + e.kind);
         }
     }

@@ -139,6 +139,16 @@ public class JavaScriptBackend implements CodeGenerator {
             case BUNDLE: return emitBundleLiteral(e.bundle);
             case ARRAY: return emitArrayLiteral(e.array);
             case FUNCTION_CALL: return emitFunctionCall(e.functionCall);
+            case BINARY_OP: {
+                String jsOp;
+                switch (e.op) {
+                    case "and": jsOp = "&&"; break;
+                    case "or":  jsOp = "||"; break;
+                    case "equals": jsOp = "==="; break;
+                    default: throw new RuntimeException("Unrecognized binary op " + e.op);
+                }
+                return "(" + emitExpression(e.left) + " " + jsOp + " " + emitExpression(e.right) + ")";
+            }
             default: throw new RuntimeException("Unrecognized expression kind " + e.kind);
         }
     }
