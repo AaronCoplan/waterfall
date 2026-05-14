@@ -131,12 +131,14 @@ pointers in structs?). Requires class/struct support in the grammar.
 of that type.
 **Where flagged:** `CBackend.emitArrayLiteral`.
 
-### C5. Standard `#include`s
-**Today:** Always emit `<stdio.h>`, `<stdbool.h>`, `<string.h>` regardless
-of usage.
-**Fix:** Demand-driven — track which headers are needed during emit and
-emit only those.
-**Where flagged:** `CBackend.emitProgram`.
+### ~~C5. Standard `#include`s~~ (closed in phase 8c)
+~~**Today:** Always emit `<stdio.h>`, `<stdbool.h>`, `<string.h>` regardless
+of usage.~~
+**Fix landed:** `CBackend` now keeps a `TreeSet<String> requiredHeaders` that
+emit sites populate during translation. `emitProgram` renders the body first,
+then emits only the headers the body actually requested. `<stdbool.h>` is
+requested by `cType("bool")` and BOOL_LITERAL; `<math.h>` by the `^` operator.
+EmptyModule and most non-bool examples no longer carry unused includes.
 
 ### C6. JS module wrapping
 **Today:** No wrapping — declarations at file scope plus a `// module X`

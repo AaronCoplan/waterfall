@@ -1,8 +1,4 @@
 // module VariablesAndFunctionsModule
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-
 const int x = 4;
 int y = 55;
 

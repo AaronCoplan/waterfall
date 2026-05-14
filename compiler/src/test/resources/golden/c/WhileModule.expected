@@ -1,7 +1,5 @@
 // module WhileModule
-#include <stdio.h>
 #include <stdbool.h>
-#include <string.h>
 
 void countdown(int start) {
     int n = start;

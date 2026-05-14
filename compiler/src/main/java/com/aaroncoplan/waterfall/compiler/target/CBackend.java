@@ -20,6 +20,7 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStateme
 import com.aaroncoplan.waterfall.compiler.typesystem.PrimitiveTypes;
 
 import java.util.List;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 /**
@@ -32,6 +33,10 @@ import java.util.stream.Collectors;
  */
 public class CBackend implements CodeGenerator {
 
+    /** Headers requested by the body of the program. Populated during emission, then
+     *  emitted at the top of {@link #emitProgram} after the module-name comment. */
+    private TreeSet<String> requiredHeaders = new TreeSet<>();
+
     @Override
     public String name() {
         return "c";
@@ -39,35 +44,41 @@ public class CBackend implements CodeGenerator {
 
     @Override
     public String emitProgram(ModuleAst module) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("// module ").append(module.name).append("\n");
-        sb.append("#include <stdio.h>\n");
-        sb.append("#include <stdbool.h>\n");
-        sb.append("#include <string.h>\n\n");
+        // Render the body first so the header set is populated by the time we serialize.
+        this.requiredHeaders = new TreeSet<>();
+        StringBuilder body = new StringBuilder();
         for (TypedVariableDeclarationAndAssignmentData v : module.topLevelVariables) {
-            sb.append(emitTypedVarDecl(v)).append("\n");
+            body.append(emitTypedVarDecl(v)).append("\n");
         }
         if (!module.topLevelVariables.isEmpty() && !module.functions.isEmpty()) {
-            sb.append("\n");
+            body.append("\n");
         }
         for (int i = 0; i < module.functions.size(); i++) {
-            sb.append(emitFunctionImpl(module.functions.get(i)));
-            if (i < module.functions.size() - 1) sb.append("\n\n");
-            else sb.append("\n");
+            body.append(emitFunctionImpl(module.functions.get(i)));
+            if (i < module.functions.size() - 1) body.append("\n\n");
+            else body.append("\n");
         }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("// module ").append(module.name).append("\n");
+        for (String header : requiredHeaders) {
+            sb.append("#include ").append(header).append("\n");
+        }
+        if (!requiredHeaders.isEmpty()) sb.append("\n");
+        sb.append(body);
         return sb.toString();
     }
 
     /**
-     * Map a Waterfall type name to its C equivalent. Unknown types pass through;
-     * gcc -fsyntax-only will reject them.
+     * Map a Waterfall type name to its C equivalent and request any header it needs.
+     * Unknown types pass through; gcc -fsyntax-only will reject them.
      */
-    private static String cType(String wfType) {
+    private String cType(String wfType) {
         if (wfType == null) return "void";
         switch (wfType) {
             case PrimitiveTypes.INT:  return "int";
             case PrimitiveTypes.DEC:  return "double";
-            case PrimitiveTypes.BOOL: return "bool";
+            case PrimitiveTypes.BOOL: requiredHeaders.add("<stdbool.h>"); return "bool";
             case PrimitiveTypes.CHAR: return "char";
             default: return wfType;
         }
@@ -160,8 +171,7 @@ public class CBackend implements CodeGenerator {
         switch (e.kind) {
             case NULL_LITERAL: return "NULL";
             case BOOL_LITERAL:
-                // <stdbool.h> is already in the always-included set today; phase 8c will
-                // switch this to a demand-driven add.
+                requiredHeaders.add("<stdbool.h>");
                 return e.literalText;
             case INT_LITERAL:
             case DEC_LITERAL:
@@ -186,7 +196,8 @@ public class CBackend implements CodeGenerator {
             case BINARY_OP: {
                 if ("^".equals(e.op)) {
                     // C: ^ is XOR, not power. README defines ^ as power, so lower to pow().
-                    // TODO(audit): also needs `#include <math.h>` and `-lm` at link time.
+                    // TODO(audit): also needs `-lm` at link time.
+                    requiredHeaders.add("<math.h>");
                     return "pow(" + emitExpression(e.left) + ", " + emitExpression(e.right) + ")";
                 }
                 String cOp;

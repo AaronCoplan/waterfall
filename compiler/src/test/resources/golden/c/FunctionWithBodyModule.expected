@@ -1,8 +1,4 @@
 // module FunctionWithBodyModule
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-
 int flag = 0;
 
 void doSomething(void) {

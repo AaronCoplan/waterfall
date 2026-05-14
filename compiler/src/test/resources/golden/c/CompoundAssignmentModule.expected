@@ -1,8 +1,4 @@
 // module CompoundAssignmentModule
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-
 void tally(void) {
     int total = 0;
     total = 5;

@@ -132,7 +132,7 @@ the deeper grammar/type lifting in phases 8–10.
 
 - `C2` — per-module C headers so `Module::fn` actually links.
 - `C4` — C array literal element-type inference.
-- `C5` — demand-driven `#include` emission.
+- ~~`C5`~~ — demand-driven `#include` emission. _(closed in phase 8c)_
 - `C6` — JS module wrapping (pick ESM / CJS / IIFE).
 - `C7` — Python `typing.Final` for `const` / `imm`.
 - ~~`T1`~~ — non-zero exit codes from `Main.main`. _(closed in phase 8b)_

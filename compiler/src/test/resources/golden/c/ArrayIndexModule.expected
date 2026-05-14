@@ -1,8 +1,4 @@
 // module ArrayIndexModule
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-
 int first(int idx) {
     int x = arr[0];
     int y = arr[idx];

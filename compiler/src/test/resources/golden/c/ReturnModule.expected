@@ -1,8 +1,4 @@
 // module ReturnModule
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-
 int one(void) {
     return 1;
 }
