@@ -135,7 +135,7 @@ the deeper grammar/type lifting in phases 8–10.
 - `C5` — demand-driven `#include` emission.
 - `C6` — JS module wrapping (pick ESM / CJS / IIFE).
 - `C7` — Python `typing.Final` for `const` / `imm`.
-- `T1` — non-zero exit codes from `Main.main`.
+- ~~`T1`~~ — non-zero exit codes from `Main.main`. _(closed in phase 8b)_
 - `T2` — Gradle 9 deprecation cleanup.
 
 See [`notes/AUDIT-OPEN-QUESTIONS.md`](notes/AUDIT-OPEN-QUESTIONS.md) for the

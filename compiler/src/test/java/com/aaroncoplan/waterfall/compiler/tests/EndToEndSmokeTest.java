@@ -39,7 +39,7 @@ public class EndToEndSmokeTest {
 
     @Test
     public void functionWithBodyTranslates() {
-        Main.main(new String[]{"../examples/FunctionWithBodyModule.wf"});
+        Main.run(new String[]{"../examples/FunctionWithBodyModule.wf"});
         String output = capturedOut.toString();
         assertFalse("Output should be non-empty", output.isEmpty());
         assertTrue("Output should declare flag variable", output.contains("int flag = 0;"));
@@ -49,7 +49,7 @@ public class EndToEndSmokeTest {
 
     @Test
     public void controlFlowTranslates() {
-        Main.main(new String[]{"../examples/ControlFlowModule.wf"});
+        Main.run(new String[]{"../examples/ControlFlowModule.wf"});
         String output = capturedOut.toString();
         assertTrue("Output should emit if-block", output.contains("if ("));
         assertTrue("Output should emit else-if-block", output.contains("else if ("));
@@ -63,14 +63,14 @@ public class EndToEndSmokeTest {
 
     @Test
     public void variableDeclarationsTranslates() {
-        Main.main(new String[]{"../examples/VariableDeclarationsModule.wf"});
+        Main.run(new String[]{"../examples/VariableDeclarationsModule.wf"});
         String output = capturedOut.toString();
         assertTrue("Output should declare int x = 4;", output.contains("int x = 4;"));
     }
 
     @Test
     public void emptyModuleProducesNoCode() {
-        Main.main(new String[]{"../examples/EmptyModule.wf"});
+        Main.run(new String[]{"../examples/EmptyModule.wf"});
         String output = capturedOut.toString().trim();
         assertTrue("Empty module should produce empty output, got: [" + output + "]", output.isEmpty());
     }

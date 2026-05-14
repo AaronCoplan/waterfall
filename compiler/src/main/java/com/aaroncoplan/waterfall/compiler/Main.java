@@ -28,14 +28,35 @@ public class Main {
 
     private static final Logger logger = LogManager.getLogger(Main.class);
 
+    /**
+     * Thin wrapper: catches {@link CompilerError} so the {@code ./waterfall}
+     * script exits non-zero on failure. Tests invoke {@link #run(String[])}
+     * directly so they can observe the exception.
+     */
     public static void main(String[] args) {
+        try {
+            run(args);
+        } catch (CompilerError e) {
+            // Diagnostic message was already printed via the run path; surface the
+            // top-level summary just in case nothing else made it to stderr.
+            if (e.getMessage() != null && !e.getMessage().isEmpty()) {
+                System.err.println(e.getMessage());
+            }
+            System.exit(1);
+        }
+    }
+
+    /**
+     * Compiler entry point. Throws {@link CompilerError} on any failure.
+     */
+    public static void run(String[] args) {
         logger.info("[START] Argument Parsing");
         final Pair<Arguments, String> argParseResult = ArgParser.parseCommandLineArgs(args);
         final Arguments arguments = argParseResult.firstVal;
         final String errorMsg = argParseResult.secondVal;
         if (arguments == null) {
             System.err.println(errorMsg);
-            return;
+            throw new CompilerError("argument parsing failed");
         }
         logger.info("[END] Argument Parsing");
 
@@ -46,7 +67,7 @@ public class Main {
             final Pair<Boolean, String> fileCheckResult = FileUtils.isReadableFile(filePath);
             if (!fileCheckResult.firstVal) {
                 System.err.println(fileCheckResult.secondVal);
-                return;
+                throw new CompilerError("file existence check failed");
             }
         }
         logger.info("[END] Existence Check");
@@ -65,7 +86,7 @@ public class Main {
             parseResult.getSyntaxErrors().forEach(System.err::println);
             hasErrors = true;
         }
-        if (hasErrors) return;
+        if (hasErrors) throw new CompilerError("syntax errors");
         logger.info("[END] Syntax Errors Check");
 
         logger.info("[START] Top Level Symbol Table Creation");
@@ -74,10 +95,10 @@ public class Main {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
             WaterfallParser.ModuleContext module = ast.module();
             final SymbolTable symbolTable = TopLevelSymbolTableGenerator.generateFromModule(parseResult.getFilePath(), module);
-            if (symbolTable == null) return;
+            if (symbolTable == null) throw new CompilerError("top-level symbol table creation failed");
             if (symbolTableRegistry.containsKey(module.name.getText())) {
                 System.err.format("Error: the name %s already exists!%n", module.name.getText());
-                return;
+                throw new CompilerError("duplicate module name");
             }
             symbolTableRegistry.put(module.name.getText(), symbolTable);
         }
@@ -94,14 +115,14 @@ public class Main {
                 VerificationResult r = v.verify(symbolTable);
                 if (!r.isSuccessful()) {
                     System.err.format("%s in %s%n", r.getErrorMessage(), v.getSourcePosition().generateMessage());
-                    return;
+                    throw new CompilerError("verification failed");
                 }
             }
             for (FunctionImplementationData f : moduleAst.functions) {
                 VerificationResult r = f.verify(symbolTable);
                 if (!r.isSuccessful()) {
                     System.err.format("%s in %s%n", r.getErrorMessage(), f.getSourcePosition().generateMessage());
-                    return;
+                    throw new CompilerError("verification failed");
                 }
             }
 

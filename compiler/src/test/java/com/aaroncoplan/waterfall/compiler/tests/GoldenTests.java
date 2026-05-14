@@ -86,7 +86,14 @@ public class GoldenTests {
         System.setOut(new PrintStream(out));
         System.setErr(new PrintStream(new ByteArrayOutputStream()));
         try {
-            Main.main(new String[]{"--target", target, examplePath.toString()});
+            // Some example files exercise error paths (duplicate decls) which now throw
+            // CompilerError. Swallow it here — what the golden cares about is the stdout
+            // captured before the throw.
+            try {
+                Main.run(new String[]{"--target", target, examplePath.toString()});
+            } catch (com.aaroncoplan.waterfall.compiler.CompilerError ignored) {
+                // expected for Duplicate*Module examples
+            }
         } finally {
             System.setOut(originalOut);
             System.setErr(originalErr);

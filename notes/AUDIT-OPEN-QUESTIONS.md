@@ -155,14 +155,16 @@ collections.
 
 ## Tooling
 
-### T1. Exit codes
-**Today:** `Main.main` returns normally on every error path so the unit
+### ~~T1. Exit codes~~ (closed in phase 8b)
+~~**Today:** `Main.main` returns normally on every error path so the unit
 test (which calls `Main.main` in-process) can keep running. The `./waterfall`
-script always exits 0 even on error.
-**Fix:** Have `Main.main` throw a custom checked exception; wrap with a
-public `runOrExit` entry point that catches and exits non-zero. Refactor
-`EndToEndSmokeTest` to use the catchable entry point.
-**Where flagged:** `Main.java`, `notes/PHASE-2-decisions.md` row 6.
+script always exits 0 even on error.~~
+**Fix landed:** Split the entry points. `Main.run(String[])` is the in-process
+entry point and throws `CompilerError` on any failure; `Main.main(String[])`
+is the JVM entry point and catches `CompilerError` then `System.exit(1)`s.
+`EndToEndSmokeTest` + `GoldenTests` switched to `Main.run` and either let
+the exception propagate (assertion-style) or swallow it where the error
+output is the test target (Duplicate*Module goldens).
 
 ### T2. log4j Gradle 9 deprecations
 **Today:** The build prints "Deprecated Gradle features were used in this
