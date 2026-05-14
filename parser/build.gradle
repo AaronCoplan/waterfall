@@ -23,6 +23,11 @@ generateGrammarSource {
 // Generated grammar sources live under build/ and are added to the main source set.
 // Both Java and Kotlin compile tasks consume them via the registered source dir below.
 sourceSets.main.java.srcDirs += file("${project.buildDir}/generated-src/main/java")
+// Kotlin's compile task needs to see the generated Java so .kt files can reference
+// `WaterfallLexer` / `WaterfallParser`. Also enforce ordering: ANTLR generates before
+// either Kotlin or Java compile runs.
+compileKotlin.dependsOn generateGrammarSource
+compileJava.dependsOn generateGrammarSource
 idea {
     module {
         generatedSourceDirs += file("${project.buildDir}/generated-src/main/java")
