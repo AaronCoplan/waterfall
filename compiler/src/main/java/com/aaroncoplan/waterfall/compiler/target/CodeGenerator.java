@@ -14,6 +14,7 @@ import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.UntypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.VariableAssignmentData;
+import com.aaroncoplan.waterfall.compiler.statements.WhileBlockData;
 
 /**
  * Pluggable target-language code generator. One implementation per supported
@@ -34,6 +35,7 @@ public interface CodeGenerator {
     String emitFunctionImpl(FunctionImplementationData s);
     String emitIfBlock(IfBlockData s);
     String emitForBlock(ForBlockData s);
+    String emitWhileBlock(WhileBlockData s);
     String emitFunctionCallStatement(FunctionCallStatementData s);
     String emitReturnStatement(ReturnStatementData s);
 

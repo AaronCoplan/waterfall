@@ -5,6 +5,7 @@ import com.aaroncoplan.waterfall.compiler.statements.ForBlockData;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionCallStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.IfBlockData;
 import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
+import com.aaroncoplan.waterfall.compiler.statements.WhileBlockData;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.UntypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.VariableAssignmentData;
@@ -35,6 +36,9 @@ public final class StatementDispatcher {
         }
         if (stmt.forBlock() != null) {
             return new ForBlockData(filePath, stmt.forBlock());
+        }
+        if (stmt.whileBlock() != null) {
+            return new WhileBlockData(filePath, stmt.whileBlock());
         }
         if (stmt.returnStatement() != null) {
             return new ReturnStatementData(filePath, stmt.returnStatement());

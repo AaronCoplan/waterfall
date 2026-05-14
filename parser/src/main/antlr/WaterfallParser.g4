@@ -23,7 +23,13 @@ statement
     | functionCall NEWLINE+
     | ifBlock
     | forBlock
+    | whileBlock
     | returnStatement
+    ;
+
+whileBlock
+    : WHILE L_PARENS expression R_PARENS emptyBlock NEWLINE+
+    | WHILE L_PARENS expression R_PARENS statementBlock NEWLINE+
     ;
 
 returnStatement

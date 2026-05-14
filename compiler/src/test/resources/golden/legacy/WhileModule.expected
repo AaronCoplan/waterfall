@@ -1,0 +1,3 @@
+void countdown(int start) {int n = start;
+while (n) {int x = n;}}
+void waitForever() {while (true) {doSomething();}}

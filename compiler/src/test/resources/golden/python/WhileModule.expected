@@ -1,0 +1,11 @@
+# module WhileModule
+def countdown(start):
+    n = start
+    while n:
+        x = n
+
+
+def waitForever():
+    while True:
+        doSomething()
+

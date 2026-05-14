@@ -14,6 +14,7 @@ import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.UntypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.VariableAssignmentData;
+import com.aaroncoplan.waterfall.compiler.statements.WhileBlockData;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 
 import java.util.Arrays;
@@ -105,6 +106,12 @@ public class PythonBackend implements CodeGenerator {
     }
 
     @Override
+    public String emitWhileBlock(WhileBlockData s) {
+        return String.format("while %s:\n%s",
+                emitExpression(s.condition), indent(bodyOrPass(s.body), 1));
+    }
+
+    @Override
     public String emitFunctionCallStatement(FunctionCallStatementData s) {
         return emitFunctionCall(s.call);
     }
@@ -120,7 +127,13 @@ public class PythonBackend implements CodeGenerator {
             case NULL_LITERAL: return "None";
             case INT_LITERAL:
             case DEC_LITERAL:
+                return e.literalText;
             case IDENTIFIER:
+                // TODO(audit): no first-class bool literals in the grammar yet, so the
+                // identifiers `true`/`false` are case-translated to Python's `True`/`False`.
+                // A real fix is to add BOOL_LITERAL tokens.
+                if ("true".equals(e.literalText)) return "True";
+                if ("false".equals(e.literalText)) return "False";
                 return e.literalText;
             case STRING_LITERAL:
                 // Source: `...` backtick-delimited. Python uses single/double quotes.

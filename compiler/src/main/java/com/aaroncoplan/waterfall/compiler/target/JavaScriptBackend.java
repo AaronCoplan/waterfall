@@ -14,6 +14,7 @@ import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.UntypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.VariableAssignmentData;
+import com.aaroncoplan.waterfall.compiler.statements.WhileBlockData;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 
 import java.util.List;
@@ -104,6 +105,11 @@ public class JavaScriptBackend implements CodeGenerator {
     public String emitForBlock(ForBlockData s) {
         return String.format("for (const %s of %s) {%s}",
                 s.iteratorName, s.collectionName, blockBody(s.body));
+    }
+
+    @Override
+    public String emitWhileBlock(WhileBlockData s) {
+        return String.format("while (%s) {%s}", emitExpression(s.condition), blockBody(s.body));
     }
 
     @Override
