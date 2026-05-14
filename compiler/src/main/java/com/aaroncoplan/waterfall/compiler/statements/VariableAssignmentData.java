@@ -8,12 +8,14 @@ import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 
 public class VariableAssignmentData extends TranslatableStatement {
     public final String name;
-    public final int value;
+    public final String op;          // "=", "+=", "-=", "*=", "/=", "%="
+    public final ExpressionData value;
 
-    public VariableAssignmentData(final String filePath, WaterfallParser.VariableAssignmentContext variableAssignmentContext) {
-        super(filePath, variableAssignmentContext);
-        this.name = variableAssignmentContext.name.getText();
-        this.value = Integer.parseInt(variableAssignmentContext.INT_LITERAL().getText());
+    public VariableAssignmentData(final String filePath, WaterfallParser.VariableAssignmentContext ctx) {
+        super(filePath, ctx);
+        this.name = ctx.name.getText();
+        this.op = ctx.op.getText();
+        this.value = new ExpressionData(filePath, ctx.expression());
     }
 
     @Override

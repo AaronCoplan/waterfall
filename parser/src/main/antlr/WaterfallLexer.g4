@@ -56,6 +56,13 @@ POW: '^';
 TIMES: '*';
 DIVIDE: '/';
 
+// compound assignment
+PLUS_EQUALS: '+=';
+MINUS_EQUALS: '-=';
+TIMES_EQUALS: '*=';
+DIVIDE_EQUALS: '/=';
+MOD_EQUALS: '%=';
+
 // comparators
 LESS_THAN: '<';
 GREATER_THAN: '>';

@@ -69,7 +69,7 @@ elseBlock
     ;
 
 variableAssignment
-    : name=ID EQUALS INT_LITERAL NEWLINE+
+    : name=ID op=(EQUALS | PLUS_EQUALS | MINUS_EQUALS | TIMES_EQUALS | DIVIDE_EQUALS | MOD_EQUALS) expression NEWLINE+
     ;
 
 untypedVariableDeclarationAndAssignment

@@ -58,7 +58,7 @@ public class LegacyTextBackend implements CodeGenerator {
 
     @Override
     public String emitVarAssignment(VariableAssignmentData s) {
-        return String.format("%s = %d;", s.name, s.value);
+        return String.format("%s %s %s;", s.name, s.op, emitExpression(s.value));
     }
 
     @Override
