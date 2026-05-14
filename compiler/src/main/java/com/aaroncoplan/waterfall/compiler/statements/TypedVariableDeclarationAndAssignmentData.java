@@ -5,6 +5,7 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStateme
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
+import com.aaroncoplan.waterfall.compiler.typesystem.PrimitiveTypes;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,9 +33,9 @@ public class TypedVariableDeclarationAndAssignmentData extends TranslatableState
 
     @Override
     public VerificationResult verify(SymbolTable symbolTable) {
-        if (!"int".equals(type)) {
-            // TODO(audit): only "int" is allowed at phase 1; phase 5 relaxes for dec/bool/char.
-            return new VerificationResult(false, "Type should be int");
+        if (!PrimitiveTypes.isPrimitive(type)) {
+            return new VerificationResult(false,
+                    "Type '" + type + "' is not a recognized primitive. Known: " + PrimitiveTypes.ALL);
         }
         return new VerificationResult(true, null);
     }

@@ -7,6 +7,7 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
+import com.aaroncoplan.waterfall.compiler.typesystem.PrimitiveTypes;
 import com.aaroncoplan.waterfall.parser.Pair;
 
 import java.util.Collections;
@@ -33,15 +34,17 @@ public class FunctionImplementationData extends TranslatableStatement {
 
     @Override
     public VerificationResult verify(SymbolTable symbolTable) {
-        if (returnType != null && !"int".equals(returnType)) {
-            // TODO(audit): only "int" return is allowed at phase 1; phase 5 relaxes this.
-            return new VerificationResult(false, "Illegal return type " + returnType);
+        if (returnType != null && !PrimitiveTypes.isPrimitive(returnType)) {
+            return new VerificationResult(false,
+                    "Illegal return type '" + returnType + "'. Known: " + PrimitiveTypes.ALL);
         }
 
         SymbolTable functionSymbolTable = new SymbolTable(symbolTable);
         for (Pair<String, String> arg : typedArguments) {
-            if (!"int".equals(arg.firstVal)) {
-                return new VerificationResult(false, "Illegal argument type " + arg.firstVal + " for arg " + arg.secondVal);
+            if (!PrimitiveTypes.isPrimitive(arg.firstVal)) {
+                return new VerificationResult(false,
+                        "Illegal argument type '" + arg.firstVal + "' for arg " + arg.secondVal
+                                + ". Known: " + PrimitiveTypes.ALL);
             }
             try {
                 functionSymbolTable.declare(arg.secondVal, arg.firstVal);

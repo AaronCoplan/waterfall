@@ -34,14 +34,14 @@ public class UntypedVariableDeclarationAndAssignmentData extends TranslatableSta
     private static String inferType(ExpressionData expr) {
         switch (expr.kind) {
             case INT_LITERAL: return "int";
-            case DEC_LITERAL:
-                // TODO(audit): `dec` not yet relaxed by the verifier; phase 5 adds it.
-                return "int";
+            case DEC_LITERAL: return "dec";
             case STRING_LITERAL:
-                // TODO(audit): no string type yet; phase 5 will add `char[]` / `char *`.
-                return "int";
+                // TODO(audit): no first-class string type yet; defaults to char so the
+                // C backend can emit `char *`. JS/Python don't care.
+                return "char";
             default:
-                // TODO(audit): cross-expression type inference not implemented; default int.
+                // TODO(audit): cross-expression type inference (identifiers, calls,
+                // arithmetic) not implemented; default int.
                 return "int";
         }
     }

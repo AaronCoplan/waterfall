@@ -1,0 +1,11 @@
+// module FunctionImplementationsModule
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+void myFunc(void) {}
+
+void myFunc2(int arg, int arg2) {}
+
+int myFunc3(int arg1, int arg2, int arg3) {}
+

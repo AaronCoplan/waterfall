@@ -1,0 +1,13 @@
+// module FunctionWithBodyModule
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+int flag = 0;
+
+void doSomething(void) {
+    int x = 14;
+    flag = 1;
+    int y = 7;
+}
+
