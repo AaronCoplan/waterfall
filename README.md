@@ -134,7 +134,7 @@ the deeper grammar/type lifting in phases 8–10.
 - `C4` — C array literal element-type inference.
 - ~~`C5`~~ — demand-driven `#include` emission. _(closed in phase 8c)_
 - `C6` — JS module wrapping (pick ESM / CJS / IIFE).
-- `C7` — Python `typing.Final` for `const` / `imm`.
+- ~~`C7`~~ — Python `typing.Final` for `const` / `imm`. _(closed in phase 8d)_
 - ~~`T1`~~ — non-zero exit codes from `Main.main`. _(closed in phase 8b)_
 - `T2` — Gradle 9 deprecation cleanup.
 

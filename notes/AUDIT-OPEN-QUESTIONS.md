@@ -147,11 +147,14 @@ comment.
 CommonJS vs. an IIFE.
 **Where flagged:** `JavaScriptBackend.emitProgram`.
 
-### C7. Python `const`/`imm` not enforced
-**Today:** Emitted as plain assignment. Python has no compile-time const.
-**Fix:** Use `typing.Final` annotations or `types.MappingProxyType` for
-collections.
-**Where flagged:** `PythonBackend.emitTypedVarDecl`.
+### ~~C7. Python `const`/`imm` not enforced~~ (closed in phase 8d)
+~~**Today:** Emitted as plain assignment. Python has no compile-time const.~~
+**Fix landed:** `const`/`imm` decls emit `name: Final = value`. The
+`PythonBackend` tracks whether any `Final` annotation was emitted and
+prepends `from typing import Final` to the module only when needed. Type
+checkers (mypy / pyright) honor the annotation; CPython itself still
+doesn't enforce at runtime, but `typing.Final` is the canonical
+intent-signal.
 
 ---
 

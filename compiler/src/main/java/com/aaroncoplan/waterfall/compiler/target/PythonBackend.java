@@ -32,6 +32,9 @@ public class PythonBackend implements CodeGenerator {
 
     private static final String INDENT_UNIT = "    ";
 
+    /** Whether any const/imm decl was emitted; controls the `from typing import Final` prelude. */
+    private boolean usesFinal = false;
+
     @Override
     public String name() {
         return "python";
@@ -39,30 +42,45 @@ public class PythonBackend implements CodeGenerator {
 
     @Override
     public String emitProgram(ModuleAst module) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("# module ").append(module.name).append("\n");
+        // Render the body first so usesFinal reflects whether any const/imm got emitted.
+        this.usesFinal = false;
+        StringBuilder body = new StringBuilder();
         for (TypedVariableDeclarationAndAssignmentData v : module.topLevelVariables) {
-            sb.append(emitTypedVarDecl(v)).append("\n");
+            body.append(emitTypedVarDecl(v)).append("\n");
         }
         if (!module.topLevelVariables.isEmpty() && !module.functions.isEmpty()) {
-            sb.append("\n");
+            body.append("\n");
         }
         for (int i = 0; i < module.functions.size(); i++) {
-            sb.append(emitFunctionImpl(module.functions.get(i)));
-            if (i < module.functions.size() - 1) sb.append("\n\n\n");
-            else sb.append("\n");
+            body.append(emitFunctionImpl(module.functions.get(i)));
+            if (i < module.functions.size() - 1) body.append("\n\n\n");
+            else body.append("\n");
         }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("# module ").append(module.name).append("\n");
+        if (usesFinal) {
+            sb.append("from typing import Final\n");
+        }
+        sb.append(body);
         return sb.toString();
     }
 
     @Override
     public String emitTypedVarDecl(TypedVariableDeclarationAndAssignmentData s) {
-        // TODO(audit): const/imm not enforced at runtime by Python; emitted as a plain assignment.
+        if (s.isImmutable()) {
+            usesFinal = true;
+            return String.format("%s: Final = %s", s.name, emitExpression(s.value));
+        }
         return String.format("%s = %s", s.name, emitExpression(s.value));
     }
 
     @Override
     public String emitUntypedVarDecl(UntypedVariableDeclarationAndAssignmentData s) {
+        if (s.isImmutable()) {
+            usesFinal = true;
+            return String.format("%s: Final = %s", s.name, emitExpression(s.value));
+        }
         return String.format("%s = %s", s.name, emitExpression(s.value));
     }
 
