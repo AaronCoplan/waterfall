@@ -8,7 +8,6 @@ import com.aaroncoplan.waterfall.compiler.statements.ModuleAst;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
-import com.aaroncoplan.waterfall.compiler.symboltables.TopLevelSymbolTableGenerator;
 import com.aaroncoplan.waterfall.compiler.target.Backends;
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 import com.aaroncoplan.waterfall.parser.FileUtils;
@@ -19,9 +18,9 @@ import com.aaroncoplan.waterfall.parser.ParseResult;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -89,26 +88,22 @@ public class Main {
         if (hasErrors) throw new CompilerError("syntax errors");
         logger.info("[END] Syntax Errors Check");
 
-        logger.info("[START] Top Level Symbol Table Creation");
-        Map<String, SymbolTable> symbolTableRegistry = new HashMap<>();
+        logger.info("[START] Verification and Translation");
+        Set<String> seenModuleNames = new HashSet<>();
         for (ParseResult parseResult : parseResultList) {
             WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
             WaterfallParser.ModuleContext module = ast.module();
-            final SymbolTable symbolTable = TopLevelSymbolTableGenerator.generateFromModule(parseResult.getFilePath(), module);
-            if (symbolTable == null) throw new CompilerError("top-level symbol table creation failed");
-            if (symbolTableRegistry.containsKey(module.name.getText())) {
-                System.err.format("Error: the name %s already exists!%n", module.name.getText());
+            String moduleName = module.name.getText();
+            if (!seenModuleNames.add(moduleName)) {
+                System.err.format("Error: the name %s already exists!%n", moduleName);
                 throw new CompilerError("duplicate module name");
             }
-            symbolTableRegistry.put(module.name.getText(), symbolTable);
-        }
-        logger.info("[END] Top Level Symbol Table Creation");
 
-        logger.info("[START] Inline Verification and Translation");
-        for (ParseResult parseResult : parseResultList) {
-            WaterfallParser.ProgramContext ast = parseResult.getProgramAST();
-            WaterfallParser.ModuleContext module = ast.module();
-            final SymbolTable symbolTable = symbolTableRegistry.get(module.name.getText());
+            // Fresh top-level scope per module. Each top-level decl's verify() declares
+            // itself into this scope, surfacing duplicate-top-level errors. Function
+            // bodies create their own child scope and recurse — inner var-decls now
+            // declare too, so a duplicate `int x = 1` inside a function body fails.
+            final SymbolTable symbolTable = new SymbolTable(null);
             final ModuleAst moduleAst = new ModuleAst(parseResult.getFilePath(), module);
 
             for (TypedVariableDeclarationAndAssignmentData v : moduleAst.topLevelVariables) {
@@ -128,6 +123,6 @@ public class Main {
 
             System.out.println(backend.emitProgram(moduleAst));
         }
-        logger.info("[END] Inline Verification and Translation");
+        logger.info("[END] Verification and Translation");
     }
 }

@@ -31,15 +31,20 @@ example don't parse. The `ArrayIndexModule` C golden is skipped by
 mapping: JS/Python → ignored; C → `<elt> arr[]` or `<elt>* arr`.
 **Where flagged:** `CRuntimeCheckTest.gccAcceptsGolden`, `notes/PHASE-6f`.
 
-### G3. Function-body symbol-table declarations
-**Today:** Function-body `int x = 1` decls don't `declare()` into the
-function-local symbol table; we kept the original behavior. Phase 1's
-verifier intentionally left this alone.
-**Fix:** Have `TypedVariableDeclarationAndAssignmentData.verify` declare
-into the scope it's given. Requires plumbing a "scope" through the verify
-chain in `IfBlockData` / `ForBlockData` / `WhileBlockData` / `FunctionImplData`.
-**Where flagged:** `TypedVariableDeclarationAndAssignmentData.verify`,
-`UntypedVariableDeclarationAndAssignmentData.verify`.
+### ~~G3. Function-body symbol-table declarations~~ (closed in phase 8e)
+~~**Today:** Function-body `int x = 1` decls don't `declare()` into the
+function-local symbol table; we kept the original behavior.~~
+**Fix landed:** `TypedVar`, `UntypedVar`, and `FunctionImpl` verifiers now
+call `scope.declare(...)`. `IfBlockData` / `ForBlockData` / `WhileBlockData`
+already wrapped child scopes — that hierarchy now actually carries
+inner-declared names. `TopLevelSymbolTableGenerator` was deleted; `Main`
+builds a fresh empty scope per module and the top-level decls' verify
+both declare and check. New `DuplicateInnerDeclarationTest` covers
+inner-duplicate, shadow-arg, and distinct-branch cases.
+
+Also closed a latent grammar bug: the `ID` lexer rule's middle group
+used `+` instead of `*`, silently rejecting 2-character identifiers like
+`go`. Fixed in the same phase.
 
 ### G4. Expression type inference is shallow
 **Today:** `:=` infers `int` for INT_LITERAL, `dec` for DEC_LITERAL, `char`

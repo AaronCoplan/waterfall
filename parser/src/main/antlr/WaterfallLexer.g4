@@ -29,7 +29,10 @@ NULL: 'NULL';
 BOOL_LITERAL: 'true' | 'false';
 
 // literals and identifiers
-ID: ('a' .. 'z' | 'A' .. 'Z') (('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')+ ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'))?;
+// Identifier: letter, optionally followed by (letter|digit|underscore)* ending in letter|digit.
+// (The original rule used `+` instead of `*` for the middle group, which silently rejected
+// 2-character identifiers like `go`.)
+ID: ('a' .. 'z' | 'A' .. 'Z') (('a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '_')* ('a' .. 'z' | 'A' .. 'Z' | '0' .. '9'))?;
 INT_LITERAL: ('0' .. '9')+;
 DEC_LITERAL: ('0' .. '9')+ DOT ('0' .. '9')+;
 STRING_LITERAL: '`' ( '\\`' | ~('\n'|'\r') )*? '`';

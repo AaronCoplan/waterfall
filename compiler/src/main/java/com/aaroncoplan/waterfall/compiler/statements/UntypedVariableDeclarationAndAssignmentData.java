@@ -3,6 +3,7 @@ package com.aaroncoplan.waterfall.compiler.statements;
 import com.aaroncoplan.waterfall.generated.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
+import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 
@@ -48,6 +49,11 @@ public class UntypedVariableDeclarationAndAssignmentData extends TranslatableSta
 
     @Override
     public VerificationResult verify(SymbolTable symbolTable) {
+        try {
+            symbolTable.declare(name, inferredType);
+        } catch (DuplicateDeclarationException e) {
+            return new VerificationResult(false, "Duplicate declaration: " + name);
+        }
         return new VerificationResult(true, null);
     }
 

@@ -3,6 +3,7 @@ package com.aaroncoplan.waterfall.compiler.statements;
 import com.aaroncoplan.waterfall.generated.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
+import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 import com.aaroncoplan.waterfall.compiler.typesystem.PrimitiveTypes;
@@ -36,6 +37,11 @@ public class TypedVariableDeclarationAndAssignmentData extends TranslatableState
         if (!PrimitiveTypes.isPrimitive(type)) {
             return new VerificationResult(false,
                     "Type '" + type + "' is not a recognized primitive. Known: " + PrimitiveTypes.ALL);
+        }
+        try {
+            symbolTable.declare(name, type);
+        } catch (DuplicateDeclarationException e) {
+            return new VerificationResult(false, "Duplicate declaration: " + name);
         }
         return new VerificationResult(true, null);
     }

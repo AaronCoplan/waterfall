@@ -106,7 +106,7 @@ aspirational and starts to parse.
 
 - ~~`G1`~~ — first-class `true` / `false` literals (deletes the Python identifier case-translation hack). _(closed in phase 8a)_
 - `G2` — array types in the grammar (`int[]`, `char[]`); unblocks `C1`, `C4`, and `canBeFormed`.
-- `G3` — function-body symbol-table scoping (declare inner vars into their scope).
+- ~~`G3`~~ — function-body symbol-table scoping (declare inner vars into their scope). _(closed in phase 8e)_
 
 **Phase 9 — Type system depth.** Builds on phase 8. The verifier graduates from
 a primitive-name allowlist to something that actually tracks types through

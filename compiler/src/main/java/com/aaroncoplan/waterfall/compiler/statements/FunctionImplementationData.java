@@ -38,6 +38,13 @@ public class FunctionImplementationData extends TranslatableStatement {
             return new VerificationResult(false,
                     "Illegal return type '" + returnType + "'. Known: " + PrimitiveTypes.ALL);
         }
+        // Self-declaration into the outer (module) scope. Catches duplicate top-level
+        // names; also makes the function visible to itself for recursion.
+        try {
+            symbolTable.declare(name, returnType == null ? "void" : returnType);
+        } catch (DuplicateDeclarationException e) {
+            return new VerificationResult(false, "Duplicate top-level declaration: " + name);
+        }
 
         SymbolTable functionSymbolTable = new SymbolTable(symbolTable);
         for (Pair<String, String> arg : typedArguments) {
