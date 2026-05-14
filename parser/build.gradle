@@ -18,31 +18,13 @@ jar {
 generateGrammarSource {
     arguments = ['-package', 'com.aaroncoplan.waterfall.generated']
     outputDirectory = file("${project.buildDir}/generated-src/main/java")
-    doLast {
-        copy {
-            from "${project.buildDir}/generated-src/main/java"
-            into "src/main/java/com/aaroncoplan/waterfall/generated"
-        }
-    }
 }
 
-// ensure we generate the grammar source prior
-// to compiling project code
-compileJava.dependsOn generateGrammarSource
-compileJava {
-    source = ['src/main/java']
-}
-
-// remove generated grammar source on clean
-task removeGeneratedSource(type: Delete) {
-    delete 'src/main/java/com/aaroncoplan/waterfall/generated'
-}
-clean.dependsOn removeGeneratedSource
-
-// mark generated source as code for IntelliJ
-sourceSets.main.java.srcDirs += file("src/main/java/com/aaroncoplan/waterfall/generated")
+// Generated grammar sources live under build/ and are added to the main source set.
+// Both Java and Kotlin compile tasks consume them via the registered source dir below.
+sourceSets.main.java.srcDirs += file("${project.buildDir}/generated-src/main/java")
 idea {
     module {
-        generatedSourceDirs += file('src/main/java/com/aaroncoplan/waterfall/generated')
+        generatedSourceDirs += file("${project.buildDir}/generated-src/main/java")
     }
 }
