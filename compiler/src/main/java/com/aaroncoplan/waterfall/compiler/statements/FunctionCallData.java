@@ -80,29 +80,4 @@ public class FunctionCallData {
         return new Pair<>(Collections.emptyList(), Collections.emptyList());
     }
 
-    public String translate() {
-        final String argsText;
-        if (!namedArguments.isEmpty()) {
-            argsText = namedArguments.stream()
-                    .map(p -> p.firstVal + "=" + p.secondVal.translate())
-                    .collect(Collectors.joining(", "));
-        } else {
-            argsText = positionalArguments.stream()
-                    .map(ExpressionData::translate)
-                    .collect(Collectors.joining(", "));
-        }
-        switch (kind) {
-            case LOCAL:
-                return String.format("%s(%s)", functionName, argsText);
-            case MODULE:
-                // TODO(audit): MODULE-style "Mod::fn" — Phase 1 mangles to "Mod_fn" for the
-                // legacy C-like emitter. Per-target backends in later phases will override this.
-                return String.format("%s_%s(%s)", moduleName, functionName, argsText);
-            case OBJECT:
-                String receiver = String.join(".", receiverPath);
-                return String.format("%s.%s(%s)", receiver, functionName, argsText);
-            default:
-                throw new RuntimeException("Unrecognized kind " + kind);
-        }
-    }
 }

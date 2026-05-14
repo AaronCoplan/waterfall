@@ -4,6 +4,7 @@ import com.aaroncoplan.waterfall.generated.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
+import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 
 public class TypedVariableDeclarationAndAssignmentData extends TranslatableStatement {
     public final String name, type;
@@ -26,7 +27,7 @@ public class TypedVariableDeclarationAndAssignmentData extends TranslatableState
     }
 
     @Override
-    public String translate() {
-        return String.format("%s %s = %s;", type, name, value.translate());
+    public String translate(CodeGenerator backend) {
+        return backend.emitTypedVarDecl(this);
     }
 }

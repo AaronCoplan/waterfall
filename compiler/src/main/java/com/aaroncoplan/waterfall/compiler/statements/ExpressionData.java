@@ -69,29 +69,4 @@ public class ExpressionData {
         }
     }
 
-    public String translate() {
-        switch (kind) {
-            case NULL_LITERAL:
-                // TODO(audit): "null" maps to legacy emitter literal NULL; backends will reshape.
-                return "NULL";
-            case INT_LITERAL:
-            case DEC_LITERAL:
-            case IDENTIFIER:
-                return literalText;
-            case STRING_LITERAL:
-                // Source string literals are backtick-delimited; legacy emitter keeps backticks.
-                // Per-target backends will translate to "..." (C/Python) or template literals (JS).
-                return literalText;
-            case LAMBDA:
-                return lambda.translate();
-            case BUNDLE:
-                return bundle.translate();
-            case ARRAY:
-                return array.translate();
-            case FUNCTION_CALL:
-                return functionCall.translate();
-            default:
-                throw new RuntimeException("Unrecognized kind " + kind);
-        }
-    }
 }

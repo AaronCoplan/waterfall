@@ -6,6 +6,7 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStateme
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
+import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 import com.aaroncoplan.waterfall.parser.Pair;
 
 import java.util.Collections;
@@ -57,14 +58,7 @@ public class FunctionImplementationData extends TranslatableStatement {
     }
 
     @Override
-    public String translate() {
-        final String translatedReturnType = returnType == null ? "void" : returnType;
-        final String args = typedArguments.stream()
-                .map(arg -> String.format("%s %s", arg.firstVal, arg.secondVal))
-                .collect(Collectors.joining(", "));
-        final String body = statements.stream()
-                .map(TranslatableStatement::translate)
-                .collect(Collectors.joining("\n"));
-        return String.format("%s %s(%s) {%s}", translatedReturnType, name, args, body);
+    public String translate(CodeGenerator backend) {
+        return backend.emitFunctionImpl(this);
     }
 }

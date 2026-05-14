@@ -22,11 +22,4 @@ public class LambdaFunctionData {
         this.body = ctx.functionCall() == null ? null : new FunctionCallData(filePath, ctx.functionCall());
     }
 
-    public String translate() {
-        String argList = typedArguments.stream()
-                .map(p -> p.firstVal + " " + p.secondVal)
-                .collect(Collectors.joining(", "));
-        String bodyText = body == null ? "{}" : body.translate();
-        return String.format("(%s) ==> %s", argList, bodyText);
-    }
 }

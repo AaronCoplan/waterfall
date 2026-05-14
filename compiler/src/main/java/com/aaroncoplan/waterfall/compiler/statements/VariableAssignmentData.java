@@ -4,6 +4,7 @@ import com.aaroncoplan.waterfall.generated.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
+import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 
 public class VariableAssignmentData extends TranslatableStatement {
     public final String name;
@@ -21,7 +22,7 @@ public class VariableAssignmentData extends TranslatableStatement {
     }
 
     @Override
-    public String translate() {
-        return String.format("%s = %d;", name, value);
+    public String translate(CodeGenerator backend) {
+        return backend.emitVarAssignment(this);
     }
 }

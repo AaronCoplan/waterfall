@@ -15,9 +15,4 @@ public class BundleLiteralData {
                 .collect(Collectors.toList());
     }
 
-    public String translate() {
-        // TODO(audit): bundle semantics aren't defined yet; legacy emitter renders the
-        // source `|a, b|` literally. Per-target backends in later phases may diverge.
-        return "|" + elements.stream().map(ExpressionData::translate).collect(Collectors.joining(", ")) + "|";
-    }
 }

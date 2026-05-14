@@ -1,5 +1,6 @@
 package com.aaroncoplan.waterfall.compiler.argumentparsing;
 
+import com.aaroncoplan.waterfall.compiler.target.Backends;
 import com.aaroncoplan.waterfall.parser.Pair;
 import net.sourceforge.argparse4j.ArgumentParsers;
 import net.sourceforge.argparse4j.helper.HelpScreenException;
@@ -19,9 +20,18 @@ public class ArgParser {
                 .nargs("+")
                 .help("List of files to compile");
 
+        argumentParser.addArgument("--target")
+                .setDefault(Backends.DEFAULT_TARGET)
+                .help("Target language to emit. Known: " + Backends.knownTargetsList());
+
         try {
             final Namespace namespace = argumentParser.parseArgs(args);
-            return new Pair<>(new Arguments(namespace.getList("files")), null);
+            String target = namespace.getString("target");
+            if (Backends.forTarget(target) == null) {
+                return new Pair<>(null, "Unknown target '" + target
+                        + "'. Known targets: " + Backends.knownTargetsList());
+            }
+            return new Pair<>(new Arguments(namespace.getList("files"), target), null);
         } catch(ArgumentParserException e) {
             final String errorMessage = e instanceof HelpScreenException ? "" : e.getMessage();
             return new Pair<>(null, errorMessage);
@@ -29,4 +39,3 @@ public class ArgParser {
     }
 
 }
-

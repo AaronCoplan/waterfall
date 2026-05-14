@@ -15,7 +15,4 @@ public class ArrayLiteralData {
                 .collect(Collectors.toList());
     }
 
-    public String translate() {
-        return "[" + elements.stream().map(ExpressionData::translate).collect(Collectors.joining(", ")) + "]";
-    }
 }

@@ -5,6 +5,7 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.StatementDispatcher
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
+import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 
 import java.util.Collections;
 import java.util.List;
@@ -70,21 +71,7 @@ public class IfBlockData extends TranslatableStatement {
     }
 
     @Override
-    public String translate() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("if (").append(ifBranch.condition.translate()).append(") {");
-        sb.append(ifBranch.body.stream().map(TranslatableStatement::translate).collect(Collectors.joining("\n")));
-        sb.append("}");
-        for (Branch elif : elifBranches) {
-            sb.append(" else if (").append(elif.condition.translate()).append(") {");
-            sb.append(elif.body.stream().map(TranslatableStatement::translate).collect(Collectors.joining("\n")));
-            sb.append("}");
-        }
-        if (elseBody != null) {
-            sb.append(" else {");
-            sb.append(elseBody.stream().map(TranslatableStatement::translate).collect(Collectors.joining("\n")));
-            sb.append("}");
-        }
-        return sb.toString();
+    public String translate(CodeGenerator backend) {
+        return backend.emitIfBlock(this);
     }
 }

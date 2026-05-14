@@ -5,9 +5,9 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.StatementDispatcher
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
+import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ForBlockData extends TranslatableStatement {
 
@@ -37,10 +37,7 @@ public class ForBlockData extends TranslatableStatement {
     }
 
     @Override
-    public String translate() {
-        // Legacy emitter: produce a C++-style range-for that's "close enough" to most targets.
-        // Per-target backends in phase 3+ override per language.
-        String inner = body.stream().map(TranslatableStatement::translate).collect(Collectors.joining("\n"));
-        return String.format("for (auto %s : %s) {%s}", iteratorName, collectionName, inner);
+    public String translate(CodeGenerator backend) {
+        return backend.emitForBlock(this);
     }
 }
