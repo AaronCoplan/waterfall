@@ -134,11 +134,16 @@ name and a receiver-as-first-arg ABI. Won't link in any real example.
 pointers in structs?). Requires class/struct support in the grammar.
 **Where flagged:** `CBackend.emitFunctionCall` OBJECT branch.
 
-### C4. Array literals in C
-**Today:** `(int[]){...}` — element type hardcoded to int.
-**Fix:** Element-type inference; or emit a typedef and a compound literal
-of that type.
-**Where flagged:** `CBackend.emitArrayLiteral`.
+### ~~C4. Array literals in C~~ (closed in phase 8g)
+~~**Today:** `(int[]){...}` — element type hardcoded to int.~~
+**Fix landed:** `CBackend.inferArrayElementType` looks at the first element's
+`ExpressionData.kind` and picks the corresponding C type: INT_LITERAL →
+`int`, DEC_LITERAL → `double`, BOOL_LITERAL → `bool` (and requests
+`<stdbool.h>`), STRING_LITERAL → `const char *`. Identifiers / calls /
+arithmetic still fall through to `int` (proper inference is `G4`'s job).
+Empty arrays still default to `int` (flagged TODO). New
+`examples/ArrayLiteralsModule.wf` exercises int / dec / bool element types
+and is verified by `gcc -fsyntax-only`.
 
 ### ~~C5. Standard `#include`s~~ (closed in phase 8c)
 ~~**Today:** Always emit `<stdio.h>`, `<stdbool.h>`, `<string.h>` regardless

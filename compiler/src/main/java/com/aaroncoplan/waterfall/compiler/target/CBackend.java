@@ -250,9 +250,32 @@ public class CBackend implements CodeGenerator {
 
     @Override
     public String emitArrayLiteral(ArrayLiteralData a) {
-        // C99 compound literal: emits as `(int[]){a, b, c}` for INT-only arrays.
-        // TODO(audit): hardcoded to int element type; real solution needs element-type inference.
-        return "(int[]){" + a.elements.stream().map(this::emitExpression).collect(Collectors.joining(", ")) + "}";
+        // C99 compound literal. Element type is inferred from the first element's kind.
+        String elementType = inferArrayElementType(a);
+        String body = a.elements.stream().map(this::emitExpression).collect(Collectors.joining(", "));
+        return "(" + elementType + "[]){" + body + "}";
+    }
+
+    /**
+     * Infer the C element type for an array literal from its first element's expression
+     * kind. Empty arrays default to {@code int} (TODO: surface a useful diagnostic).
+     */
+    private String inferArrayElementType(ArrayLiteralData a) {
+        if (a.elements.isEmpty()) {
+            // TODO(audit): empty array literal — element type can't be inferred from contents.
+            return "int";
+        }
+        ExpressionData first = a.elements.get(0);
+        switch (first.kind) {
+            case INT_LITERAL:    return "int";
+            case DEC_LITERAL:    return "double";
+            case BOOL_LITERAL:   requiredHeaders.add("<stdbool.h>"); return "bool";
+            case STRING_LITERAL: return "const char *";
+            default:
+                // Identifiers, calls, arithmetic, etc. — would need real type inference.
+                // TODO(audit): falls back to int; a real fix needs G4.
+                return "int";
+        }
     }
 
     @Override

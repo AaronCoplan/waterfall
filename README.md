@@ -131,7 +131,7 @@ does a C lambda lower, what's the named-arg ABI per target.
 the deeper grammar/type lifting in phases 8–10.
 
 - `C2` — per-module C headers so `Module::fn` actually links.
-- `C4` — C array literal element-type inference.
+- ~~`C4`~~ — C array literal element-type inference. _(closed in phase 8g)_
 - ~~`C5`~~ — demand-driven `#include` emission. _(closed in phase 8c)_
 - `C6` — JS module wrapping (pick ESM / CJS / IIFE).
 - ~~`C7`~~ — Python `typing.Final` for `const` / `imm`. _(closed in phase 8d)_
