@@ -1,0 +1,11 @@
+// module CastModule
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+int transform(int n) {
+    double asDec = ((double)(n));
+    int asInt = ((int)(asDec));
+    return asInt;
+}
+

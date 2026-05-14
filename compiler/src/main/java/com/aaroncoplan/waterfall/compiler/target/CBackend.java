@@ -177,6 +177,8 @@ public class CBackend implements CodeGenerator {
             case FUNCTION_CALL: return emitFunctionCall(e.functionCall);
             case ARRAY_INDEX:
                 return e.arrayIndex.target + "[" + emitExpression(e.arrayIndex.index) + "]";
+            case CAST:
+                return "((" + cType(e.castTargetType) + ")(" + emitExpression(e.castOperand) + "))";
             case BINARY_OP: {
                 String cOp;
                 switch (e.op) {

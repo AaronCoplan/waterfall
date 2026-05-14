@@ -135,6 +135,8 @@ public class LegacyTextBackend implements CodeGenerator {
                 return "(" + emitExpression(e.left) + " " + e.op + " " + emitExpression(e.right) + ")";
             case ARRAY_INDEX:
                 return e.arrayIndex.target + "[" + emitExpression(e.arrayIndex.index) + "]";
+            case CAST:
+                return "(" + emitExpression(e.castOperand) + " castas " + e.castTargetType + ")";
             default: throw new RuntimeException("Unrecognized expression kind " + e.kind);
         }
     }

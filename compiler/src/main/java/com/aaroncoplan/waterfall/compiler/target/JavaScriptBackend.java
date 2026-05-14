@@ -147,6 +147,17 @@ public class JavaScriptBackend implements CodeGenerator {
             case FUNCTION_CALL: return emitFunctionCall(e.functionCall);
             case ARRAY_INDEX:
                 return e.arrayIndex.target + "[" + emitExpression(e.arrayIndex.index) + "]";
+            case CAST: {
+                String fn;
+                switch (e.castTargetType) {
+                    case "int":  fn = "Math.trunc"; break;  // best-guess: truncate to integer
+                    case "dec":  fn = "Number"; break;
+                    case "bool": fn = "Boolean"; break;
+                    case "char": fn = "String"; break;
+                    default:     fn = "/* castas " + e.castTargetType + " */"; break;
+                }
+                return fn + "(" + emitExpression(e.castOperand) + ")";
+            }
             case BINARY_OP: {
                 String jsOp;
                 switch (e.op) {

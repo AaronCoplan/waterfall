@@ -16,6 +16,7 @@ public class ExpressionData {
         FUNCTION_CALL,
         BINARY_OP,
         ARRAY_INDEX,
+        CAST,
     }
 
     public final Kind kind;
@@ -28,9 +29,23 @@ public class ExpressionData {
     public final ExpressionData left;           // BINARY_OP only
     public final ExpressionData right;          // BINARY_OP only
     public final ArrayIndexData arrayIndex;     // ARRAY_INDEX only
+    public final String castTargetType;         // CAST only — the target type name
+    public final ExpressionData castOperand;    // CAST only
 
     public ExpressionData(String filePath, WaterfallParser.ExpressionContext ctx) {
-        // Binary op alternative — must be checked first because the `op` label is the
+        // Cast alt — `expression CASTAS castTarget=type`. Check before binary because
+        // it's also left-recursive and we want to identify it precisely.
+        if (ctx.castTarget != null) {
+            this.kind = Kind.CAST;
+            this.castTargetType = ctx.castTarget.getText();
+            this.castOperand = new ExpressionData(filePath, ctx.expression(0));
+            this.op = null; this.left = null; this.right = null;
+            this.literalText = null;
+            this.lambda = null; this.bundle = null; this.array = null;
+            this.functionCall = null; this.arrayIndex = null;
+            return;
+        }
+        // Binary op alternative — must be checked next because the `op` label is the
         // only thing distinguishing it (all other accessors return null in that case).
         if (ctx.op != null) {
             this.kind = Kind.BINARY_OP;
@@ -40,6 +55,7 @@ public class ExpressionData {
             this.literalText = null;
             this.lambda = null; this.bundle = null; this.array = null;
             this.functionCall = null; this.arrayIndex = null;
+            this.castTargetType = null; this.castOperand = null;
             return;
         }
 
@@ -73,5 +89,7 @@ public class ExpressionData {
         this.op = null;
         this.left = null;
         this.right = null;
+        this.castTargetType = null;
+        this.castOperand = null;
     }
 }

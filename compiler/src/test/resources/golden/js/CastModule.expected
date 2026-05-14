@@ -1,0 +1,7 @@
+// module CastModule
+function transform(n) {
+    let asDec = Number(n);
+    let asInt = Math.trunc(asDec);
+    return asInt;
+}
+

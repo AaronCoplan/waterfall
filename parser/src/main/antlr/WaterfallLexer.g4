@@ -22,6 +22,7 @@ WHILE: 'while';
 AND: 'and';
 OR: 'or';
 EQUALS_OP: 'equals';
+CASTAS: 'castas';
 
 // other reserved words (also before ID)
 NULL: 'NULL';

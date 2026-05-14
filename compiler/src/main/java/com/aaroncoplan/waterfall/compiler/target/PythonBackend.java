@@ -159,6 +159,17 @@ public class PythonBackend implements CodeGenerator {
             case FUNCTION_CALL: return emitFunctionCall(e.functionCall);
             case ARRAY_INDEX:
                 return e.arrayIndex.target + "[" + emitExpression(e.arrayIndex.index) + "]";
+            case CAST: {
+                String fn;
+                switch (e.castTargetType) {
+                    case "int":  fn = "int"; break;
+                    case "dec":  fn = "float"; break;
+                    case "bool": fn = "bool"; break;
+                    case "char": fn = "str"; break;
+                    default:     fn = "/* castas " + e.castTargetType + " */"; break;
+                }
+                return fn + "(" + emitExpression(e.castOperand) + ")";
+            }
             case BINARY_OP: {
                 String pyOp;
                 switch (e.op) {

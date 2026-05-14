@@ -113,6 +113,7 @@ expression
     | functionCall
     | arrayIndex
     | name=ID
+    | expression CASTAS castTarget=type
     | left=expression op=EQUALS_OP right=expression
     | left=expression op=AND right=expression
     | left=expression op=OR right=expression
