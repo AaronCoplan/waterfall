@@ -1,0 +1,18 @@
+module FibonacciModule {
+    func fib(int n) returns int {
+        if(n < 2) {
+            return n
+        }
+        return fib(n - 1) + fib(n - 2)
+    }
+
+    func sumOfFibs(int upTo) returns int {
+        int total = 0
+        int i = 0
+        while(i < upTo) {
+            total += fib(i)
+            i++
+        }
+        return total
+    }
+}
