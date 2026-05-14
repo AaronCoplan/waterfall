@@ -133,6 +133,8 @@ public class LegacyTextBackend implements CodeGenerator {
             case FUNCTION_CALL: return emitFunctionCall(e.functionCall);
             case BINARY_OP:
                 return "(" + emitExpression(e.left) + " " + e.op + " " + emitExpression(e.right) + ")";
+            case ARRAY_INDEX:
+                return e.arrayIndex.target + "[" + emitExpression(e.arrayIndex.index) + "]";
             default: throw new RuntimeException("Unrecognized expression kind " + e.kind);
         }
     }

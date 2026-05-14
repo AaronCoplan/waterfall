@@ -157,6 +157,8 @@ public class PythonBackend implements CodeGenerator {
             case BUNDLE: return emitBundleLiteral(e.bundle);
             case ARRAY: return emitArrayLiteral(e.array);
             case FUNCTION_CALL: return emitFunctionCall(e.functionCall);
+            case ARRAY_INDEX:
+                return e.arrayIndex.target + "[" + emitExpression(e.arrayIndex.index) + "]";
             case BINARY_OP: {
                 String pyOp;
                 switch (e.op) {

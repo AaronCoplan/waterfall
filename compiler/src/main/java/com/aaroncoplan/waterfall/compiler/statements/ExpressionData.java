@@ -15,6 +15,7 @@ public class ExpressionData {
         ARRAY,
         FUNCTION_CALL,
         BINARY_OP,
+        ARRAY_INDEX,
     }
 
     public final Kind kind;
@@ -26,63 +27,51 @@ public class ExpressionData {
     public final String op;                     // BINARY_OP only: "and" / "or" / "equals"
     public final ExpressionData left;           // BINARY_OP only
     public final ExpressionData right;          // BINARY_OP only
+    public final ArrayIndexData arrayIndex;     // ARRAY_INDEX only
 
     public ExpressionData(String filePath, WaterfallParser.ExpressionContext ctx) {
+        // Binary op alternative — must be checked first because the `op` label is the
+        // only thing distinguishing it (all other accessors return null in that case).
         if (ctx.op != null) {
             this.kind = Kind.BINARY_OP;
             this.op = ctx.op.getText();
             this.left = new ExpressionData(filePath, ctx.left);
             this.right = new ExpressionData(filePath, ctx.right);
             this.literalText = null;
-            this.lambda = null; this.bundle = null; this.array = null; this.functionCall = null;
+            this.lambda = null; this.bundle = null; this.array = null;
+            this.functionCall = null; this.arrayIndex = null;
             return;
         }
-        // No-op default for binary fields when this is a leaf.
+
+        // Leaf / primary alternatives.
+        Kind k;
+        String text = null;
+        LambdaFunctionData ld = null;
+        BundleLiteralData bd = null;
+        ArrayLiteralData ad = null;
+        FunctionCallData fc = null;
+        ArrayIndexData ai = null;
+        if (ctx.NULL() != null) { k = Kind.NULL_LITERAL; text = ctx.NULL().getText(); }
+        else if (ctx.INT_LITERAL() != null) { k = Kind.INT_LITERAL; text = ctx.INT_LITERAL().getText(); }
+        else if (ctx.DEC_LITERAL() != null) { k = Kind.DEC_LITERAL; text = ctx.DEC_LITERAL().getText(); }
+        else if (ctx.STRING_LITERAL() != null) { k = Kind.STRING_LITERAL; text = ctx.STRING_LITERAL().getText(); }
+        else if (ctx.lambdaFunction() != null) { k = Kind.LAMBDA; ld = new LambdaFunctionData(filePath, ctx.lambdaFunction()); }
+        else if (ctx.bundleLiteral() != null) { k = Kind.BUNDLE; bd = new BundleLiteralData(filePath, ctx.bundleLiteral()); }
+        else if (ctx.arrayLiteral() != null) { k = Kind.ARRAY; ad = new ArrayLiteralData(filePath, ctx.arrayLiteral()); }
+        else if (ctx.functionCall() != null) { k = Kind.FUNCTION_CALL; fc = new FunctionCallData(filePath, ctx.functionCall()); }
+        else if (ctx.arrayIndex() != null) { k = Kind.ARRAY_INDEX; ai = new ArrayIndexData(filePath, ctx.arrayIndex()); }
+        else if (ctx.ID() != null) { k = Kind.IDENTIFIER; text = ctx.ID().getText(); }
+        else throw new RuntimeException("Unrecognized expression alternative");
+
+        this.kind = k;
+        this.literalText = text;
+        this.lambda = ld;
+        this.bundle = bd;
+        this.array = ad;
+        this.functionCall = fc;
+        this.arrayIndex = ai;
         this.op = null;
         this.left = null;
         this.right = null;
-        if (ctx.NULL() != null) {
-            this.kind = Kind.NULL_LITERAL;
-            this.literalText = ctx.NULL().getText();
-            this.lambda = null; this.bundle = null; this.array = null; this.functionCall = null;
-        } else if (ctx.INT_LITERAL() != null) {
-            this.kind = Kind.INT_LITERAL;
-            this.literalText = ctx.INT_LITERAL().getText();
-            this.lambda = null; this.bundle = null; this.array = null; this.functionCall = null;
-        } else if (ctx.DEC_LITERAL() != null) {
-            this.kind = Kind.DEC_LITERAL;
-            this.literalText = ctx.DEC_LITERAL().getText();
-            this.lambda = null; this.bundle = null; this.array = null; this.functionCall = null;
-        } else if (ctx.STRING_LITERAL() != null) {
-            this.kind = Kind.STRING_LITERAL;
-            this.literalText = ctx.STRING_LITERAL().getText();
-            this.lambda = null; this.bundle = null; this.array = null; this.functionCall = null;
-        } else if (ctx.lambdaFunction() != null) {
-            this.kind = Kind.LAMBDA;
-            this.literalText = null;
-            this.lambda = new LambdaFunctionData(filePath, ctx.lambdaFunction());
-            this.bundle = null; this.array = null; this.functionCall = null;
-        } else if (ctx.bundleLiteral() != null) {
-            this.kind = Kind.BUNDLE;
-            this.literalText = null;
-            this.bundle = new BundleLiteralData(filePath, ctx.bundleLiteral());
-            this.lambda = null; this.array = null; this.functionCall = null;
-        } else if (ctx.arrayLiteral() != null) {
-            this.kind = Kind.ARRAY;
-            this.literalText = null;
-            this.array = new ArrayLiteralData(filePath, ctx.arrayLiteral());
-            this.lambda = null; this.bundle = null; this.functionCall = null;
-        } else if (ctx.functionCall() != null) {
-            this.kind = Kind.FUNCTION_CALL;
-            this.literalText = null;
-            this.functionCall = new FunctionCallData(filePath, ctx.functionCall());
-            this.lambda = null; this.bundle = null; this.array = null;
-        } else if (ctx.ID() != null) {
-            this.kind = Kind.IDENTIFIER;
-            this.literalText = ctx.ID().getText();
-            this.lambda = null; this.bundle = null; this.array = null; this.functionCall = null;
-        } else {
-            throw new RuntimeException("Unrecognized expression alternative");
-        }
     }
 }

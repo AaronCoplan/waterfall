@@ -111,10 +111,15 @@ expression
     | bundleLiteral
     | arrayLiteral
     | functionCall
+    | arrayIndex
     | name=ID
     | left=expression op=EQUALS_OP right=expression
     | left=expression op=AND right=expression
     | left=expression op=OR right=expression
+    ;
+
+arrayIndex
+    : target=ID L_BRACKET index=expression R_BRACKET
     ;
 
 bundleLiteral
