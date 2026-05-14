@@ -176,7 +176,8 @@ public class PythonBackend implements CodeGenerator {
                     case "and": pyOp = "and"; break;
                     case "or":  pyOp = "or"; break;
                     case "equals": pyOp = "=="; break;
-                    default: throw new RuntimeException("Unrecognized binary op " + e.op);
+                    case "^": pyOp = "**"; break;  // Waterfall ^ is power; Python uses **
+                    default: pyOp = e.op; break;   // +, -, *, /, %, <, >, <=, >=
                 }
                 return "(" + emitExpression(e.left) + " " + pyOp + " " + emitExpression(e.right) + ")";
             }

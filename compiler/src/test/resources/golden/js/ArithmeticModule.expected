@@ -1,0 +1,17 @@
+// module ArithmeticModule
+function sumOfMultiples(limit) {
+    let total = 0;
+    let n = 0;
+    while ((n < limit)) {if ((((n % 3) === 0) || ((n % 5) === 0))) {total += n;}
+n++;}
+    return total;
+}
+
+function square(x) {
+    return (x * x);
+}
+
+function cube(x) {
+    return (x ** 3);
+}
+

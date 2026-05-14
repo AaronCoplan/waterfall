@@ -164,7 +164,8 @@ public class JavaScriptBackend implements CodeGenerator {
                     case "and": jsOp = "&&"; break;
                     case "or":  jsOp = "||"; break;
                     case "equals": jsOp = "==="; break;
-                    default: throw new RuntimeException("Unrecognized binary op " + e.op);
+                    case "^": jsOp = "**"; break;  // Waterfall uses ^ for power; JS uses **
+                    default: jsOp = e.op; break;   // +, -, *, /, %, <, >, <=, >=
                 }
                 return "(" + emitExpression(e.left) + " " + jsOp + " " + emitExpression(e.right) + ")";
             }

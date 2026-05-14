@@ -114,6 +114,10 @@ expression
     | arrayIndex
     | name=ID
     | expression CASTAS castTarget=type
+    | left=expression op=POW right=expression
+    | left=expression op=(TIMES | DIVIDE | MOD) right=expression
+    | left=expression op=(PLUS | MINUS) right=expression
+    | left=expression op=(LESS_THAN | GREATER_THAN | LESS_THAN_EQUAL | GREATER_THAN_EQUAL) right=expression
     | left=expression op=EQUALS_OP right=expression
     | left=expression op=AND right=expression
     | left=expression op=OR right=expression

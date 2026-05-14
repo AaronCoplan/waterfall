@@ -180,12 +180,17 @@ public class CBackend implements CodeGenerator {
             case CAST:
                 return "((" + cType(e.castTargetType) + ")(" + emitExpression(e.castOperand) + "))";
             case BINARY_OP: {
+                if ("^".equals(e.op)) {
+                    // C: ^ is XOR, not power. README defines ^ as power, so lower to pow().
+                    // TODO(audit): also needs `#include <math.h>` and `-lm` at link time.
+                    return "pow(" + emitExpression(e.left) + ", " + emitExpression(e.right) + ")";
+                }
                 String cOp;
                 switch (e.op) {
                     case "and": cOp = "&&"; break;
                     case "or":  cOp = "||"; break;
                     case "equals": cOp = "=="; break;
-                    default: throw new RuntimeException("Unrecognized binary op " + e.op);
+                    default: cOp = e.op; break;  // +, -, *, /, %, <, >, <=, >=
                 }
                 return "(" + emitExpression(e.left) + " " + cOp + " " + emitExpression(e.right) + ")";
             }

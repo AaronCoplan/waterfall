@@ -1,0 +1,21 @@
+module ArithmeticModule {
+    func sumOfMultiples(int limit) returns int {
+        int total = 0
+        int n = 0
+        while(n < limit) {
+            if(n % 3 equals 0 or n % 5 equals 0) {
+                total += n
+            }
+            n++
+        }
+        return total
+    }
+
+    func square(int x) returns int {
+        return x * x
+    }
+
+    func cube(int x) returns int {
+        return x ^ 3
+    }
+}
