@@ -25,6 +25,11 @@ statement
     | forBlock
     | whileBlock
     | returnStatement
+    | incrementStatement
+    ;
+
+incrementStatement
+    : name=ID op=(PLUS_PLUS | MINUS_MINUS) NEWLINE+
     ;
 
 whileBlock

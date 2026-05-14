@@ -8,6 +8,7 @@ import com.aaroncoplan.waterfall.compiler.statements.FunctionCallData;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionCallStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData;
 import com.aaroncoplan.waterfall.compiler.statements.IfBlockData;
+import com.aaroncoplan.waterfall.compiler.statements.IncrementStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.LambdaFunctionData;
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst;
 import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
@@ -119,6 +120,13 @@ public class PythonBackend implements CodeGenerator {
     @Override
     public String emitReturnStatement(ReturnStatementData s) {
         return s.value == null ? "return" : "return " + emitExpression(s.value);
+    }
+
+    @Override
+    public String emitIncrementStatement(IncrementStatementData s) {
+        // Python lacks ++/--; lower to augmented assignment.
+        String delta = "++".equals(s.op) ? "+= 1" : "-= 1";
+        return s.name + " " + delta;
     }
 
     @Override

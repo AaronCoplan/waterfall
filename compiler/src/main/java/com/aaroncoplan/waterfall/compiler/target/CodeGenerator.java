@@ -8,6 +8,7 @@ import com.aaroncoplan.waterfall.compiler.statements.FunctionCallData;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionCallStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData;
 import com.aaroncoplan.waterfall.compiler.statements.IfBlockData;
+import com.aaroncoplan.waterfall.compiler.statements.IncrementStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.LambdaFunctionData;
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst;
 import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
@@ -38,6 +39,7 @@ public interface CodeGenerator {
     String emitWhileBlock(WhileBlockData s);
     String emitFunctionCallStatement(FunctionCallStatementData s);
     String emitReturnStatement(ReturnStatementData s);
+    String emitIncrementStatement(IncrementStatementData s);
 
     // Expressions and helpers
     String emitExpression(ExpressionData e);

@@ -63,6 +63,10 @@ TIMES_EQUALS: '*=';
 DIVIDE_EQUALS: '/=';
 MOD_EQUALS: '%=';
 
+// increment / decrement
+PLUS_PLUS: '++';
+MINUS_MINUS: '--';
+
 // comparators
 LESS_THAN: '<';
 GREATER_THAN: '>';

@@ -8,6 +8,7 @@ import com.aaroncoplan.waterfall.compiler.statements.FunctionCallData;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionCallStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData;
 import com.aaroncoplan.waterfall.compiler.statements.IfBlockData;
+import com.aaroncoplan.waterfall.compiler.statements.IncrementStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.LambdaFunctionData;
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst;
 import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
@@ -110,6 +111,11 @@ public class LegacyTextBackend implements CodeGenerator {
     @Override
     public String emitReturnStatement(ReturnStatementData s) {
         return s.value == null ? "return;" : "return " + emitExpression(s.value) + ";";
+    }
+
+    @Override
+    public String emitIncrementStatement(IncrementStatementData s) {
+        return s.name + s.op + ";";
     }
 
     @Override

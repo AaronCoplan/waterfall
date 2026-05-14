@@ -1,0 +1,12 @@
+// module IncrementModule
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+void count(void) {
+    int n = 0;
+    n++;
+    n++;
+    n--;
+}
+

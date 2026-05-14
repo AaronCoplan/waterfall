@@ -4,6 +4,7 @@ import com.aaroncoplan.waterfall.generated.WaterfallParser;
 import com.aaroncoplan.waterfall.compiler.statements.ForBlockData;
 import com.aaroncoplan.waterfall.compiler.statements.FunctionCallStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.IfBlockData;
+import com.aaroncoplan.waterfall.compiler.statements.IncrementStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData;
 import com.aaroncoplan.waterfall.compiler.statements.WhileBlockData;
 import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData;
@@ -42,6 +43,9 @@ public final class StatementDispatcher {
         }
         if (stmt.returnStatement() != null) {
             return new ReturnStatementData(filePath, stmt.returnStatement());
+        }
+        if (stmt.incrementStatement() != null) {
+            return new IncrementStatementData(filePath, stmt.incrementStatement());
         }
         throw new RuntimeException("Unrecognized statement");
     }
