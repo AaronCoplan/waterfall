@@ -1,6 +1,7 @@
 package com.aaroncoplan.waterfall.compiler.statements;
 
 import com.aaroncoplan.waterfall.generated.WaterfallParser;
+import com.aaroncoplan.waterfall.compiler.statements.helpers.StatementDispatcher;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement;
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException;
@@ -16,52 +17,41 @@ public class FunctionImplementationData extends TranslatableStatement {
     public final List<Pair<String, String>> typedArguments;
     public final List<TranslatableStatement> statements;
 
-    public FunctionImplementationData(String filePath, WaterfallParser.FunctionImplementationContext functionImplementationContext) {
-        super(filePath, functionImplementationContext);
-        this.name = functionImplementationContext.name.getText();
-        this.returnType = functionImplementationContext.returnType == null ? null : functionImplementationContext.returnType.getText();
-        List<WaterfallParser.TypedArgumentContext> typedArgumentsContext = functionImplementationContext.typedArgumentList() == null ? Collections.emptyList() : functionImplementationContext.typedArgumentList().typedArgument();
-        this.typedArguments = typedArgumentsContext.stream().map(arg -> new Pair<>(arg.type().getText(), arg.name.getText())).collect(Collectors.toList());
-        List<WaterfallParser.StatementContext> statementContexts = functionImplementationContext.statement() == null ? Collections.emptyList() : functionImplementationContext.statement();
-        this.statements = statementContexts.stream().map(statementContext -> {
-            if(statementContext.typedVariableDeclarationAndAssignment() != null) {
-                return new TypedVariableDeclarationAndAssignmentData(filePath, statementContext.typedVariableDeclarationAndAssignment());
-            } else if(statementContext.untypedVariableDeclarationAndAssignment() != null) {
-                return new UntypedVariableDeclarationAndAssignmentData(filePath, statementContext.untypedVariableDeclarationAndAssignment());
-            } else if(statementContext.variableAssignment() != null) {
-                return new VariableAssignmentData(filePath, statementContext.variableAssignment());
-            } else {
-                throw new RuntimeException("UNRECOGNIZED STATEMENT");
-            }
-        }).collect(Collectors.toList());
+    public FunctionImplementationData(String filePath, WaterfallParser.FunctionImplementationContext ctx) {
+        super(filePath, ctx);
+        this.name = ctx.name.getText();
+        this.returnType = ctx.returnType == null ? null : ctx.returnType.getText();
+        List<WaterfallParser.TypedArgumentContext> typedArgumentsContext = ctx.typedArgumentList() == null
+                ? Collections.emptyList()
+                : ctx.typedArgumentList().typedArgument();
+        this.typedArguments = typedArgumentsContext.stream()
+                .map(arg -> new Pair<>(arg.type().getText(), arg.name.getText()))
+                .collect(Collectors.toList());
+        this.statements = StatementDispatcher.fromStatementBlock(filePath, ctx.statementBlock());
     }
 
     @Override
     public VerificationResult verify(SymbolTable symbolTable) {
-        if(returnType != null && !"int".equals(returnType)) {
+        if (returnType != null && !"int".equals(returnType)) {
+            // TODO(audit): only "int" return is allowed at phase 1; phase 5 relaxes this.
             return new VerificationResult(false, "Illegal return type " + returnType);
         }
 
-        // create a symbol table and declare the arguments
         SymbolTable functionSymbolTable = new SymbolTable(symbolTable);
-        for(Pair<String, String> arg : typedArguments) {
-            if(!"int".equals(arg.firstVal)) {
+        for (Pair<String, String> arg : typedArguments) {
+            if (!"int".equals(arg.firstVal)) {
                 return new VerificationResult(false, "Illegal argument type " + arg.firstVal + " for arg " + arg.secondVal);
-            } else {
-                try {
-                    functionSymbolTable.declare(arg.secondVal, arg.firstVal);
-                } catch(DuplicateDeclarationException e) {
-                    return new VerificationResult(false, "Could not declare function arg " + arg.secondVal + ", name already taken!");
-                }
+            }
+            try {
+                functionSymbolTable.declare(arg.secondVal, arg.firstVal);
+            } catch (DuplicateDeclarationException e) {
+                return new VerificationResult(false, "Could not declare function arg " + arg.secondVal + ", name already taken!");
             }
         }
 
-        // translate code within function body
-        for(TranslatableStatement translatableStatement : statements) {
-            VerificationResult verificationResult = translatableStatement.verify(functionSymbolTable);
-            if(!verificationResult.isSuccessful()) {
-                return verificationResult;
-            }
+        for (TranslatableStatement statement : statements) {
+            VerificationResult r = statement.verify(functionSymbolTable);
+            if (!r.isSuccessful()) return r;
         }
         return new VerificationResult(true, null);
     }
@@ -69,8 +59,12 @@ public class FunctionImplementationData extends TranslatableStatement {
     @Override
     public String translate() {
         final String translatedReturnType = returnType == null ? "void" : returnType;
-        final String args = typedArguments.stream().map(arg -> String.format("%s %s", arg.firstVal, arg.secondVal)).collect(Collectors.joining(", "));
-        final String functionBody = statements.stream().map(TranslatableStatement::translate).collect(Collectors.joining("\n"));
-        return String.format("%s %s(%s) {%s}", translatedReturnType, name, args, functionBody);
+        final String args = typedArguments.stream()
+                .map(arg -> String.format("%s %s", arg.firstVal, arg.secondVal))
+                .collect(Collectors.joining(", "));
+        final String body = statements.stream()
+                .map(TranslatableStatement::translate)
+                .collect(Collectors.joining("\n"));
+        return String.format("%s %s(%s) {%s}", translatedReturnType, name, args, body);
     }
 }

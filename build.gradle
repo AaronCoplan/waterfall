@@ -19,6 +19,10 @@ configure(subprojects) {
         testImplementation 'junit:junit:4.12'
     }
 
+    tasks.withType(AbstractCopyTask).configureEach {
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    }
+
     // show test results in terminal
     test {
         testLogging {

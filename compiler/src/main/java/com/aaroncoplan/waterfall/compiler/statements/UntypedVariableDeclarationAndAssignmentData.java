@@ -6,14 +6,30 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 
 public class UntypedVariableDeclarationAndAssignmentData extends TranslatableStatement {
-    public final String name, type;
-    public final int value;
+    public final String name;
+    public final String inferredType;
+    public final ExpressionData value;
 
-    public UntypedVariableDeclarationAndAssignmentData(final String filePath, WaterfallParser.UntypedVariableDeclarationAndAssignmentContext untypedVariableDeclarationAndAssignmentContext) {
-        super(filePath, untypedVariableDeclarationAndAssignmentContext);
-        this.name = untypedVariableDeclarationAndAssignmentContext.name.getText();
-        this.type = "int";
-        this.value = Integer.parseInt(untypedVariableDeclarationAndAssignmentContext.INT_LITERAL().getText());
+    public UntypedVariableDeclarationAndAssignmentData(final String filePath, WaterfallParser.UntypedVariableDeclarationAndAssignmentContext ctx) {
+        super(filePath, ctx);
+        this.name = ctx.name.getText();
+        this.value = new ExpressionData(filePath, ctx.expression());
+        this.inferredType = inferType(this.value);
+    }
+
+    private static String inferType(ExpressionData expr) {
+        switch (expr.kind) {
+            case INT_LITERAL: return "int";
+            case DEC_LITERAL:
+                // TODO(audit): `dec` not yet relaxed by the verifier; phase 5 adds it.
+                return "int";
+            case STRING_LITERAL:
+                // TODO(audit): no string type yet; phase 5 will add `char[]` / `char *`.
+                return "int";
+            default:
+                // TODO(audit): cross-expression type inference not implemented; default int.
+                return "int";
+        }
     }
 
     @Override
@@ -23,6 +39,6 @@ public class UntypedVariableDeclarationAndAssignmentData extends TranslatableSta
 
     @Override
     public String translate() {
-        return String.format("%s %s = %d;", type, name, value);
+        return String.format("%s %s = %s;", inferredType, name, value.translate());
     }
 }

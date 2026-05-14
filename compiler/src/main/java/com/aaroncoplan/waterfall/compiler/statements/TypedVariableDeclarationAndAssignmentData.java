@@ -7,26 +7,26 @@ import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 
 public class TypedVariableDeclarationAndAssignmentData extends TranslatableStatement {
     public final String name, type;
-    public final int value;
+    public final ExpressionData value;
 
-    public TypedVariableDeclarationAndAssignmentData(String filePath, WaterfallParser.TypedVariableDeclarationAndAssignmentContext typedVariableDeclarationAndAssignmentContext) {
-        super(filePath, typedVariableDeclarationAndAssignmentContext);
-        this.name = typedVariableDeclarationAndAssignmentContext.name.getText();
-        this.type = typedVariableDeclarationAndAssignmentContext.type().getText();
-        this.value = Integer.parseInt(typedVariableDeclarationAndAssignmentContext.INT_LITERAL().getText());
+    public TypedVariableDeclarationAndAssignmentData(String filePath, WaterfallParser.TypedVariableDeclarationAndAssignmentContext ctx) {
+        super(filePath, ctx);
+        this.name = ctx.name.getText();
+        this.type = ctx.type().getText();
+        this.value = new ExpressionData(filePath, ctx.expression());
     }
 
     @Override
     public VerificationResult verify(SymbolTable symbolTable) {
-        if("int".equals(type)) {
-            return new VerificationResult(true, null);
-        } else {
+        if (!"int".equals(type)) {
+            // TODO(audit): only "int" is allowed at phase 1; phase 5 relaxes for dec/bool/char.
             return new VerificationResult(false, "Type should be int");
         }
+        return new VerificationResult(true, null);
     }
 
     @Override
     public String translate() {
-        return String.format("%s %s = %d;", type, name, value);
+        return String.format("%s %s = %s;", type, name, value.translate());
     }
 }
