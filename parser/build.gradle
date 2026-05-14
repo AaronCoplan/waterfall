@@ -28,6 +28,8 @@ sourceSets.main.java.srcDirs += file("${project.buildDir}/generated-src/main/jav
 // either Kotlin or Java compile runs.
 compileKotlin.dependsOn generateGrammarSource
 compileJava.dependsOn generateGrammarSource
+compileTestKotlin.dependsOn generateTestGrammarSource
+compileTestJava.dependsOn generateTestGrammarSource
 idea {
     module {
         generatedSourceDirs += file("${project.buildDir}/generated-src/main/java")
