@@ -1,0 +1,6 @@
+// module VariablesAndFunctionsModule
+const x = 4;
+let y = 55;
+
+function add(a, b) {}
+

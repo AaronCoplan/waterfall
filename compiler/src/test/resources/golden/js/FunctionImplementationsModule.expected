@@ -1,0 +1,7 @@
+// module FunctionImplementationsModule
+function myFunc() {}
+
+function myFunc2(arg, arg2) {}
+
+function myFunc3(arg1, arg2, arg3) {}
+

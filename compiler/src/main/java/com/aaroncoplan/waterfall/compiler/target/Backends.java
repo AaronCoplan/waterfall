@@ -16,6 +16,7 @@ public final class Backends {
     private static final Map<String, Supplier<CodeGenerator>> REGISTRY = new LinkedHashMap<>();
     static {
         REGISTRY.put("legacy", LegacyTextBackend::new);
+        REGISTRY.put("js", JavaScriptBackend::new);
     }
 
     private Backends() {}

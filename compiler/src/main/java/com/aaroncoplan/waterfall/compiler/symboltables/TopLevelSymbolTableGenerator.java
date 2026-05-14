@@ -17,7 +17,7 @@ public class TopLevelSymbolTableGenerator {
                     symbolTable.declare(typedVariableDeclarationAndAssignmentData.name, typedVariableDeclarationAndAssignmentData.type);
                 } catch (DuplicateDeclarationException e) {
                     final SourcePosition sourcePosition = typedVariableDeclarationAndAssignmentData.getSourcePosition();
-                    System.out.format("Duplicate declaration when declaring %s in %s", typedVariableDeclarationAndAssignmentData.name, sourcePosition.generateMessage()).println();
+                    System.err.format("Duplicate declaration when declaring %s in %s%n", typedVariableDeclarationAndAssignmentData.name, sourcePosition.generateMessage());
                     return null;
                 }
 
@@ -27,7 +27,7 @@ public class TopLevelSymbolTableGenerator {
                     symbolTable.declare(functionImplementationData.name, functionImplementationData.returnType);
                 } catch (DuplicateDeclarationException e) {
                     final SourcePosition sourcePosition = functionImplementationData.getSourcePosition();
-                    System.out.format("Duplicate declaration when declaring %s in %s", functionImplementationData.name, sourcePosition.generateMessage()).println();
+                    System.err.format("Duplicate declaration when declaring %s in %s%n", functionImplementationData.name, sourcePosition.generateMessage());
                     return null;
                 }
             }

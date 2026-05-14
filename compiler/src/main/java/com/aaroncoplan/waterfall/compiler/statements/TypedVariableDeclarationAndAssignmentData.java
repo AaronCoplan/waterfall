@@ -6,15 +6,28 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult;
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable;
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class TypedVariableDeclarationAndAssignmentData extends TranslatableStatement {
     public final String name, type;
+    public final List<String> modifiers;
     public final ExpressionData value;
 
     public TypedVariableDeclarationAndAssignmentData(String filePath, WaterfallParser.TypedVariableDeclarationAndAssignmentContext ctx) {
         super(filePath, ctx);
         this.name = ctx.name.getText();
         this.type = ctx.type().getText();
+        this.modifiers = ctx.modifier() == null
+                ? Collections.emptyList()
+                : Collections.unmodifiableList(
+                    ctx.modifier().stream().map(m -> m.getText()).collect(Collectors.toList()));
         this.value = new ExpressionData(filePath, ctx.expression());
+    }
+
+    public boolean isImmutable() {
+        return modifiers.contains("const") || modifiers.contains("imm");
     }
 
     @Override

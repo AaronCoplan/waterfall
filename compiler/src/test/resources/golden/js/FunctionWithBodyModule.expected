@@ -1,0 +1,9 @@
+// module FunctionWithBodyModule
+let flag = 0;
+
+function doSomething() {
+    let x = 14;
+    flag = 1;
+    let y = 7;
+}
+
