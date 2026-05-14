@@ -17,6 +17,7 @@ public final class Backends {
     static {
         REGISTRY.put("legacy", LegacyTextBackend::new);
         REGISTRY.put("js", JavaScriptBackend::new);
+        REGISTRY.put("python", PythonBackend::new);
     }
 
     private Backends() {}

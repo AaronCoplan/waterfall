@@ -1,0 +1,12 @@
+# module FunctionImplementationsModule
+def myFunc():
+    pass
+
+
+def myFunc2(arg, arg2):
+    pass
+
+
+def myFunc3(arg1, arg2, arg3):
+    pass
+

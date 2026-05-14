@@ -1,0 +1,7 @@
+# module VariablesAndFunctionsModule
+x = 4
+y = 55
+
+def add(a, b):
+    pass
+
