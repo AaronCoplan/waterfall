@@ -177,9 +177,7 @@ The mitigation is **not** a single tool or threshold — it's a tool-agnostic pe
 
 **Why this beats a mutation-test slogan**: tool-agnostic (R9 mitigation — survives Claude/Codex quality changes); intrinsically multi-signal (much harder to satisfice than a single threshold); operationally enforceable (each leg has a clear pass/fail per phase).
 
-**The Aaron-writes-the-tests discipline**: verifier-correctness tests are Aaron-authored, not AI-authored. Trip-wire: any verifier-correctness test file whose only author is AI = red flag.
-
-Discipline documented at `notes/VERIFICATION-DISCIPLINE.md` (P10 deliverable).
+The triad legs are the discipline. AI can write any of them, including the property-test invariants and the differential-oracle examples — *but* the legs must come from different prompt contexts than the implementation, so that the verification signal is independent of the implementation reasoning. Discipline documented at `notes/VERIFICATION-DISCIPLINE.md` (P10 deliverable).
 
 ---
 

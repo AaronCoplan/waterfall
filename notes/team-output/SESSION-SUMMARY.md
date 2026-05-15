@@ -73,8 +73,8 @@ Plus `notes/PHASE-10-design.md` — the ~1920-line load-bearing P10 implementati
 
 ## A few things you should know
 
-- **The single weekly signal that matters**: "Did Aaron write at least one verifier-correctness property test this week?" If "no" for 2 weeks running, the project is in R8 territory (verification overfitting). Stop feature work and do a triad review. This is documented in the playbook §5.
-- **Aaron writes the tests for verifier-correctness paths**, not AI. AI may write backend-output tests, parser tests, examples. Trip-wire: any test file under `verifier/` or `symboltables/` whose only author is AI = red flag.
+- **The single weekly signal that matters**: "Did any leg of the verification triad surface an issue this week?" If "no" across all three legs for 2 weeks running, the project is in R8 territory (verification overfitting / triad-is-theater). Stop feature work and do a triad review. Documented in playbook §5.
+- **Prompt-context independence is the verification discipline.** AI can write any leg of the triad — property tests, oracle examples, adversarial inputs — but verification artifacts must come from a separate session than the one that wrote the implementation. Shared SPEC, separate chats. Aaron's role on verifier-correctness paths is PR review, not authorship.
 - **P10 spec quality is load-bearing**. The 13 PITFALL callouts in `notes/PHASE-10-design.md` map to AI-failure-mode prevention. The 7 ESCALATE items name the exact ambiguities AI implementers should NOT silently resolve. Read them before the first plan-mode session.
 - **All commits in this session are no-co-author per your CLAUDE.md**. If you see a Co-Authored-By trailer anywhere, that's a bug; flag and I'll fix.
 

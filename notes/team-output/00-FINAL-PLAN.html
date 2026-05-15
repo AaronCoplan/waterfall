@@ -309,7 +309,7 @@
   </tbody>
 </table>
 
-<p><strong>The Aaron-writes-the-tests discipline</strong>: verifier-correctness tests are Aaron-authored, not AI-authored. Trip-wire: any verifier-correctness test file with only AI authorship = red flag.</p>
+<p>The triad legs are the discipline. AI can write any of them, including the property-test invariants and the differential-oracle examples — <em>but</em> the legs must come from different prompt contexts than the implementation, so the verification signal stays independent of the implementation reasoning.</p>
 
 <h2 id="readonly">8 · The headline feature — <code>readonly</code> (unified)</h2>
 

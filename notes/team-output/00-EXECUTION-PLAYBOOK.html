@@ -208,11 +208,11 @@ The single dominant risk this playbook is built around is <strong>R8 / failure-m
   <thead><tr><th>Phase</th><th>Oracle</th><th>Mechanism</th></tr></thead>
   <tbody>
     <tr><td>P10</td><td>Prior <code>*Data</code> AST emission + existing golden test suite</td><td>For every example, old AST and new IR produce byte-equivalent emission per backend. Zero golden diffs is the gate.</td></tr>
-    <tr><td>P11</td><td>Aaron-authored hand-checked type-inference cases</td><td>Aaron writes 20+ cases like <code>y := add(1, 2)</code> infers <code>y: int</code>; reject any disagreement.</td></tr>
+    <tr><td>P11</td><td>Hand-checked type-inference cases</td><td>20+ cases like <code>y := add(1, 2)</code> infers <code>y: int</code>. Cases drafted in a fresh-session prompt against the SPEC, then reviewed by Aaron before being canonized as the oracle. Reject any disagreement.</td></tr>
     <tr><td>P11.5</td><td>Cross-target execution consistency</td><td><code>gcc -o exe && ./exe</code> over the runtime-verifiable subset. Goldens captured under <code>compiler/src/test/resources/runtime-golden/c/</code>.</td></tr>
     <tr><td>P12</td><td>Cross-target runtime consistency on <code>match</code> + <code>Result</code> chains</td><td>Same generator drives JS/Python/C; all three must produce identical stdout.</td></tr>
     <tr><td>P13</td><td>Per-stdlib-function differential vs. native interpreter</td><td>Library-author niche cannot tolerate stdlib drift.</td></tr>
-    <tr><td>P14</td><td>Full publishing pipeline end-to-end</td><td>Install in fresh containers, run smoke tests, compare across artifacts. Aaron-authored smoke tests.</td></tr>
+    <tr><td>P14</td><td>Full publishing pipeline end-to-end</td><td>Install in fresh containers, run smoke tests, compare across artifacts. Smoke tests cover idiomatic-output expectations (source maps resolve, <code>.pyi</code> is well-formed, C header compiles in hello-world).</td></tr>
     <tr><td>P15</td><td>JS <code>Array</code>/<code>Map</code> natives + Python <code>list</code>/<code>dict</code> natives</td><td>Property tests on <code>Vec&lt;T&gt;</code>/<code>Map&lt;K, V&gt;</code> use natives as known-good.</td></tr>
     <tr><td>P16</td><td>All prior oracles + 1M fuzz inputs (no crashes), 1K well-typed (no false-rejects)</td><td>Full-spec adversarial session against <code>SPEC.md</code> v1.0.</td></tr>
   </tbody>
@@ -230,15 +230,14 @@ The single dominant risk this playbook is built around is <strong>R8 / failure-m
   </tbody>
 </table>
 
-<h3>The discipline rule: who writes what</h3>
+<h3>The discipline rule: prompt-context independence</h3>
 <div class="key-banner">
-<strong>Aaron writes the tests; AI does not — applied selectively.</strong>
+The triad is the discipline. AI can write any of the three legs, <em>including</em> property-test invariants and differential-oracle examples. The non-negotiable rule is <strong>prompt-context independence</strong>: the agent that writes a verification artifact MUST run in a separate session from the agent that wrote the corresponding implementation, with no shared chat history. Same model, different conversation.
 <ul>
-  <li><strong>Aaron writes</strong>: property-test invariants (high leverage, one invariant catches many bugs), differential-test oracles, contract tests for verifier-correctness paths (anything in <code>compiler/src/main/kotlin/.../verifier/</code> and <code>.../symboltables/SymbolTable.kt</code>).</li>
-  <li><strong>AI writes</strong>: example-based tests inside Aaron-authored invariants, trivial backend-output tests, adversarial-input generation in §3 leg 3.</li>
-  <li><strong>Trip-wire</strong>: any test file under <code>compiler/src/test/.../verifier/</code> or <code>.../symboltables/</code> whose <code>git log --follow</code> shows AI as sole author = red flag.</li>
+  <li><strong>Implementation session</strong>: has the SPEC + the current code in context. Writes the impl.</li>
+  <li><strong>Verification session</strong>: has the SPEC + a <em>blank</em> code context. Writes property tests, oracle examples, or adversarial inputs against the SPEC, not against the impl.</li>
 </ul>
-Weekly time budget: ~8 h/week of contract-test design + adversarial review (Aaron's hands on keyboard).
+This preserves the "tests pass, code is wrong" defense: if both sessions share chat context, they share the same silent assumptions and the verification overfit becomes invisible. Aaron's role is the <em>reviewer</em>: read the verification artifacts as PR review, especially for verifier-correctness paths. Weekly time budget: ~4 h/week of focused review + ~2 h/week running fresh-session adversarial reviews.
 </div>
 
 <h2>§4 — The first 100 hours</h2>
@@ -287,7 +286,7 @@ Weekly time budget: ~8 h/week of contract-test design + adversarial review (Aaro
 <h2>§5 — Signals and dashboards</h2>
 
 <div class="key-banner">
-<strong>The single load-bearing weekly signal:</strong> Did Aaron write at least one verifier-correctness property test or contract test this week? Track in <code>IMPLEMENTATION-LOG.md</code>. <strong>If "no" for 2 weeks running: the project is in R8 territory. Stop feature work; do a full triad design review for the current phase.</strong> This is the dominant tell that the AI-augmented compression has gone fake.
+<strong>The single load-bearing weekly signal:</strong> Did any leg of the verification triad surface an issue this week? A healthy week sees at least one of: a property-test failure (caught a real bug), a differential-oracle disagreement, or an adversarial-input "compiler-broke" case. <strong>If "no" across all three legs for 2 weeks running: the triad is theater. Stop feature work; do a full triad design review — likely the property invariants are too loose, the oracle isn't strict enough, or the adversarial prompt is too tame.</strong> This is the dominant tell that the AI-augmented compression has gone fake.
 </div>
 
 <h3>Leading vs. lagging indicators</h3>
@@ -296,7 +295,7 @@ Weekly time budget: ~8 h/week of contract-test design + adversarial review (Aaro
   <tbody>
     <tr><td>Spec-stability rate (spec edits per plan-mode loop)</td><td>Leading</td><td>Falling toward 0 over a phase</td><td>Stop. Restructure SPEC section, not sentences</td></tr>
     <tr><td>Plan-mode iterations per feature</td><td>Leading</td><td>2–3 average; 3–5 OK for novel</td><td>1 (too thin) or &gt;5 (under-specified) → §1 trip-wires</td></tr>
-    <tr><td>"Aaron wrote a verifier-correctness test this week"</td><td>Leading</td><td>Yes, every week</td><td>R8 stop-the-line if "no" 2 weeks running</td></tr>
+    <tr><td>"Verification triad surfaced any issue this week"</td><td>Leading</td><td>Yes, every week (any leg)</td><td>R8 stop-the-line if "no" across all three legs for 2 weeks running</td></tr>
     <tr><td>Adversarial "compiler-broke" finds per phase</td><td>Leading</td><td>1–5 (triad working)</td><td>0 = make prompt sharper; &gt;10 = impl quality slipping</td></tr>
     <tr><td>Skeptic find rate on phase exit</td><td>Leading</td><td>≥30% of phase exits surface ≥1 finding</td><td>0% across 2 phases → re-frame skeptic context</td></tr>
     <tr><td>Phase calendar slippage</td><td>Lagging</td><td>≤25% of phase budget</td><td>&gt;25% → §6 recovery</td></tr>
