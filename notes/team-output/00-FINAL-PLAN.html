@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waterfall — The Plan (v2)</title>
+<style>
+  :root {
+    --text: #1a1a1a;
+    --muted: #555;
+    --bg: #fbfaf6;
+    --rule: #d8d4c8;
+    --accent: #1c4587;
+    --code-bg: #f0ece1;
+    --table-stripe: #f4f1e8;
+    --warn: #b8860b;
+  }
+  html { font-size: 17px; }
+  body {
+    margin: 0 auto;
+    max-width: 760px;
+    padding: 3rem 1.25rem 6rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Iowan Old Style", "Charter", "Source Serif Pro", Georgia, serif;
+    line-height: 1.55;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Inter", "Helvetica Neue", system-ui, sans-serif;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  h1 { font-size: 2.2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.5rem; margin: 3rem 0 0.75rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); }
+  h3 { font-size: 1.15rem; margin: 2rem 0 0.5rem; }
+  h4 { font-size: 1rem; margin: 1.5rem 0 0.5rem; color: var(--muted); }
+  .subtitle { color: var(--muted); font-size: 1.05rem; font-style: italic; margin: 0.25rem 0 2rem; }
+  p { margin: 0.6rem 0; }
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(28, 69, 135, 0.25); }
+  a:hover { border-bottom-color: var(--accent); }
+  ul, ol { padding-left: 1.5rem; margin: 0.6rem 0; }
+  li { margin: 0.25rem 0; }
+  blockquote {
+    margin: 1rem 0;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid var(--accent);
+    background: var(--code-bg);
+    font-style: italic;
+  }
+  code {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.92em;
+    background: var(--code-bg);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+  }
+  pre {
+    background: #1f2330;
+    color: #eaeaea;
+    padding: 0.9rem 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0.75rem 0;
+  }
+  pre code { background: transparent; color: inherit; padding: 0; font-size: 0.9rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+    font-size: 0.93rem;
+  }
+  th, td {
+    border: 1px solid var(--rule);
+    padding: 0.45rem 0.7rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--code-bg);
+    font-family: "Inter", "Helvetica Neue", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.01em;
+  }
+  tbody tr:nth-child(even) td { background: var(--table-stripe); }
+  hr { border: 0; height: 1px; background: var(--rule); margin: 2.5rem 0; }
+  .meta-line {
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0 0 1.5rem;
+  }
+  .tldr {
+    background: var(--code-bg);
+    border-left: 3px solid var(--accent);
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    border-radius: 0 3px 3px 0;
+  }
+  .tldr p:first-child { margin-top: 0; }
+  .tldr p:last-child { margin-bottom: 0; }
+  .star { color: var(--warn); font-weight: 700; }
+  .footer-meta {
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    margin-top: 4rem;
+    text-align: center;
+  }
+  .toc {
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 0.92rem;
+    background: var(--code-bg);
+    padding: 1rem 1.25rem;
+    border-radius: 4px;
+    margin: 1.5rem 0 2.5rem;
+  }
+  .toc ol { padding-left: 1.5rem; margin: 0.3rem 0 0; }
+  .toc li { margin: 0.15rem 0; }
+</style>
+</head>
+<body>
+
+<h1>Waterfall — The Plan (v2, post-iteration)</h1>
+<p class="subtitle">Strategic plan for turning the transpiler into a sustained niche language. Companion: <code>00-EXECUTION-PLAYBOOK.html</code>.</p>
+
+<p class="meta-line">Updated 2026-05-15 · after iteration with user — 12 decisions answered or deferred · 2 adversarial rounds · 4 document rewrites</p>
+
+<div class="tldr">
+<p><strong>Recommendations in one breath.</strong> Aim for the upper end of "sustained niche" (Gleam / Crystal / Nim class), serving <em>polyglot library authors who ship one algorithm to many runtimes</em>, with Gleam-grade language-design taste. Build via AI-augmented spec-first development that compresses <em>technical completeness</em> to 5–7 months of weekend/evening work while keeping the <em>adoption-bound</em> legitimacy milestones on a 1–3 year calendar. Ship <code>readonly</code> Form B per the unified design; treat it as one feature among many, not the headline pitch.</p>
+</div>
+
+<div class="toc">
+<strong>On this page</strong>
+<ol>
+  <li><a href="#mikes">Two users named Mike</a></li>
+  <li><a href="#glance">Recommendations at-a-glance</a></li>
+  <li><a href="#decisions">The twelve decisions</a></li>
+  <li><a href="#legitimate">What "legitimate" means here</a></li>
+  <li><a href="#niche">The niche: library-author + Gleam-vibe</a></li>
+  <li><a href="#roadmap">The roadmap</a></li>
+  <li><a href="#triad">The verification triad</a></li>
+  <li><a href="#readonly">The headline feature — <code>readonly</code></a></li>
+  <li><a href="#features">The legitimacy-bar feature set</a></li>
+  <li><a href="#external"><code>@external</code></a></li>
+  <li><a href="#errors">JSON-first error format</a></li>
+  <li><a href="#polish">Idiomatic output polish</a></li>
+  <li><a href="#risks">Top risks</a></li>
+  <li><a href="#not">What Waterfall is NOT</a></li>
+  <li><a href="#first-commits">The first three commits</a></li>
+  <li><a href="#appendices">Appendices</a></li>
+</ol>
+</div>
+
+<h2 id="mikes">1 · Two users named Mike</h2>
+
+<h3>Mike, round 1 — early adopter</h3>
+<p><em>Mike, 28, JS background, weekend Rust dabbler. He installs Waterfall in 20 minutes, writes a small program, hits </em><code>verification failed</code><em>, has to scroll stderr to find the file:line. He hits another error with similar UX ten minutes later and switches back to TypeScript "for now."</em></p>
+<p><strong>The first thing that frustrates Mike is not <code>readonly</code>. It is the diagnostic UX.</strong> The audit calls this D5; the proposed roadmap puts the fix in P13. <em>Floor before ceiling.</em></p>
+
+<h3>Mike, round 2 — library author</h3>
+<p><em>Mike, library author of a CRC32 implementation he currently maintains in parallel JS/Python/C. He rewrites in Waterfall, runs </em><code>wfpm publish</code><em>. The npm package has no source maps. The Python package has no docstrings, no type stubs (</em><code>.pyi</code><em>). The C release has no metadata, no header guards, no version pin. He compares against </em><code>serde</code><em>'s Rust output. He uninstalls.</em></p>
+<p><strong>The library-author niche has a higher idiomatic-output bar than the teaching niche did.</strong> Source maps, <code>.d.ts</code>, docstrings, package metadata are not "polish for v1.1" — they are table stakes for v1.0 technical. Absorbed into P14.</p>
+
+<p>Both vignettes resolve to the same operating principle: <strong>invisible foundation work before visible features</strong>. The plan that follows is built around this.</p>
+
+<h2 id="glance">2 · Recommendations at-a-glance</h2>
+
+<p><strong>Thesis</strong>: Waterfall should aim for the upper end of "sustained niche" (Gleam / Crystal / Nim class), serving <strong>polyglot library authors writing focused code that ships across runtimes</strong>, with <strong>Gleam-grade language-design taste</strong> — built via <strong>AI-augmented spec-first development</strong> that compresses <em>technical completeness</em> to 5–7 months of weekend/evening work while keeping the <em>adoption-bound</em> legitimacy milestones on a 1–3 year calendar.</p>
+
+<p><strong>The defining choice</strong>: v1.0 splits into two milestones. Technical-complete is compressible; legitimacy is not.</p>
+
+<p><strong>The defining risk</strong>: verification overfitting ("tests pass, code is wrong"). Mitigated by a tool-agnostic per-phase triad (property tests + differential oracle + AI-generated adversarial inputs), not a mutation-test slogan.</p>
+
+<p><strong>The defining workflow</strong>: spec → plan-mode loop → adversarial review → implement. Klabnik's Rue, Carlini's C compiler, and Lambeau's Elo all followed it. Hejlsberg and Zig didn't and stopped.</p>
+
+<h2 id="decisions">3 · The twelve decisions</h2>
+
+<table>
+  <thead><tr><th>#</th><th>Decision</th><th>Answer</th></tr></thead>
+  <tbody>
+    <tr><td>Q1</td><td>Tier + niche</td><td><strong>Tier B upper end + library-author / Gleam-vibe combined</strong>; teaching = content marketing</td></tr>
+    <tr><td>Q2</td><td>Timeline</td><td><strong>5–7 months for v1.0 technical-complete</strong>; 12–24 months for v1.0 legitimacy; AI-augmented, spec-first</td></tr>
+    <tr><td>Q3</td><td>Second maintainer by P12</td><td><strong>Deferred</strong> — revisit during P16.5 adoption phase</td></tr>
+    <tr><td>Q4</td><td><code>readonly</code> as headline</td><td><strong>Implement first, decide later</strong>; default to "one of many features" per R5</td></tr>
+    <tr><td>Q5</td><td>Drop legacy backend</td><td><strong>Yes, now</strong> (pre-P10 cleanup)</td></tr>
+    <tr><td>Q6</td><td>WASM target</td><td><strong>Deferred</strong> — late P13 / P17; R6 monitoring active</td></tr>
+    <tr><td>Q7</td><td>Foundation-style name</td><td><strong>Deferred</strong> — stay personal repo; rebrand if success forces it</td></tr>
+    <tr><td>Q8</td><td>AI transparency posture</td><td><strong>Transparent but not leading</strong> — niche pitch on homepage, AI-augmented build in CONTRIBUTING + engineering blog</td></tr>
+    <tr><td>Q9</td><td>Adversarial review budget</td><td><strong>No budget</strong> — best product, fast; review discipline is the limit, not money</td></tr>
+    <tr><td>Q10</td><td>Error format</td><td><strong>JSON-first</strong> (JSONL on stderr by default; <code>--errors human</code> for the colorized formatter)</td></tr>
+    <tr><td>Q11</td><td>Property-based test framework</td><td><strong>Kotest</strong> (sealed-class arbiters, automatic shrinking, JUnit-4 runner integration)</td></tr>
+    <tr><td>Q12</td><td>Gradle T2 deprecation timing</td><td><strong>P10 housekeeping</strong> — clean log signal during AI-heavy sprint</td></tr>
+  </tbody>
+</table>
+
+<h2 id="legitimate">4 · What "legitimate" means here</h2>
+
+<table>
+  <thead><tr><th>Tier</th><th>Bar</th><th>Examples</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>A</td><td>Credible hobby project</td><td>lox, MiniJava</td><td><strong>Floor</strong> — already 60% there in LOC. Too low to be a north star.</td></tr>
+    <tr><td><strong>B (upper end)</strong></td><td>Sustained niche — LSP, spec, package manager, semantic value-add, ≥3 production users, 1.5k–3k stars</td><td>Gleam, Crystal, Nim, ReScript, PureScript</td><td><strong>Target.</strong> Library-author niches punch above star-count for staying power (Rust's <code>serde</code> analog).</td></tr>
+    <tr><td>C</td><td>Mainstream — corporate backing, conferences</td><td>TypeScript, Kotlin, Swift</td><td><strong>Rejected.</strong> No indie-built transpiled language has reached Tier C.</td></tr>
+  </tbody>
+</table>
+
+<p><strong>v1.0 splits into two milestones under AI-augmented build cadence.</strong> Empirical research shows technical completeness compresses dramatically; adoption / production-trust / community do not. So:</p>
+
+<ul>
+  <li><strong>v1.0 technical-complete (5–7 months, median 5–6):</strong> feature-complete per spec; spec frozen; LSP feature-complete; package manager working; all backends polished; verification triad in place; idiomatic output (source maps, <code>.d.ts</code>, docstrings, package metadata) included. <em>No production-user requirement.</em></li>
+  <li><strong>v1.0 legitimacy (12–24 months from kickoff):</strong> adds ≥3 production library users, ≥1,500 stars, ≥50 active community members, ≥1 conference/meetup talk, ≥1 case-study artifact. Calendar-bound — AI doesn't compress relationships.</li>
+</ul>
+
+<h3>Calendar milestones (AI-augmented evidence-based)</h3>
+
+<table>
+  <thead><tr><th>Horizon</th><th>Date</th><th>What ships</th></tr></thead>
+  <tbody>
+    <tr><td><strong>5–7 months</strong></td><td>2026-10 → 2026-12</td><td><strong>v1.0 technical-complete.</strong> Spec frozen at v0.9 → v1.0 after one adversarial review; LSP feature-complete; package manager works end-to-end; C backend output runtime-verified (not syntax-only); idiomatic output polish; first Aaron-authored library (CRC32 or similar) shipped to npm + PyPI + C header from one source.</td></tr>
+    <tr><td><strong>12 months</strong></td><td>2027-05</td><td><strong>First external library author trying real ports.</strong> ≥250 stars. The 6→12-month gap is <em>adoption work</em> — content marketing, case-study cultivation. AI doesn't help.</td></tr>
+    <tr><td><strong>24 months</strong></td><td>2028-05</td><td><strong>v1.0 legitimacy hit.</strong> ≥3 production library users, ≥1,500 stars, ≥50-active-member community.</td></tr>
+    <tr><td><strong>3 years</strong></td><td>2029-05</td><td><strong>v1.x maintained.</strong> ≥3,000 stars, ≥10 production users, annual meet exists, ≥1 conference talk by someone other than Aaron.</td></tr>
+    <tr><td><strong>5 years</strong></td><td>2031-05</td><td><strong>Recognized small-niche language.</strong> ≥5,000 stars; ≥1 Waterfall-originated library is the canonical implementation across multiple ecosystems.</td></tr>
+  </tbody>
+</table>
+
+<p>The 10-year horizon is dropped — at AI-augmented velocity, it's too far out to plan.</p>
+
+<h2 id="niche">5 · The niche: library-author + Gleam-vibe combined</h2>
+
+<p>Five niches were evaluated; two combine into the chosen positioning.</p>
+
+<table>
+  <thead><tr><th>Candidate</th><th>Verdict</th></tr></thead>
+  <tbody>
+    <tr><td>1. Friendly Haxe (game scripting)</td><td>Saturated</td></tr>
+    <tr><td>2. Polyglot teaching language</td><td>Reframed → content marketing</td></tr>
+    <tr><td>3. JS-first with C escape hatch</td><td>Wrong fit (WASM dominates)</td></tr>
+    <tr><td>4. Embedded scripting</td><td>Wrong fit (Lua entrenched)</td></tr>
+    <tr><td><strong>5. Polyglot library author + Gleam-vibe</strong></td><td><strong>Recommended</strong></td></tr>
+  </tbody>
+</table>
+
+<h3>The pitch</h3>
+<blockquote>Waterfall is a small, typed language for shipping one algorithm to many runtimes — write it once in Waterfall, publish it to npm, PyPI, and as a C header.</blockquote>
+
+<p><strong>Three sentences</strong>: <em>Waterfall is a small, typed language for code that needs to ship across runtimes. Write your algorithm once in Waterfall — with sum types, </em><code>match</code><em>, friendly errors, and Gleam-grade language design — and publish the same source as an npm package, a PyPI wheel, and a vendorable C header. If you've ever maintained parallel JS, Python, and C ports of the same library, Waterfall is the tool that stops the drift.</em></p>
+
+<p><strong>Marketing posture</strong>: general-purpose with personality. <em>Not</em> "the language for domain X." Teaching positioning is <em>content marketing</em>, not the headline.</p>
+
+<h3>What this commits us to</h3>
+<ul>
+  <li>Every new language feature gets a "how this lowers to each backend" write-up. Roadmap work, not afterthought.</li>
+  <li>The three-backend constraint (post-legacy-drop) is the <em>point</em>, not a constraint. Backend divergence is the teaching material.</li>
+  <li>Documentation stays first-class.</li>
+  <li>Idiomatic output is non-negotiable. The <code>wfpm publish</code> artifact must look like an npm/PyPI/C package hand-written by someone who knows the ecosystem.</li>
+</ul>
+
+<p><strong>Tier band</strong>: 1,500–3,000 stars at v1.0 legitimacy (library-author niches punch above star-count); ≥3 production library users.</p>
+
+<h2 id="roadmap">6 · The roadmap</h2>
+
+<table>
+  <thead><tr><th>Phase</th><th>Goal</th><th>Calendar weeks</th><th>Pivotal?</th><th>Audit codes</th></tr></thead>
+  <tbody>
+    <tr><td><span class="star">★</span> P10</td><td>Foundation refactor — typed IR, verifier separation, BUS-FACTOR/VERIFICATION-DISCIPLINE docs, Gradle T2 sweep</td><td>2–3</td><td><span class="star">★</span></td><td>D1, D2, D3, D6, T2</td></tr>
+    <tr><td>P11</td><td>Type inference + condition checking</td><td>1</td><td></td><td>G4, G5</td></tr>
+    <tr><td><span class="star">★</span> P11.5</td><td>Modules + cross-module linking + visibility + C execution oracle</td><td>2–3</td><td><span class="star">★</span></td><td>C2, C6, D10</td></tr>
+    <tr><td><span class="star">★</span> P12</td><td>Sum types + <code>match</code> + <code>Result</code> + <code>@external</code> + <code>readonly</code></td><td>2–3</td><td><span class="star">★</span></td><td>U1, partial U2</td></tr>
+    <tr><td><span class="star">★</span> P13</td><td>Spec + LSP + package manager + friendly errors + cross-target stdlib</td><td><strong>7–13 (median ~10)</strong></td><td><span class="star">★</span></td><td>legitimacy bar</td></tr>
+    <tr><td><span class="star">★</span> P14</td><td>Generics + publish pipeline + idiomatic-output polish</td><td><strong>4–6 (median ~5)</strong></td><td><span class="star">★</span></td><td>publishing</td></tr>
+    <tr><td>P15</td><td>Records + methods + generic containers</td><td>1–2</td><td></td><td>C3, README items</td></tr>
+    <tr><td><span class="star">★</span> P16</td><td>v1.0 technical-complete — stabilize + release</td><td>1–2</td><td><span class="star">★</span></td><td>U1/U2/U3 remainders</td></tr>
+    <tr><td><span class="star">★</span> P16.5</td><td>v1.0 legitimacy — ≥3 production library users, ≥1,500 stars</td><td><strong>12–24 calendar months</strong></td><td><span class="star">★</span></td><td>none (adoption)</td></tr>
+    <tr><td>○ P17</td><td>WASM target + ecosystem</td><td>post-v1</td><td></td><td>—</td></tr>
+  </tbody>
+</table>
+
+<p><strong>Total to v1.0 technical-complete</strong>: 20–31 calendar weeks (median 22–25, ~5–6 months). <strong>Total to v1.0 legitimacy</strong>: ~18–32 months from kickoff.</p>
+
+<h3>Build cadence vs adoption cadence</h3>
+<ul>
+  <li><strong>Mechanical work</strong> (parser, lexer, lowering, stdlib): AI compresses 10–30×. Klabnik's Rue (11–14 days for compiler core), Carlini's C compiler (2 weeks Linux-buildable) set the floor.</li>
+  <li><strong>Tasted work</strong> (LSP, friendly errors, language-design taste): 2–5×. This is why P13 is the longest phase.</li>
+  <li><strong>Verification rigor</strong> (property tests, differential oracles, adversarial review): does NOT compress. <em>Requires more care under AI augmentation, not less.</em></li>
+  <li><strong>Adoption / community trust</strong>: does not compress at all. Bun's Rust port hit 99.8% test pass in 9 days; six months later, no one runs it in production.</li>
+</ul>
+
+<p>So 20–31 weeks of build + 12–24 months of adoption is the honest range. <strong>Plan against the median, not the optimistic build-floor.</strong></p>
+
+<h2 id="triad">7 · The verification triad (R8 mitigation)</h2>
+
+<p>The single decision that determines whether the AI-augmented compression is real or fake. <strong>The dominant AI failure mode is "tests pass, code is wrong" via verifier overfitting</strong> — same shape at every scale: Rue's codegen passed tests but produced segfaulting binaries; Carlini's C compiler "hard-codes values to satisfy the test suite"; Bun's Rust port passes 99.8% of tests with 13,000 unsafe blocks (~180× the density of a comparable hand-written project).</p>
+
+<p>Tool-agnostic per-phase triad — all three must show "no regressions" before phase exit:</p>
+
+<table>
+  <thead><tr><th>Leg</th><th>What it is</th><th>Where it lives</th></tr></thead>
+  <tbody>
+    <tr><td><strong>1. Property-based tests</strong></td><td>Kotest property arbiters at N=10000 per generator. ≥1 invariant property per new feature.</td><td><code>compiler/src/test/kotlin/.../property/</code></td></tr>
+    <tr><td><strong>2. Differential oracle</strong></td><td>Per phase: known-good reference. P10 = existing <code>*Data</code> AST. P11–P15 = hand-checked Aaron-authored cases. Backends = gcc/Node/Python executing the output.</td><td>Per-phase test fixtures + <code>PHASE-N-design.md</code></td></tr>
+    <tr><td><strong>3. AI-generated adversarial inputs</strong></td><td>Per phase: ≥20 "tricky inputs that should break the compiler" generated by a fresh Claude session given only the spec.</td><td><code>compiler/src/test/resources/adversarial/phase-N/</code></td></tr>
+  </tbody>
+</table>
+
+<p><strong>The Aaron-writes-the-tests discipline</strong>: verifier-correctness tests are Aaron-authored, not AI-authored. Trip-wire: any verifier-correctness test file with only AI authorship = red flag.</p>
+
+<h2 id="readonly">8 · The headline feature — <code>readonly</code> (unified)</h2>
+
+<p><strong>Form A</strong>: <code>readonly x = 4</code> at declaration time.</p>
+<p><strong>Form B</strong>: <code>readonly x</code> as a standalone statement mid-function, freezing a previously-mutable binding.</p>
+
+<p>The design unifies under a single keyword. <strong><code>readonly</code> is the only modifier</strong>; the legacy keywords <code>const</code> and <code>imm</code> are removed with a small migration (3 <code>.wf</code> files plus tests + goldens). v1 ships a friendly parser-level "use readonly instead" error for <code>const</code>/<code>imm</code> (custom <code>LegacyModifierErrorListener</code>, ~50–80 lines), removed in v1.1.</p>
+
+<h3>What Form B is</h3>
+<pre><code>int x = 0
+x = compute()
+readonly x        // ← verifier-only; emits nothing
+// x = 5          // ERROR: cannot write to readonly binding `x`</code></pre>
+
+<p>Form B is a <strong>statement</strong>, not an expression. It records a freeze on <code>x</code> in the current scope's local shadow of the symbol table. <strong>It produces no runtime effect</strong> — the JS/Python/C output at this line is empty.</p>
+
+<p>Framing: <strong>a one-line shorthand for Rust's shadowing-and-rebinding idiom, applied without a fresh binding</strong>. Rust users write <code>let x = x;</code> for the same effect. Waterfall makes the idiom syntactic. The novelty is <em>syntactic</em>, not semantic — the team explicitly does not lean on it as the pitch.</p>
+
+<h3>Semantic calls</h3>
+<ol>
+  <li><strong>Scope</strong>: freeze applies from the <code>readonly x</code> statement to the end of the lexical scope in which <code>x</code> was originally declared.</li>
+  <li><strong>Branch joins</strong>: <code>readonly</code> after <code>if/else</code> iff <strong>every non-terminating path</strong> promoted it. Intersection rule.</li>
+  <li><strong>Loops</strong>: freezes only for the rest of the current iteration. Loop-back intersection means top of next iteration is mutable.</li>
+  <li><strong>Aliasing</strong>: binding-only, not transitive. Freezing <code>a</code> does not freeze the record <code>a</code> points to.</li>
+  <li><strong>Subfield (<code>readonly x.field</code>)</strong>: deferred to post-records (P15).</li>
+  <li><strong>Lambda captures</strong>: deferred to P12 when multi-statement lambda bodies land.</li>
+  <li><strong><code>commitReadonly</code> walk-depth</strong>: writes only to the current scope's shadow, never to the parent. Each control-flow join is independent.</li>
+</ol>
+
+<h3>Marketing</h3>
+<p><strong>Implement first, decide later.</strong> Per R5: don't market <code>readonly</code> as the headline until P12 implementation experience confirms it earns the weight. Use it for internal examples; if it feels good, promote it. If it feels awkward, downgrade to "one of several modifiers."</p>
+
+<h2 id="features">9 · The legitimacy-bar feature set</h2>
+
+<p>Required for Tier B in 2026. Each fully spec'd in <code>03-language-design.md</code>.</p>
+
+<table>
+  <thead><tr><th>Feature</th><th>Why</th><th>Priority</th><th>Sketch</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Records / structs</strong></td><td>Product types are table stakes</td><td>T1</td><td><code>type Point = { x: int, y: int }</code></td></tr>
+    <tr><td><strong>Sum types / <code>union</code></strong></td><td>ADTs are the 2026 baseline</td><td>T1</td><td><code>type Shape = Circle(r: dec) | Square(side: dec)</code></td></tr>
+    <tr><td><strong>Pattern matching</strong></td><td>Goes with sum types; exhaustiveness check</td><td>T1</td><td><code>match s { Circle(r) =&gt;... }</code></td></tr>
+    <tr><td><strong>Generics</strong></td><td>Parametric polymorphism; monomorphized for C, erased elsewhere</td><td>T1</td><td><code>func map&lt;T, U&gt;(xs: T[], f: (T) ==&gt; U) returns U[]</code></td></tr>
+    <tr><td><strong>Modules + visibility</strong></td><td>Library authors publish packages that import each other (P11.5)</td><td>T1</td><td><code>import Math</code>; <code>pub</code>/<code>pkg</code>/<code>private</code></td></tr>
+    <tr><td><strong><code>Result&lt;T, E&gt;</code> + <code>?</code></strong></td><td>Cross-target error story without exceptions</td><td>T1</td><td><code>func parse(s: string) returns Result&lt;int, string&gt;</code></td></tr>
+    <tr><td><strong>Real <code>string</code> type</strong></td><td><code>STRING_LITERAL → char</code> is actively buggy today</td><td>T1</td><td>First-class, not <code>char[]</code></td></tr>
+    <tr><td><strong><code>@external</code></strong></td><td>The library-author headline (P12 firm deliverable)</td><td>T1</td><td>See §10</td></tr>
+    <tr><td><strong>Package manager (<code>wfpm</code>)</strong></td><td>Required for legitimacy</td><td>T2</td><td><code>wfpm new</code>, <code>wfpm install</code>, <code>wfpm publish</code></td></tr>
+    <tr><td><strong>LSP / formatter</strong></td><td>Required for legitimacy</td><td>T2</td><td>hover, go-to-def, diagnostics</td></tr>
+    <tr><td><strong>Cross-target-coherent stdlib</strong></td><td><code>Math</code> / <code>String</code> / <code>Array</code> / <code>IO</code> behave identically</td><td>T2</td><td>depends on <code>@external</code></td></tr>
+    <tr><td><strong>Idiomatic output polish</strong></td><td>npm source maps, Python <code>.pyi</code>, C metadata (P14)</td><td>T2</td><td>per-target ecosystem expectations</td></tr>
+  </tbody>
+</table>
+
+<h2 id="external">10 · <code>@external</code> — the library-author headline</h2>
+
+<pre><code>@external(js, "Math", "sqrt")
+@external(python, "math", "sqrt")
+@external(c, "math.h", "sqrt")
+func sqrt(x: dec) returns dec</code></pre>
+
+<h3>Decisions made</h3>
+<ul>
+  <li><strong>Reserved targets</strong>: <code>js</code>, <code>python</code>, <code>c</code>, <code>wasm</code> (reserved-but-not-live). Unknown keywords are a verification error.</li>
+  <li><strong>Partial-target-support semantics</strong>: Gleam-style. An <code>@external(js)</code> only function rejects at the type level when compiling to Python. The verifier is target-aware: <code>Verifier.verifyModule(module, scope, target: TargetKeyword? = null)</code>. <code>null</code> = verify against all targets (union check).</li>
+  <li><strong>Per-target lowering</strong>: JS = ESM <code>import</code>; Python = <code>from X import Y</code>; C = <code>#include</code> + forward declarations; named <code>header="..."</code> for non-stdlib C.</li>
+  <li><strong>Accepts</strong>: primitives, primitive arrays, locally-defined records and sum types, stdlib types. <strong>Does not accept</strong>: lambdas (U2 unresolved), cross-package records (no v1 ABI-stability story).</li>
+  <li><strong>Cross-module <code>@external</code> × visibility</strong>: deferred to P11.5 design doc.</li>
+</ul>
+
+<h2 id="errors">11 · JSON-first error format (Q10)</h2>
+
+<p>Errors emit as <strong>JSONL on stderr by default</strong>. Plain-text humans get <code>--errors human</code> (auto-detected for TTY) piping the JSON through a built-in formatter.</p>
+
+<pre><code>{
+  "schemaVersion": 1,
+  "severity": "ERROR",
+  "code": "WF1042",
+  "message": "Cannot assign to readonly binding 'x'.",
+  "primaryLocation": { "file": "src/lib.wf", "line": 12, "column": 4 },
+  "relatedInfo": [{ "file": "src/lib.wf", "line": 8, "column": 4, "message": "readonly applied here" }],
+  "suggestedFix": "Use a fresh binding or remove the `readonly x` statement above.",
+  "tags": []
+}</code></pre>
+
+<ul>
+  <li><strong>Required</strong>: <code>schemaVersion</code>, <code>severity</code>, <code>code</code>, <code>message</code>, <code>primaryLocation</code>.</li>
+  <li><strong>Optional</strong>: <code>relatedInfo</code>, <code>suggestedFix</code>, <code>tags</code>.</li>
+  <li><strong>Code allocation</strong>: <code>WF1xxx</code> = P10-era; <code>WF2xxx</code> = P12-era; stable across versions.</li>
+  <li><strong>Schema file</strong>: <code>notes/error-schema-v1.json</code>, shipped at <code>compiler/src/main/resources/error-schema-v1.json</code>.</li>
+</ul>
+
+<p><strong>Why JSON-first</strong>: LSP consumes the JSON directly — no parsing of human text. AI tooling benefits from structured errors. Humans pay the cost of a converter, but the converter is built-in and TTY-default.</p>
+
+<h2 id="polish">12 · Idiomatic output polish (in v1.0 technical, P14)</h2>
+
+<p>Library-author niche credibility is decided on day 1 by what the published artifact looks like. Shipping v1.0 to npm/PyPI in 2026 without source maps and type declarations is the 2018-transpiler equivalent.</p>
+
+<p>P14 deliverables:</p>
+<ul>
+  <li><strong>JS</strong>: source maps (<code>.js.map</code>), ESM with named exports, <code>package.json</code> with <code>exports</code>, README in the package, semver-tagged releases.</li>
+  <li><strong>Python</strong>: <code>.pyi</code> type stubs, <code>__doc__</code> docstrings preserved, <code>pyproject.toml</code> with PEP 621 metadata, type hints per PEP 484.</li>
+  <li><strong>C</strong>: header guards, version pin, README in tarball, <code>pkg-config</code> <code>.pc</code> file, vendor-friendly layout.</li>
+</ul>
+
+<p>Cost: +2–3 weeks of P14 work (4–6 weeks median 5). Total v1.0 technical horizon lands at 5–7 months, upper end of the original window.</p>
+
+<h2 id="risks">13 · Top risks (R1 → R10)</h2>
+
+<table>
+  <thead><tr><th>#</th><th>Risk</th><th>Severity</th><th>Mitigation summary</th></tr></thead>
+  <tbody>
+    <tr><td><strong>R1</strong></td><td>Burnout mid-build (weeks 4–16)</td><td>HIGH</td><td>Phase-exit checklist as discipline anchor; BUS-FACTOR.md in P10; trip-wires on skipped triad legs + 2-week build gaps</td></tr>
+    <tr><td>R2</td><td>Multi-target divergence becomes debt</td><td>MEDIUM</td><td><code>@external</code> model; reject mixed-support at type level; quarterly C-backend TODO audit</td></tr>
+    <tr><td>R3</td><td>Library-author niche misfit</td><td>MEDIUM</td><td>Aaron-authored case study by end of P12; trip-wire = no inbound interest in 90 days</td></tr>
+    <tr><td>R4</td><td>Feature creep / Tier C drift</td><td>MEDIUM</td><td>Phase plan discipline; trip-wire = phase &gt;1.5× budget</td></tr>
+    <tr><td>R5</td><td>"Novel readonly" doesn't pan out</td><td>MEDIUM</td><td>Don't market until P12 confirms; trip-wire = examples don't read well to fresh eyes</td></tr>
+    <tr><td><strong>R6</strong></td><td>WASM eats the library-author niche</td><td><strong>HIGH</strong></td><td>Anchor in idiomatic output + readability + Gleam-grade design; quarterly WASM ecosystem monitoring</td></tr>
+    <tr><td>R7</td><td>Long-tail post-build burnout (P16.5)</td><td>MEDIUM</td><td>Realistic 6-month checkpoints; keep coding work as engagement vehicle alongside outreach</td></tr>
+    <tr><td><strong>R8</strong></td><td>Verification overfitting (dominant AI failure)</td><td><strong>HIGH</strong></td><td>The triad. Trip-wire = any triad leg skipped in any P10–P15 phase</td></tr>
+    <tr><td>R9</td><td>AI tooling regression</td><td>MEDIUM</td><td>Tool-agnostic specs; trip-wire = AI-tooling abandonment doubles phase budget</td></tr>
+    <tr><td><strong>R10</strong></td><td>Verifier-design quality in week 1</td><td><strong>HIGH</strong></td><td>Adversarial pre-review of P10 spec by skeptic agent before any implementation</td></tr>
+  </tbody>
+</table>
+
+<p>R1, R6, R8, R10 are the four that materially threaten the plan. The rest are recoverable.</p>
+
+<h2 id="not">14 · What Waterfall is NOT</h2>
+
+<ul>
+  <li>Not a JVM-compatible language.</li>
+  <li>Not aiming for vendor adoption.</li>
+  <li>Not a research vehicle for novel type theory — Hindley-Milner-lite is the ceiling.</li>
+  <li>Not a "fast" language — no benchmarks vs Zig or Rust.</li>
+  <li>Not a systems / OS language.</li>
+  <li>Not a concurrency-focused language — no goroutines, async/await, STM, or actors in v1.</li>
+  <li>Not a domain-specific language.</li>
+</ul>
+
+<h2 id="first-commits">15 · The first three commits</h2>
+
+<ol>
+  <li><strong>Drop the legacy backend.</strong> Delete <code>LegacyTextBackend.kt</code>, drop <code>legacy</code> goldens, update <code>Backends.kt</code> registration, default <code>--target</code> = <code>js</code>, strip references.</li>
+  <li><strong><code>BUS-FACTOR.md</code> at repo root.</strong> 1–2 pages on how to cut a release, pipeline layout, reversible vs load-bearing decisions.</li>
+  <li><strong>Verifier enforces <code>const</code>/<code>imm</code> today.</strong> The audit's no-op verifier — fix in a small targeted PR; sets up the symbol-table redesign with a real test bed.</li>
+</ol>
+
+<p>After those three, P10 proper begins. Start with the spec-first plan-mode loop against <code>notes/PHASE-10-design.md</code>. See the execution playbook (<code>00-EXECUTION-PLAYBOOK.md</code>) for the operational rhythm.</p>
+
+<h2 id="appendices">16 · Appendices</h2>
+
+<ul>
+  <li><strong>A — Codebase audit</strong> (<code>01-codebase-audit.md</code>)</li>
+  <li><strong>B — PL landscape</strong> (<code>02-pl-landscape.md</code>) — 16 transpiled-language case studies</li>
+  <li><strong>C — Language design</strong> (<code>03-language-design.md</code>) — full feature catalog + readonly spec</li>
+  <li><strong>D — Strategy</strong> (<code>04-strategy.md</code> post round-3)</li>
+  <li><strong>E — Adversarial review round 1</strong> (<code>05-adversarial-review.md</code>)</li>
+  <li><strong>F — Quality review</strong> (<code>06-quality-review.md</code>)</li>
+  <li><strong>G — AI-augmented dev research</strong> (<code>07-ai-augmented-dev-research.md</code>)</li>
+  <li><strong>H — Adversarial review round 2</strong> (<code>08-adversarial-review-2.md</code>)</li>
+  <li><strong>I — P10 design</strong> (<code>notes/PHASE-10-design.md</code>) — the load-bearing implementation spec</li>
+</ul>
+
+<p>Also in this directory:</p>
+<ul>
+  <li><strong><code>00-EXECUTION-PLAYBOOK.md</code></strong> — operational runbook (the "how")</li>
+  <li><strong><code>00-KICKOFF-PROMPT.md</code></strong> — self-contained prompt to spin up a fresh <code>/teamwork</code> implementation team</li>
+</ul>
+
+<p class="footer-meta">Total source material: ~600 KB across nine docs. This synthesis is the strategic plan; the playbook is the operational companion; the kickoff prompt is what you paste into a fresh session tomorrow morning.</p>
+
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Waterfall — Execution Playbook</title>
+<style>
+  :root {
+    --text: #1a1a1a;
+    --muted: #555;
+    --bg: #fbfaf6;
+    --rule: #d8d4c8;
+    --accent: #1c4587;
+    --code-bg: #f0ece1;
+    --table-stripe: #f4f1e8;
+    --warn: #b8860b;
+    --danger: #a3402e;
+  }
+  html { font-size: 17px; }
+  body {
+    margin: 0 auto;
+    max-width: 800px;
+    padding: 3rem 1.25rem 6rem;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Iowan Old Style", "Charter", "Source Serif Pro", Georgia, serif;
+    line-height: 1.5;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Inter", "Helvetica Neue", system-ui, sans-serif;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+  h1 { font-size: 2rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
+  h2 { font-size: 1.4rem; margin: 2.5rem 0 0.6rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+  h3 { font-size: 1.1rem; margin: 1.5rem 0 0.4rem; }
+  h4 { font-size: 1rem; margin: 1rem 0 0.4rem; color: var(--muted); }
+  .subtitle { color: var(--muted); font-size: 1rem; font-style: italic; margin: 0.25rem 0 1.5rem; }
+  p { margin: 0.5rem 0; }
+  strong { font-weight: 600; }
+  em { font-style: italic; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(28, 69, 135, 0.25); }
+  a:hover { border-bottom-color: var(--accent); }
+  ul, ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+  li { margin: 0.2rem 0; }
+  blockquote {
+    margin: 0.75rem 0;
+    padding: 0.6rem 1rem;
+    border-left: 3px solid var(--accent);
+    background: var(--code-bg);
+    font-style: italic;
+  }
+  code {
+    font-family: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+    font-size: 0.9em;
+    background: var(--code-bg);
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+  }
+  pre {
+    background: #1f2330;
+    color: #eaeaea;
+    padding: 0.85rem 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin: 0.6rem 0;
+  }
+  pre code { background: transparent; color: inherit; padding: 0; font-size: 0.88rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.85rem 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    border: 1px solid var(--rule);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: var(--code-bg);
+    font-family: "Inter", "Helvetica Neue", system-ui, sans-serif;
+    font-weight: 600;
+    font-size: 0.87rem;
+  }
+  tbody tr:nth-child(even) td { background: var(--table-stripe); }
+  hr { border: 0; height: 1px; background: var(--rule); margin: 2rem 0; }
+  .key-banner {
+    background: #fff4d6;
+    border-left: 3px solid var(--warn);
+    padding: 0.85rem 1.1rem;
+    margin: 1rem 0;
+    border-radius: 0 3px 3px 0;
+    font-size: 0.95rem;
+  }
+  .key-banner strong { color: var(--danger); }
+  .meta-line {
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin: 0 0 1.5rem;
+  }
+  .footer-meta { color: var(--muted); font-size: 0.85rem; font-style: italic; margin-top: 4rem; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Waterfall — Operational Execution Playbook</h1>
+<p class="subtitle">Companion to <code>00-FINAL-PLAN.html</code>. Strategy answers <em>what + why</em>; this answers <em>what do I do tomorrow morning, and how do I know I'm on track</em>.</p>
+
+<p class="meta-line">~7 dense pages · 2026-05-15 · revise after week 1 of P10 — first contact with reality will surface what doesn't survive</p>
+
+<div class="key-banner">
+The single dominant risk this playbook is built around is <strong>R8 / failure-mode #1: "tests pass, code is wrong."</strong> Every section reflects that. Read once before P10 starts. Reread §1 + §6 weekly.
+</div>
+
+<h2>§1 — The spec-first loop, operationalized</h2>
+
+<p>The single highest-leverage workflow Aaron has. Every non-trivial change runs through it.</p>
+
+<h3>The loop (one cycle per feature, not per phase)</h3>
+<ol>
+  <li><strong>Open</strong> Claude Code in plan mode against the relevant <code>SPEC.md</code> (e.g., <code>notes/PHASE-10-design.md</code> for P10 sub-tasks).</li>
+  <li><strong>Ask</strong> the agent to draft a plan for the feature. Do not approve.</li>
+  <li><strong>Read</strong> the plan and answer the single load-bearing question: <strong>"What ambiguities did it silently resolve?"</strong> Write them down — even the small ones. Each silent resolution is a candidate bug under failure-mode #4.</li>
+  <li><strong>Edit the spec</strong> to remove the ambiguities found in step 3. Commit the spec edit as its own diff. Re-plan.</li>
+  <li><strong>Loop</strong> 2→4 until the agent produces a plan approved without spec edits. Klabnik-style: average 2–3 iterations; ≥3 iterations is the P10 target.</li>
+  <li><strong>Exit plan mode and implement.</strong> Then run §3.</li>
+</ol>
+
+<h3>Trip-wires inside the loop</h3>
+<table>
+  <thead><tr><th>Signal</th><th>What it means</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td>Plan approved on iteration 1</td><td>Spec is too thin OR feature is trivial</td><td>If non-trivial, spawn fresh-session skeptic on the spec; demand it find ≥1 ambiguity</td></tr>
+    <tr><td>Plan-mode iterations &gt;5</td><td>Feature is under-specified at a structural level</td><td>Stop. Write spec for the feature itself before re-planning</td></tr>
+    <tr><td>Agent asks no clarifying questions across the loop</td><td>It is silently resolving</td><td>Force it: append "list every assumption you made" to the planning prompt</td></tr>
+    <tr><td>Same ambiguity surfaces in two unrelated plans</td><td>Spec has a structural gap, not a wording gap</td><td>Edit <code>SPEC.md</code> at the section level, not the sentence level</td></tr>
+  </tbody>
+</table>
+
+<h3>Worked example — hypothetical P10 sub-task 5.3 (<code>verify()</code> migration)</h3>
+<p>Spec ambiguity the loop catches: the plan says "move each <code>*Data.verify</code> body into <code>StatementVerifier.verifyXxx</code>." Read carefully: what does the plan do with <code>FunctionImplementationData.verify</code>, which the spec (§5.3) routes to <code>ModuleVerifier</code>? If the plan dumps it into <code>StatementVerifier</code> alongside the others, <em>that's a silent resolution</em> — the spec routes functions to module-level verification because they introduce names visible across the module. Catch this in plan mode: edit <code>PHASE-10-design.md</code> §5.3 to make the routing explicit by <code>*Data</code> class. Re-plan. Now the plan correctly splits the migration.</p>
+
+<p>The discipline is: <strong>the spec is the verifier.</strong> If the spec admits the wrong interpretation, the spec is the bug. Fix the spec, not the implementation.</p>
+
+<h2>§2 — Phase rhythm</h2>
+
+<p>Each phase has three rituals. Don't skip; don't reorder.</p>
+
+<table>
+  <thead><tr><th>Ritual</th><th>When</th><th>Concrete steps</th><th>Exit signal</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Phase kickoff</strong></td>
+      <td>Day 1 of phase</td>
+      <td>(a) Write/update <code>PHASE-Nxx-design.md</code>. (b) Spawn fresh-session skeptic against the design doc only — instruct it to find ambiguities; require ≥1 material finding before proceeding. (c) Commit the doc. (d) Add entry to <code>IMPLEMENTATION-LOG.md</code>.</td>
+      <td>Spec at known commit; skeptic-pre-review finished and findings resolved or accepted.</td>
+    </tr>
+    <tr>
+      <td><strong>Mid-phase checkpoint</strong></td>
+      <td>~Week 1 of any multi-week phase</td>
+      <td>(a) Run the full §3 triad against current state. (b) Inventory: any "wait, the spec didn't say" moments? Each = a spec ambiguity that escaped plan mode. (c) Course-correct: edit spec + revise impl, or accept and log. (d) Update <code>IMPLEMENTATION-LOG.md</code>.</td>
+      <td>Triad green OR specific remediation plan logged.</td>
+    </tr>
+    <tr>
+      <td><strong>Phase exit</strong></td>
+      <td>When deliverables complete</td>
+      <td>(a) Run all three triad legs at production scale (N=10000 properties, full differential oracle, ≥20 adversarial). (b) Walk phase-exit checklist from <code>04-strategy.md</code> §3. (c) Spawn fresh-session skeptic on the diff. (d) Resolve or accept findings. (e) Tag commit <code>phase-N-complete</code>. (f) Retrospective in <code>IMPLEMENTATION-LOG.md</code>.</td>
+      <td>All triad green + every checklist box checked or explicitly waived.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Phase-exit sub-template (paste into <code>IMPLEMENTATION-LOG.md</code>)</h3>
+<pre><code>## Phase N retrospective — {date}
+- Calendar weeks budgeted vs actual: {bud} / {act}
+- Triad caught (count): properties {n_prop}, differential {n_diff}, adversarial {n_adv}
+- Skeptic findings on exit: {fatal} fatal / {risk} risk / {minor} minor
+- Spec edits during phase (count): {n}
+- Plan-mode iterations average: {x}
+- Carry-forward into phase {N+1}: <list>
+- One sentence on what surprised: <text></code></pre>
+
+<h2>§3 — The verification triad (operationalized)</h2>
+
+<p>Three legs; all three must show <em>no regressions</em> before phase exit. Tool-agnostic; survives tool transitions (R9 mitigation).</p>
+
+<h3>Leg 1 — Property-based tests at N=10000</h3>
+<table>
+  <thead><tr><th>Item</th><th>Concrete</th></tr></thead>
+  <tbody>
+    <tr><td>Framework</td><td>Kotest property arbiters, <code>forAll(N=10000)</code> default. Lower (N=1000) acceptable only for property checks that compile a generated program and run it through a backend.</td></tr>
+    <tr><td>Location</td><td><code>compiler/src/test/kotlin/.../property/</code> — one file per invariant family.</td></tr>
+    <tr><td>Naming</td><td>Sentence form: <code>"symbol table lookup after declare returns the declared SymbolInfo"</code>, not <code>test1</code>.</td></tr>
+    <tr><td>Per-phase minimums</td><td><strong>P10:</strong> SymbolTable invariants, JoinAnalysis intersection, IrLowering round-trip, JsonRenderer round-trip. <strong>P11:</strong> "well-typed programs that pass verifier produce typecheckable backend output." <strong>P11.5:</strong> "no <code>private</code> symbol leaks across modules"; C runtime stdout matches JS/Python. <strong>P12:</strong> exhaustiveness on <code>match</code>, Result chain associativity. <strong>P14:</strong> monomorphization correctness, source-map validity. <strong>P15:</strong> <code>Vec&lt;T&gt;</code> / <code>Map&lt;K, V&gt;</code> round-trip + ordering.</td></tr>
+    <tr><td>Anti-pattern</td><td>"Property test" that asserts a specific output for one input. That's an example-based test wearing a <code>forAll</code>.</td></tr>
+  </tbody>
+</table>
+
+<h3>Leg 2 — Differential testing against an oracle</h3>
+<p>Each phase <strong>names its oracle</strong>. No oracle = leg failed by construction.</p>
+<table>
+  <thead><tr><th>Phase</th><th>Oracle</th><th>Mechanism</th></tr></thead>
+  <tbody>
+    <tr><td>P10</td><td>Prior <code>*Data</code> AST emission + existing golden test suite</td><td>For every example, old AST and new IR produce byte-equivalent emission per backend. Zero golden diffs is the gate.</td></tr>
+    <tr><td>P11</td><td>Aaron-authored hand-checked type-inference cases</td><td>Aaron writes 20+ cases like <code>y := add(1, 2)</code> infers <code>y: int</code>; reject any disagreement.</td></tr>
+    <tr><td>P11.5</td><td>Cross-target execution consistency</td><td><code>gcc -o exe && ./exe</code> over the runtime-verifiable subset. Goldens captured under <code>compiler/src/test/resources/runtime-golden/c/</code>.</td></tr>
+    <tr><td>P12</td><td>Cross-target runtime consistency on <code>match</code> + <code>Result</code> chains</td><td>Same generator drives JS/Python/C; all three must produce identical stdout.</td></tr>
+    <tr><td>P13</td><td>Per-stdlib-function differential vs. native interpreter</td><td>Library-author niche cannot tolerate stdlib drift.</td></tr>
+    <tr><td>P14</td><td>Full publishing pipeline end-to-end</td><td>Install in fresh containers, run smoke tests, compare across artifacts. Aaron-authored smoke tests.</td></tr>
+    <tr><td>P15</td><td>JS <code>Array</code>/<code>Map</code> natives + Python <code>list</code>/<code>dict</code> natives</td><td>Property tests on <code>Vec&lt;T&gt;</code>/<code>Map&lt;K, V&gt;</code> use natives as known-good.</td></tr>
+    <tr><td>P16</td><td>All prior oracles + 1M fuzz inputs (no crashes), 1K well-typed (no false-rejects)</td><td>Full-spec adversarial session against <code>SPEC.md</code> v1.0.</td></tr>
+  </tbody>
+</table>
+
+<h3>Leg 3 — AI-generated adversarial inputs (≥20 per phase)</h3>
+<table>
+  <thead><tr><th>Item</th><th>Concrete</th></tr></thead>
+  <tbody>
+    <tr><td>Ritual</td><td>Pre-merge per phase. Fresh Claude session, no prior context. Prompt: "Read <code>PHASE-N-design.md</code> and the diff. Generate 20 .wf programs that should compile (positive) and 20 that should fail with a useful error (negative), specifically targeting the new feature's edge cases."</td></tr>
+    <tr><td>Location</td><td><code>compiler/src/test/resources/adversarial/phase-N/positive/*.wf</code> and <code>.../negative/*.wf</code>. Each negative file has a sibling <code>.expected-error</code>.</td></tr>
+    <tr><td>Run</td><td>Compile each. Categorize: <strong>passed</strong> / <strong>false-rejected</strong> (spec bug) / <strong>compiler-broke</strong> (impl bug).</td></tr>
+    <tr><td>Gate</td><td>No <code>compiler-broke</code> cases unfixed. Document outcomes in <code>notes/VERIFICATION-DISCIPLINE.md</code>.</td></tr>
+    <tr><td>Anti-pattern</td><td>Adversarial inputs generated by the same session that wrote the impl. Use a <em>fresh</em> session.</td></tr>
+  </tbody>
+</table>
+
+<h3>The discipline rule: who writes what</h3>
+<div class="key-banner">
+<strong>Aaron writes the tests; AI does not — applied selectively.</strong>
+<ul>
+  <li><strong>Aaron writes</strong>: property-test invariants (high leverage, one invariant catches many bugs), differential-test oracles, contract tests for verifier-correctness paths (anything in <code>compiler/src/main/kotlin/.../verifier/</code> and <code>.../symboltables/SymbolTable.kt</code>).</li>
+  <li><strong>AI writes</strong>: example-based tests inside Aaron-authored invariants, trivial backend-output tests, adversarial-input generation in §3 leg 3.</li>
+  <li><strong>Trip-wire</strong>: any test file under <code>compiler/src/test/.../verifier/</code> or <code>.../symboltables/</code> whose <code>git log --follow</code> shows AI as sole author = red flag.</li>
+</ul>
+Weekly time budget: ~8 h/week of contract-test design + adversarial review (Aaron's hands on keyboard).
+</div>
+
+<h2>§4 — The first 100 hours</h2>
+
+<p>Literal, ordered task list. After ~hour 40 the §2 phase rhythm takes over.</p>
+
+<h3>Hours 1–10 — pre-P10 cleanup</h3>
+<table>
+  <thead><tr><th>#</th><th>Task</th><th>Output</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Drop the legacy backend (Q5 answer)</td><td>Delete <code>LegacyTextBackend.kt</code>, its goldens, the <code>legacy</code> target registration; update <code>Backends.DEFAULT_TARGET</code>. Single commit.</td></tr>
+    <tr><td>2</td><td>Write <code>BUS-FACTOR.md</code> at repo root (R1 mitigation)</td><td>~4 h. Release procedure, verifier/IR layout, reversible vs load-bearing decisions, key invariants.</td></tr>
+    <tr><td>3</td><td>Write/refresh <code>CLAUDE.md</code> at repo root</td><td>Conventions, commit format, "always run <code>./gradlew test</code>", cross-tree drift rule, AI-augmented disclosure for R9.</td></tr>
+    <tr><td>4</td><td>Stub <code>SPEC.md</code> at repo root</td><td>Top-level vision + TOC pointing to per-phase design docs. Living artifact.</td></tr>
+    <tr><td>5</td><td>Stub <code>notes/VERIFICATION-DISCIPLINE.md</code></td><td>Sections for each phase's triad outcomes; empty initially. Filled per phase.</td></tr>
+    <tr><td>6</td><td>Verifier-enforces-const fix</td><td>Confirm verifier rejects assignment-to-const today; add a test if missing. Quick win.</td></tr>
+    <tr><td>7</td><td>Gradle T2 sweep (Q12 answer)</td><td>Address Gradle 9 deprecation warnings; clean build log. Noise reduction pays for itself across the build sprint.</td></tr>
+  </tbody>
+</table>
+
+<h3>Hours 10–25 — the P10 design weekend (validate the spec via plan-mode loop)</h3>
+<table>
+  <thead><tr><th>#</th><th>Task</th><th>Output</th></tr></thead>
+  <tbody>
+    <tr><td>8</td><td>Re-read <code>PHASE-10-design.md</code> start to finish</td><td>Note every sentence that admits two readings.</td></tr>
+    <tr><td>9</td><td>Spawn fresh-session skeptic against <code>PHASE-10-design.md</code></td><td>Demand ≥3 material findings. Resolve in spec edits or explicitly accept. The <code>08-adversarial-review-2.md</code> F6–F12 findings are the floor.</td></tr>
+    <tr><td>10</td><td>Run plan-mode against sub-task 5.1</td><td>Average ≥3 iterations to approved plan. If 1 iteration: spec is too thin, loop back to §1 trip-wire.</td></tr>
+    <tr><td>11</td><td>Same for sub-tasks 5.2–5.6 in turn</td><td>Each gets its own plan-mode loop. Do not skip ahead.</td></tr>
+    <tr><td>12</td><td>Lock <code>PHASE-10-design.md</code>. Tag <code>phase-10-spec-locked</code></td><td>From now on, spec edits during P10 are tracked deltas.</td></tr>
+  </tbody>
+</table>
+
+<h3>Hours 25–100 — P10 implementation per <code>PHASE-10-design.md</code> §5</h3>
+<table>
+  <thead><tr><th>Hours</th><th>Sub-task</th><th>Notes</th></tr></thead>
+  <tbody>
+    <tr><td>25–35</td><td>5.1 + 5.2 (types + SymbolTable migration)</td><td>Highest-error-rate step. Commit-by-commit review. SymbolTable property tests ship in this window.</td></tr>
+    <tr><td>35–50</td><td>5.3 (verifier extraction)</td><td>F8 / <code>commitReadonly</code> walking — verify resolution lands. F9 / accumulate-vs-bail — confirm explicit choice reflected.</td></tr>
+    <tr><td>50–65</td><td>5.4 (IR + lowering)</td><td>Run differential oracle continuously: any golden change = stop.</td></tr>
+    <tr><td>65–85</td><td>5.5 (migrate backends to IR: JS → Python → C)</td><td>One backend per session minimum. After each: run full golden suite filtered to that target. <strong>Mid-phase checkpoint lands here.</strong></td></tr>
+    <tr><td>85–95</td><td>5.6 (remove old <code>Translatable.translate</code>) + adversarial inputs (≥20)</td><td>Adversarial inputs run last, on the integrated tree.</td></tr>
+    <tr><td>95–100</td><td>Phase-exit ritual</td><td>Triad at production scale, fresh-session skeptic on full P10 diff, retrospective, tag <code>phase-10-complete</code>.</td></tr>
+  </tbody>
+</table>
+
+<h2>§5 — Signals and dashboards</h2>
+
+<div class="key-banner">
+<strong>The single load-bearing weekly signal:</strong> Did Aaron write at least one verifier-correctness property test or contract test this week? Track in <code>IMPLEMENTATION-LOG.md</code>. <strong>If "no" for 2 weeks running: the project is in R8 territory. Stop feature work; do a full triad design review for the current phase.</strong> This is the dominant tell that the AI-augmented compression has gone fake.
+</div>
+
+<h3>Leading vs. lagging indicators</h3>
+<table>
+  <thead><tr><th>Indicator</th><th>Type</th><th>Healthy range</th><th>Red action</th></tr></thead>
+  <tbody>
+    <tr><td>Spec-stability rate (spec edits per plan-mode loop)</td><td>Leading</td><td>Falling toward 0 over a phase</td><td>Stop. Restructure SPEC section, not sentences</td></tr>
+    <tr><td>Plan-mode iterations per feature</td><td>Leading</td><td>2–3 average; 3–5 OK for novel</td><td>1 (too thin) or &gt;5 (under-specified) → §1 trip-wires</td></tr>
+    <tr><td>"Aaron wrote a verifier-correctness test this week"</td><td>Leading</td><td>Yes, every week</td><td>R8 stop-the-line if "no" 2 weeks running</td></tr>
+    <tr><td>Adversarial "compiler-broke" finds per phase</td><td>Leading</td><td>1–5 (triad working)</td><td>0 = make prompt sharper; &gt;10 = impl quality slipping</td></tr>
+    <tr><td>Skeptic find rate on phase exit</td><td>Leading</td><td>≥30% of phase exits surface ≥1 finding</td><td>0% across 2 phases → re-frame skeptic context</td></tr>
+    <tr><td>Phase calendar slippage</td><td>Lagging</td><td>≤25% of phase budget</td><td>&gt;25% → §6 recovery</td></tr>
+    <tr><td>Golden-suite divergence vs P10 baseline</td><td>Lagging</td><td>Zero in P10; documented diffs only in P11+</td><td>Undocumented golden change → stop. Find which feature added it.</td></tr>
+  </tbody>
+</table>
+
+<h3>"On track" by phase</h3>
+<table>
+  <thead><tr><th>Checkpoint</th><th>Healthy state</th></tr></thead>
+  <tbody>
+    <tr><td>Week 2</td><td>P10 sub-task 5.2 merged or close. Property test suite seeded. <code>BUS-FACTOR.md</code>, <code>CLAUDE.md</code>, <code>SPEC.md</code>, <code>VERIFICATION-DISCIPLINE.md</code> exist.</td></tr>
+    <tr><td>Week 4</td><td>P10 sub-tasks 5.3–5.4 merged. Mid-phase checkpoint done. Differential oracle green vs existing goldens.</td></tr>
+    <tr><td>Week 8</td><td>P10 complete and tagged; P11 in flight or complete. Triad-leg green rate ≥95% of PRs.</td></tr>
+    <tr><td>Week 12</td><td>P11.5 complete; C execution oracle wired in CI. First niche-fit case study in cultivation.</td></tr>
+    <tr><td>Week 16</td><td>P12 complete; sum types + match + <code>@external</code> + <code>readonly</code> shipping. First case study published.</td></tr>
+    <tr><td>Week 22</td><td>P13 complete (median); LSP, spec, package manager, friendly errors, stdlib green.</td></tr>
+    <tr><td>Week 25</td><td>P14 complete (median); idiomatic-output polish shipping; seed library on npm + PyPI + C header.</td></tr>
+    <tr><td>Week 28</td><td><strong>v1.0 technical-complete</strong> (median). Adoption phase (P16.5) begins.</td></tr>
+  </tbody>
+</table>
+
+<p>If a checkpoint slips by &gt;2 weeks: re-budget the phase explicitly in <code>04-strategy.md</code> rather than letting slip compound silently.</p>
+
+<h2>§6 — Recovery playbook</h2>
+
+<p>Each scenario: pause, diagnose, fix the underlying cause, then resume.</p>
+
+<table>
+  <thead><tr><th>Scenario</th><th>Recovery</th></tr></thead>
+  <tbody>
+    <tr><td><strong>AI session goes off the rails</strong></td><td>Cancel the session immediately. Don't keep iterating with a confused session — that compounds wrong context. Re-read SPEC for the ambiguity it found. Edit spec. Restart fresh session. Log: which ambiguity, how caught, what spec edit fixed it.</td></tr>
+    <tr><td><strong>Triad fails on phase exit</strong></td><td>Do NOT advance. Identify the failing leg: (a) property test → invariant wrong or impl wrong (usually impl). Add the input as an example test, fix impl. (b) differential oracle → impl is wrong (oracle's been gating the phase). Fix impl. (c) adversarial input "compiler-broke" → fix impl bug; consider whether the input shape suggests a missing invariant.</td></tr>
+    <tr><td><strong>Stuck on a spec ambiguity at 11pm</strong></td><td>Don't resolve in code. Commit the ambiguity as a <code>// SPEC-AMBIGUITY:</code> comment. Pick it up next session with fresh eyes.</td></tr>
+    <tr><td><strong>Property test signal stays red across sessions</strong></td><td>Pause implementation. Full skeptic pass on the spec, not the impl — red signal means spec is incomplete. Fix spec, then resume.</td></tr>
+    <tr><td><strong>Calendar slipping &gt;25% of phase budget</strong></td><td>Don't extend silently. (a) Re-budget the phase in <code>04-strategy.md</code> §3. (b) Communicate. (c) If slip is at P10 or P13, re-budget all downstream phases too. Honest re-budget preserves trust; silent slippage destroys it.</td></tr>
+    <tr><td><strong>Spec-writing fatigue (R1, weeks 1–6)</strong></td><td>Don't let it degrade to vibe-coding. Pause feature work; spawn fresh-session skeptic to <em>help write</em> the next spec section (skeptic produces draft, Aaron edits). Pair-with-the-skeptic is sustainable.</td></tr>
+    <tr><td><strong>Adversarial-review fatigue (R1, weeks 8–16)</strong></td><td>When findings feel like nitpicks, that's the trip-wire. Pause; reset skeptic context: re-prompt with FATAL/RISK examples from <code>08-adversarial-review-2.md</code> to recalibrate severity.</td></tr>
+    <tr><td><strong>2-week build gap during P10–P16</strong></td><td>Sprint has stalled. Investigate: spec ambiguity? motivational? life-event? Don't restart with feature work; restart with a §2 mid-phase checkpoint.</td></tr>
+  </tbody>
+</table>
+
+<h2>§7 — PR template</h2>
+
+<p>Mirrors the spec-first loop; enforces the discipline at the merge boundary.</p>
+
+<pre><code>## Phase: P{N} — {sub-task name}
+## Spec reference: notes/PHASE-{N}-design.md §{section}
+
+## Plan-mode loop
+- Iterations to approved plan: {count}
+- Ambiguities resolved into spec (commit refs): {list with line refs}
+
+## Implementation
+{2–4 sentences on what changed and why this PR rather than a different cut}
+
+## Verification triad
+- Property tests: {N tests added}, file refs: {paths}
+- Differential testing: oracle = {name}; results = {pass / fail with details}
+- Adversarial inputs: {N AI-generated}; outcomes = {passed: X / spec-bug-fixed: Y / impl-bug-fixed: Z}
+
+## Aaron-written tests (verifier-correctness paths)
+- {list of test files Aaron authored manually}
+
+## Open ambiguities for next phase
+- {anything that didn't make this PR's spec edit cycle}</code></pre>
+
+<h3>When to enforce strict vs relax</h3>
+<table>
+  <thead><tr><th>PR shape</th><th>Template enforcement</th></tr></thead>
+  <tbody>
+    <tr><td>Any change touching <code>verifier/</code>, <code>SymbolTable.kt</code>, <code>typesystem/</code>, <code>ir/</code>, or <code>IrLowering*</code></td><td><strong>Strict.</strong> All sections filled in. No exceptions.</td></tr>
+    <tr><td>Backend output change (touches <code>target/</code>)</td><td><strong>Strict if golden diff; relaxed if mechanical with no diff.</strong> Golden diffs require "why this change is correct" rationale.</td></tr>
+    <tr><td>Documentation, comments, build config, gradle housekeeping</td><td><strong>Skip template.</strong> One-line PR description fine.</td></tr>
+    <tr><td>One-line typo or whitespace fixes</td><td><strong>Skip template.</strong></td></tr>
+    <tr><td>Type-inference, sum-type, generic, FFI, or module-system features</td><td><strong>Strict.</strong> Silent resolution compounds worst here.</td></tr>
+  </tbody>
+</table>
+
+<h2>§8 — When to escalate to Aaron</h2>
+
+<p>For the team (AI agents or future human contributors) executing in Aaron's absence or during deep-work blocks.</p>
+
+<table>
+  <thead><tr><th>Decision type</th><th>Action</th></tr></thead>
+  <tbody>
+    <tr><td>Within-spec implementation details, idiomatic Kotlin, test-naming, file layout inside a package</td><td>Decide autonomously</td></tr>
+    <tr><td>Test framework / linter / formatter choices already specified (Kotest, etc.)</td><td>Decide autonomously</td></tr>
+    <tr><td>Choice between two valid implementations both consistent with spec</td><td>Decide autonomously; document in <code>IMPLEMENTATION-LOG.md</code></td></tr>
+    <tr><td>Spec ambiguity that blocks implementation</td><td><strong>Pause.</strong> Surface to Aaron with proposed resolution. Don't silently pick one — failure-mode #4</td></tr>
+    <tr><td>Schedule slippage &gt;25% of phase budget</td><td><strong>Pause.</strong> Surface with proposed re-budget</td></tr>
+    <tr><td>Discovered architectural debt or scope drift</td><td><strong>Surface to Aaron.</strong> Don't auto-absorb — turns one phase into two</td></tr>
+    <tr><td>Cross-phase invariant changes</td><td><strong>Pause.</strong> Needs strategist's view, not implementer's</td></tr>
+    <tr><td>Adversarial review surfaces FATAL findings</td><td><strong>Pause.</strong> Surface finding + proposed fix</td></tr>
+    <tr><td>Strategic direction changes (niche, timeline, tier)</td><td><strong>Always Aaron.</strong> Never autonomous</td></tr>
+    <tr><td>Cost of an adversarial-review or property-test pass feels disproportionate</td><td><strong>Surface to Aaron</strong> (Q9 was "no budget" — discipline is the limit — but disproportionate spend on a single review is worth a sanity check)</td></tr>
+    <tr><td>External outreach (PR comments on other projects, posts, case-study coordination)</td><td><strong>Always Aaron.</strong> Project's voice is human</td></tr>
+  </tbody>
+</table>
+
+<p class="footer-meta">End of playbook. Revise after week 1 of P10 — first contact with reality will surface what doesn't survive. The discipline is the artifact; the document is the discipline made legible.</p>
+
+</body>
+</html>
