@@ -1,4 +1,0 @@
-void describe(int n) {if (n) {int a = 1;} else if (n) {int b = 2;} else {int c = 3;}
-for (auto item : things) {int x = item;}
-doSomething();
-Other_helper(1, 2);}

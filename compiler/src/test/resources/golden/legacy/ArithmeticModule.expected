@@ -1,7 +1,0 @@
-int sumOfMultiples(int limit) {int total = 0;
-int n = 0;
-while ((n < limit)) {if ((((n % 3) equals 0) or ((n % 5) equals 0))) {total += n;}
-n++;}
-return total;}
-int square(int x) {return (x * x);}
-int cube(int x) {return (x ^ 3);}
