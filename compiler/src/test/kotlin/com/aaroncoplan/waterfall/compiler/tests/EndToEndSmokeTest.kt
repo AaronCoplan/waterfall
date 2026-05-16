@@ -37,38 +37,42 @@ class EndToEndSmokeTest {
 
     @Test
     fun functionWithBodyTranslates() {
-        Main.run(arrayOf("../examples/FunctionWithBodyModule.wf"))
+        Main.run(arrayOf("--target", "js", "../examples/FunctionWithBodyModule.wf"))
         val output = capturedOut.toString()
         assertFalse("Output should be non-empty", output.isEmpty())
-        assertTrue("Output should declare flag variable", output.contains("int flag = 0;"))
-        assertTrue("Output should declare doSomething function", output.contains("void doSomething()"))
-        assertTrue("Output should contain untyped declaration inferred as int", output.contains("int x = 14;"))
+        assertTrue("Output should declare flag variable", output.contains("let flag = 0;"))
+        assertTrue("Output should declare doSomething function", output.contains("function doSomething()"))
+        assertTrue("Output should contain untyped declaration inferred as int", output.contains("let x = 14;"))
     }
 
     @Test
     fun controlFlowTranslates() {
-        Main.run(arrayOf("../examples/ControlFlowModule.wf"))
+        Main.run(arrayOf("--target", "js", "../examples/ControlFlowModule.wf"))
         val output = capturedOut.toString()
         assertTrue("Output should emit if-block", output.contains("if ("))
         assertTrue("Output should emit else-if-block", output.contains("else if ("))
         assertTrue("Output should emit else-block", output.contains("else {"))
         assertTrue("Output should emit for-block", output.contains("for ("))
         assertTrue("Output should emit local function call", output.contains("doSomething()"))
-        assertTrue("Output should emit module-qualified function call as Module_fn",
-            output.contains("Other_helper(1, 2)"))
+        assertTrue("Output should emit module-qualified function call as Module.fn",
+            output.contains("Other.helper(1, 2)"))
     }
 
     @Test
     fun variableDeclarationsTranslates() {
-        Main.run(arrayOf("../examples/VariableDeclarationsModule.wf"))
+        Main.run(arrayOf("--target", "js", "../examples/VariableDeclarationsModule.wf"))
         val output = capturedOut.toString()
-        assertTrue("Output should declare int x = 4;", output.contains("int x = 4;"))
+        assertTrue("Output should declare let x = 4;", output.contains("let x = 4;"))
     }
 
     @Test
     fun emptyModuleProducesNoCode() {
-        Main.run(arrayOf("../examples/EmptyModule.wf"))
+        Main.run(arrayOf("--target", "js", "../examples/EmptyModule.wf"))
         val output = capturedOut.toString().trim()
-        assertTrue("Empty module should produce empty output, got: [$output]", output.isEmpty())
+        // JS backend emits a module comment header; assert output contains only the header line.
+        assertTrue("Empty module output should contain module comment, got: [$output]",
+            output.contains("// module EmptyModule"))
+        assertFalse("Empty module output should contain no function or variable declarations",
+            output.contains("function ") || output.contains("let ") || output.contains("const "))
     }
 }
