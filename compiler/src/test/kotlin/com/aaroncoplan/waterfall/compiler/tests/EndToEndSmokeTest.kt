@@ -66,7 +66,7 @@ class EndToEndSmokeTest {
     }
 
     @Test
-    fun emptyModuleProducesNoCode() {
+    fun emptyModuleHasNoDeclarations() {
         Main.run(arrayOf("--target", "js", "../examples/EmptyModule.wf"))
         val output = capturedOut.toString().trim()
         // JS backend emits a module comment header; assert output contains only the header line.
@@ -74,5 +74,13 @@ class EndToEndSmokeTest {
             output.contains("// module EmptyModule"))
         assertFalse("Empty module output should contain no function or variable declarations",
             output.contains("function ") || output.contains("let ") || output.contains("const "))
+    }
+
+    @Test
+    fun defaultTargetIsJs() {
+        Main.run(arrayOf("../examples/FibonacciModule.wf"))   // no --target
+        val output = capturedOut.toString()
+        assertTrue("Default target should produce JS output",
+            output.contains("function fib(") || output.contains("let total = 0;"))
     }
 }
