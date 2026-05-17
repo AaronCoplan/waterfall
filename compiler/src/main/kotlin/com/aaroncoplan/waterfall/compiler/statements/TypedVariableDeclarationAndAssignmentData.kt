@@ -5,6 +5,7 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStateme
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult
 import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
+import com.aaroncoplan.waterfall.compiler.symboltables.VarInfo
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator
 import com.aaroncoplan.waterfall.compiler.typesystem.PrimitiveTypes
 
@@ -27,7 +28,7 @@ class TypedVariableDeclarationAndAssignmentData(
                 "Type '$type' is not a recognized primitive or primitive array. Known: ${PrimitiveTypes.ALL}")
         }
         try {
-            symbolTable.declare(name, type)
+            symbolTable.declare(name, VarInfo(type, isImmutable()))
         } catch (e: DuplicateDeclarationException) {
             return VerificationResult(false, "Duplicate declaration: $name")
         }
