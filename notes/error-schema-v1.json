@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://waterfall-lang.dev/schemas/error-v1.json",
+  "title": "Waterfall Compiler Error v1",
+  "description": "Schema for a single JSONL error line emitted by the Waterfall compiler on stderr. See notes/PHASE-10-design.md §4.8 for field semantics and the code-allocation table.",
+  "type": "object",
+  "required": ["schemaVersion", "severity", "code", "message", "primaryLocation"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "description": "Schema version. Currently 1. Bumped on any breaking change to this format.",
+      "const": 1
+    },
+    "severity": {
+      "description": "Error severity. P10 ships only 'error'. 'warning' reserved for P11+ friendly-errors.",
+      "enum": ["error", "warning"]
+    },
+    "code": {
+      "description": "Stable error code. Consumers switch on this, never on message. See code-allocation table in PHASE-10-design.md §4.8.",
+      "type": "string",
+      "pattern": "^WF[0-9]+$"
+    },
+    "message": {
+      "description": "One-sentence canonical error message. Plain prose, no embedded formatting.",
+      "type": "string"
+    },
+    "primaryLocation": {
+      "description": "Source location where the error is anchored.",
+      "$ref": "#/$defs/sourceLocation"
+    },
+    "relatedInfo": {
+      "description": "Optional pointers to other source positions the error references (e.g., previous declaration site). Omit or use empty array when none.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["message", "location"],
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "description": "Short prose describing what this related location means.",
+            "type": "string"
+          },
+          "location": {
+            "$ref": "#/$defs/sourceLocation"
+          }
+        }
+      }
+    },
+    "suggestedFix": {
+      "description": "One-line 'what to try' hint for the human renderer. null when the verifier has no suggestion.",
+      "type": ["string", "null"]
+    },
+    "tags": {
+      "description": "Reserved for LSP-style tags (e.g., 'unnecessary', 'deprecated'). Empty array in v1.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "$defs": {
+    "sourceLocation": {
+      "description": "A location in a Waterfall source file. line is 1-based; column is 0-based (matching ANTLR charPositionInLine). endLine/endColumn are optional; when omitted the consumer treats the location as a single-character span.",
+      "type": "object",
+      "required": ["file", "line", "column"],
+      "additionalProperties": false,
+      "properties": {
+        "file": {
+          "description": "Path to the source file, as passed on the command line.",
+          "type": "string"
+        },
+        "line": {
+          "description": "1-based line number.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "column": {
+          "description": "0-based column offset (ANTLR charPositionInLine convention).",
+          "type": "integer",
+          "minimum": 0
+        },
+        "endLine": {
+          "description": "1-based end line (inclusive). Optional.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "endColumn": {
+          "description": "0-based end column (exclusive). Optional.",
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}
