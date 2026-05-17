@@ -259,7 +259,7 @@ I'll annotate where AUDIT-OPEN-QUESTIONS codes (G4, G5, U1–U3, C1–C7, T1–T
 **Effort: 2–3 weeks calendar (AI-augmented).** This is the most architecturally consequential phase and the one where verification design *cannot* be cut. The spec/plan-mode loop will likely consume 1 of those 3 weeks; implementation is the other 1–2. **The single biggest predictor of whether the rest of the roadmap compresses is whether P10's spec is precise enough that the AI doesn't silently resolve ambiguities.** If the spec is sloppy, P10 stretches and pollutes everything downstream.
 
 **Phase-exit checklist:**
-- [ ] All four backends consume the new IR, not the `*Data` AST.
+- [ ] All three backends consume the new IR, not the `*Data` AST.
 - [ ] Verifier separated; no `verify()` on `*Data`.
 - [ ] `SymbolTable.lookup` public; in-test inspection demonstrated.
 - [ ] CI green; all goldens unchanged (differential test).
@@ -362,7 +362,7 @@ I'll annotate where AUDIT-OPEN-QUESTIONS codes (G4, G5, U1–U3, C1–C7, T1–T
 **Effort: 2–3 weeks calendar (AI-augmented).** Sum types and match are the most-implemented feature pattern in modern compilers — there's abundant training data, and AI compresses well here. `@external` is the novel-feature work and carries the most risk of failure mode #4 (silent spec resolution) — its spec needs to be tight.
 
 **Phase-exit checklist:**
-- [ ] Sum types and `match` work end-to-end on all four backends.
+- [ ] Sum types and `match` work end-to-end on all three backends.
 - [ ] Exhaustiveness check rejects missing cases.
 - [ ] Multi-statement lambda bodies.
 - [ ] `@external` works across JS/Python/C with correct visibility semantics.
