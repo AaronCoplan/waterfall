@@ -1,6 +1,0 @@
-int intArr() {int[] xs = [1, 2, 3];
-return xs[0];}
-dec decArr() {dec[] ys = [1.5, 2.5];
-return ys[0];}
-bool boolArr() {bool[] flags = [true, false];
-return flags[0];}

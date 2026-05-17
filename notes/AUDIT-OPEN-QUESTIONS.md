@@ -75,14 +75,14 @@ but `castas dec[]` doesn't.~~
 
 ### U1. Bundle literals `|a, b|`
 **Today:** Best-guess as arrays/lists across every target (JS arrays,
-Python lists, C `/* TODO bundle */ {0}` placeholder, legacy pass-through).
+Python lists, C `/* TODO bundle */ {0}` placeholder).
 The source language hasn't defined what a bundle is.
 **Fix:** Decide bundle semantics first (tuple vs. struct vs. tagged record).
 **Where flagged:** Every backend's `emitBundleLiteral`.
 
 ### U2. Lambdas
-**Today:** Map to arrow functions (JS) / `lambda` (Python) / `(x castas T)`
-shape (legacy) but emit a `NULL` placeholder in C (no anonymous functions).
+**Today:** Map to arrow functions (JS) / `lambda` (Python) / emit a `NULL`
+placeholder in C (no anonymous functions).
 **Fix:** For C, lift the lambda body to a static function in the same
 compilation unit and reference it by name. Requires a transform pass.
 **Where flagged:** `CBackend.emitLambda`.
@@ -92,7 +92,6 @@ compilation unit and reference it by name. Requires a transform pass.
 - JS: `fn({a: 1, b: 2})` — callee must destructure.
 - Python: native `fn(a=1, b=2)` (clean).
 - C: names dropped, positional fallback.
-- Legacy: `fn(a=1, b=2)` source form.
 **Fix:** Standardize one ABI per target. The JS object-arg approach forces
 callee changes; alternatives include preserving call-site order via a
 parameter-name lookup against the function definition (requires symbol-table
@@ -107,7 +106,7 @@ resolution.~~
 and `escapeFor(raw, quoteChar)`. Source escapes recognized: `\``, `\\`,
 `\n`, `\r`, `\t`. All three real-target backends now go through
 `unescape -> escapeFor('"')`, switching JS off template literals for
-simplicity. Legacy emits source text verbatim. New
+simplicity. New
 `examples/StringLiteralsModule.wf` covers plain strings, embedded
 quotes, newline/tab escapes, and an escaped backtick. All goldens
 verified by their language's runtime check.

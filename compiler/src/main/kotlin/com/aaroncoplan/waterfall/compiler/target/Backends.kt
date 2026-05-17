@@ -6,10 +6,9 @@ package com.aaroncoplan.waterfall.compiler.target
  */
 object Backends {
 
-    const val DEFAULT_TARGET: String = "legacy"
+    const val DEFAULT_TARGET: String = "js"
 
     private val REGISTRY: LinkedHashMap<String, () -> CodeGenerator> = linkedMapOf(
-        "legacy" to { LegacyTextBackend() },
         "js"     to { JavaScriptBackend() },
         "python" to { PythonBackend() },
         "c"      to { CBackend() }

@@ -20,7 +20,7 @@ fetched by the wrapper.
 
 ```bash
 ./gradlew build                                  # build the compiler jar
-./waterfall examples/FunctionWithBodyModule.wf   # default: 'legacy' C-like emitter
+./waterfall examples/FunctionWithBodyModule.wf   # default: js emitter
 ./waterfall --target js examples/FibonacciModule.wf
 ./waterfall --target python examples/FibonacciModule.wf
 ./waterfall --target c examples/FibonacciModule.wf
@@ -33,8 +33,7 @@ shell pipelines.
 
 | Target  | Flag              | Runtime check                                                          |
 |---------|-------------------|------------------------------------------------------------------------|
-| Legacy  | `--target legacy` | The original C-like emitter. Default when `--target` is omitted.       |
-| JavaScript | `--target js`  | Each example's output passes `node --check`.                           |
+| JavaScript | `--target js`  | Each example's output passes `node --check`. Default when `--target` is omitted. |
 | Python 3 | `--target python` | Each example's output passes `python3 -c "import ast; ast.parse(...)"`. |
 | C99     | `--target c`      | Each example's output passes `gcc -fsyntax-only` (warnings suppressed).|
 
@@ -248,8 +247,8 @@ them in a `canBeFormed` example before they were caught as unparseable:
 ```
 parser/    ANTLR 4 grammar + a small Kotlin frontend that wraps the generated
            lexer/parser. Builds an AST.
-compiler/  Kotlin — the verifier, the CodeGenerator interface, and the four
-           backend implementations (legacy / js / python / c).
+compiler/  Kotlin — the verifier, the CodeGenerator interface, and the three
+           backend implementations (js / python / c).
 examples/  Working .wf programs, one per feature area.
 notes/     Audit decisions and the running list of open questions.
 ```

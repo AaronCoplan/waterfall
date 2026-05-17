@@ -1384,7 +1384,7 @@ enum class TargetKeyword {
 
 `ModuleVerifier.verifyModule` (in its own file) does the existing two-pass walk: top-level vars first, then functions. The implementation mirrors today's loops in `Main.run` (lines 91-105) but uses `verifier/StatementVerifier.kt:verifyStatement` instead of `Translatable.verify`.
 
-**Driver wiring** (`compiler/.../Main.kt`): the CLI's `--target` flag is parsed to a `TargetKeyword?` — when `--target` is passed, that's the specific value; when omitted, `null` (target-agnostic). The driver passes that value into `Verifier.verifyModule`. The legacy backend (per strategy doc Q5 dropping it) doesn't get a TargetKeyword variant; `--target legacy` is rejected at CLI-parse time once the legacy backend is removed.
+**Driver wiring** (`compiler/.../Main.kt`): the CLI's `--target` flag is parsed to a `TargetKeyword?` — when `--target` is passed, that's the specific value; when omitted, `null` (target-agnostic). The driver passes that value into `Verifier.verifyModule`. The legacy backend was dropped pre-P10 (Q5); `--target legacy` is rejected at CLI-parse time.
 
 **PITFALL #14** — `target == null` is "verify against all targets," NOT "skip target-conditional checks." The wrong inference: "no target specified means I don't have to think about FFI." The right inference: "no target specified means EVERY target's `@external` set must be complete." When `wfpm publish` runs, it expects target-agnostic verification to fail loudly if any function is only callable on some targets — because that's exactly the situation the user wants flagged before pushing artifacts to npm/PyPI/headers. AI implementers must not collapse `null` into "permissive": that's a silently broken implementation that ships under-tested code to library consumers. Tests in §4.7 (`nestedIfDoubleInnerPromoteDoesNotLeak` and friends) use target=null; add explicit target-specific test cases when P12 lands the `@external` enforcement.
 
@@ -2207,10 +2207,9 @@ For each, the existing `verify` body now wraps the `declare` call in a check for
 
 This is the biggest single change. One backend at a time. The order to use:
 
-1. `LegacyTextBackend` (smallest, least correctness-sensitive — it's a regression anchor).
-2. `JavaScriptBackend` (cleanest).
-3. `PythonBackend`.
-4. `CBackend` (most complex; do last so the others' migration patterns are settled).
+1. `JavaScriptBackend` (cleanest).
+2. `PythonBackend`.
+3. `CBackend` (most complex; do last so the others' migration patterns are settled).
 
 **Files changed per backend:**
 - The backend's main file — every `emit*` method's parameter type changes from `*Data` to `Ir*`.
@@ -2285,13 +2284,11 @@ The AI agent should **escalate to human review** instead of resolving silently i
 
 3. **Any place where `*Data.verify` mutates state besides `SymbolTable.declare`**. The transactional symbol-table model assumes verify-time mutations are limited to declare and (post-Piece-2) `markReadonlyLocal`. Any other state mutation discovered during the migration needs human review — it might be a structural assumption the IR breaks.
 
-4. **The legacy backend's quirks**. The legacy backend (per audit Section 3) emits backticks in string literals, uses `for (auto x : c)` (C++), and other quirks. These are preserved by goldens-unchanged. *Don't try to fix them* during the IR migration. If you see a quirk and feel tempted to "clean it up," escalate.
+4. **Inferring types for `BINARY_OP` IR nodes**. Section 3.6 says "type = left.type for P10 placeholder." That's intentionally weak — real type inference is P11. If the AI agent finds itself wanting to actually infer the result type (e.g., promoting int+dec to dec), escalate. P10 is not the time.
 
-5. **Inferring types for `BINARY_OP` IR nodes**. Section 3.6 says "type = left.type for P10 placeholder." That's intentionally weak — real type inference is P11. If the AI agent finds itself wanting to actually infer the result type (e.g., promoting int+dec to dec), escalate. P10 is not the time.
+5. **`StringLiteral` type assignment**. The audit (surprise #6) notes that today untyped strings infer to `char`. The IR follows suit (Section 3.6). If during migration this feels wrong, escalate — fixing it is a real-string-type design call (language design doc §1.7) that belongs to a future phase.
 
-6. **`StringLiteral` type assignment**. The audit (surprise #6) notes that today untyped strings infer to `char`. The IR follows suit (Section 3.6). If during migration this feels wrong, escalate — fixing it is a real-string-type design call (language design doc §1.7) that belongs to a future phase.
-
-7. **The driver's accumulate-vs-bail decision** (§4.6). Today's driver bails on the first error; the new VerifyResult supports accumulation. P10 keeps the bail-on-first behavior; P11 may flip it. *Don't speculatively switch* the driver to accumulate during P10 — escalate if doing so seems tempting.
+6. **The driver's accumulate-vs-bail decision** (§4.6). Today's driver bails on the first error; the new VerifyResult supports accumulation. P10 keeps the bail-on-first behavior; P11 may flip it. *Don't speculatively switch* the driver to accumulate during P10 — escalate if doing so seems tempting.
 
 ### 6.3 Pre-merge checklist (for the human reviewer)
 
@@ -2389,7 +2386,7 @@ compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/
 │   └── DuplicateDeclarationException.kt    (DELETED)
 ├── target/
 │   └── CodeGenerator.kt              (MODIFIED — methods take Ir*)
-│   └── [JavaScript|Python|C|LegacyText]Backend.kt   (MODIFIED — consume Ir*)
+│   └── [JavaScript|Python|C]Backend.kt   (MODIFIED — consume Ir*)
 └── Main.kt                           (MODIFIED — verifier call + lowering call)
 ```
 

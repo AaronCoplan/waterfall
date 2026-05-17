@@ -1,3 +1,0 @@
-void myFunc() {}
-void myFunc2(int arg, int arg2) {}
-int myFunc3(int arg1, int arg2, int arg3) {}

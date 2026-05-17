@@ -1,3 +1,0 @@
-int one() {return 1;}
-void nothing() {return;}
-int add(int a, int b) {return a;}

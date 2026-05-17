@@ -1,8 +1,0 @@
-char plain() {char[] greeting = `hello`;
-return greeting[0];}
-char quoted() {char[] withQuote = `she said "yes"`;
-return withQuote[0];}
-char escapes() {char[] multi = `line one\nline two\twith tab`;
-return multi[0];}
-char backtickInside() {char[] tick = `before\`after`;
-return tick[0];}

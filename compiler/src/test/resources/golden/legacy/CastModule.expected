@@ -1,3 +1,0 @@
-int transform(int n) {dec asDec = (n castas dec);
-int asInt = (asDec castas int);
-return asInt;}
