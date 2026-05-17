@@ -99,6 +99,28 @@ sealed class WaterfallType {
          * For P10 we accept exactly what today's `PrimitiveTypes.isPrimitiveOrArray`
          * accepts. The leading `?` (nullable) is parsed but produces ErrorType —
          * matches today's behavior (audit surprise #5).
+         *
+         * **Whitespace policy (strict-literal):** `fromSourceText` does NOT trim,
+         * normalize, or lowercase its input. Inputs like `"int "` (trailing space),
+         * `" int"` (leading space), `"int []"` (internal space), `"INT"` (case),
+         * `"int\t"` (tab) all return `ErrorType(text)`. The expectation is that
+         * callers feed lexer-token text, which ANTLR pre-strips whitespace; if a
+         * future grammar change introduces non-canonical text, the resulting
+         * `ErrorType` is the correct surfacing — the parser layer should be fixed,
+         * not this function.
+         *
+         * **`ErrorType.sourceText` preservation contract:** every `return ErrorType(text)`
+         * site in this function MUST pass the ORIGINAL `text` argument, never a
+         * derived form (e.g., `base + "[]"`). Test fixtures and friendly-error
+         * renderers (P11+) rely on `ErrorType.sourceText` being byte-identical to
+         * the caller's input. Reviewers must reject any refactor that breaks this.
+         *
+         * **Totality:** this function is total — it returns a `WaterfallType` for
+         * every possible input string, including null bytes, very long strings,
+         * Unicode, control characters, etc. It MUST NOT throw exceptions. The
+         * `ErrorType` variant is the canonical "I can't parse this" surfacing;
+         * callers handle it explicitly. Throwing for "obviously corrupt" input is
+         * forbidden — it would skip the verifier's friendly-error path.
          */
         fun fromSourceText(text: String): WaterfallType {
             if (text.startsWith("?")) return ErrorType(text)
