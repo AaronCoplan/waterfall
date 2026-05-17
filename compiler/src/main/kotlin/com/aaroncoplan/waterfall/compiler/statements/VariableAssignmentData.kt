@@ -4,6 +4,7 @@ import com.aaroncoplan.waterfall.generated.WaterfallParser
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
+import com.aaroncoplan.waterfall.compiler.symboltables.VarInfo
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator
 
 class VariableAssignmentData(filePath: String, ctx: WaterfallParser.VariableAssignmentContext)
@@ -14,7 +15,13 @@ class VariableAssignmentData(filePath: String, ctx: WaterfallParser.VariableAssi
     @JvmField val op: String = ctx.op.text
     @JvmField val value: ExpressionData = ExpressionData(filePath, ctx.expression())
 
-    override fun verify(symbolTable: SymbolTable): VerificationResult = VerificationResult(true, null)
+    override fun verify(symbolTable: SymbolTable): VerificationResult {
+        val info = symbolTable.lookup(name)
+        if (info is VarInfo && info.isImmutable) {
+            return VerificationResult(false, "Cannot assign to immutable binding '$name'")
+        }
+        return VerificationResult(true, null)
+    }
 
     override fun translate(backend: CodeGenerator): String = backend.emitVarAssignment(this)
 }
