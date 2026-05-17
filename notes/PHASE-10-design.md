@@ -13,7 +13,7 @@ This document is the spec for Phase 10. It closes audit debts D1 (no IR), D2 (sy
 
 It is written to be implemented by an AI agent working with a senior operator (Aaron) doing review. Every section is detailed enough that an implementer should not have to guess. Where ambiguity remains, look for the **PITFALL** callouts — those are the failure modes that hit AI implementers in the public case studies (Klabnik's hardcoded instruction sizes, Anthropic's verifier overfitting). Read those before writing any code in the affected section.
 
-If you are the AI implementer: **escalate** the listed cases under "Section 7 — Escalation list" to human review instead of resolving silently.
+If you are the AI implementer: **escalate** the listed cases under "§6.2 — Escalation list" to human review instead of resolving silently.
 
 ---
 
@@ -102,7 +102,8 @@ sealed class WaterfallType {
          */
         fun fromSourceText(text: String): WaterfallType {
             if (text.startsWith("?")) return ErrorType(text)
-            val base = if (text.endsWith("[]")) text.dropLast(2) else text
+            val isArray = text.endsWith("[]")
+            val base = if (isArray) text.dropLast(2) else text
             val baseType = when (base) {
                 "int"  -> IntType
                 "dec"  -> DecType
@@ -111,15 +112,34 @@ sealed class WaterfallType {
                 "void" -> VoidType
                 else   -> return ErrorType(text)
             }
-            return if (text.endsWith("[]")) ArrayType(baseType) else baseType
+            // `void[]` (and `void[][]+`) is never a valid type — `void` is a return-only
+            // marker, not a value type that can be put in an array. The verifier-level
+            // PITFALL #1 covers bare `void x = ...`; this guard covers the array case
+            // at the parser level so `ArrayType(VoidType)` is structurally unconstructible.
+            if (isArray && baseType === VoidType) return ErrorType(text)
+            return if (isArray) ArrayType(baseType) else baseType
         }
+
+        /**
+         * Canonical adapter for nullable inputs (e.g., `FunctionImplementationData.returnType: String?`).
+         * Returns [VoidType] when `text` is null — matching today's `returnType ?: "void"` semantics
+         * but without round-tripping through [fromSourceText] ("void"). Non-null inputs go through
+         * [fromSourceText] verbatim.
+         *
+         * The §5.2 callsites at `FunctionImplementationData.verify` (line 35, self-decl for recursion)
+         * MUST use this method, not `fromSourceText(returnType ?: "void")` — the latter is forbidden
+         * because it introduces a string-bridge ambiguity (today the string-bridged path agrees with
+         * the helper only by coincidence with the §1.2 guard on `void[]`).
+         */
+        fun forReturnType(text: String?): WaterfallType =
+            if (text == null) VoidType else fromSourceText(text)
     }
 }
 ```
 
-**PITFALL #1** — The `void` case. Today `FunctionImplementationData.verify` at line 35 stores `returnType ?: "void"` in the symbol table. That string `"void"` is the same string the audit calls inconsistent (Section 3, `PrimitiveTypes`). Under the new scheme `VoidType` is a first-class variant of `WaterfallType`. `PrimitiveTypes.ALL` still does not contain `"void"`, which is correct because `void` is *not* a value type — it's only a return type. The verifier must reject `void x = ...` declarations (this was implicit before; make it explicit). Escalate if you discover any other site that conflated `"void"` with primitive types.
+**PITFALL #1** — The `void` case. Today `FunctionImplementationData.verify` (at the self-declaration call on line 35) stores `returnType ?: "void"` in the symbol table. That string `"void"` is the same string the audit calls inconsistent (Section 3, `PrimitiveTypes`). Under the new scheme `VoidType` is a first-class variant of `WaterfallType`. `PrimitiveTypes.ALL` still does not contain `"void"`, which is correct because `void` is *not* a value type — it's only a return type. The verifier must reject `void x = ...` declarations (this was implicit before; make it explicit). **Sub-task ownership**: the explicit rejection lands in §5.3 (verifier package) as a new `VerifyError.VoidNotAValueType` variant emitted from `StatementVerifier.verifyTypedVarDecl` when the declared type is `WaterfallType.VoidType`. The array case `ArrayType(VoidType)` is handled at the parser level by the §1.2 `fromSourceText` guard — `void[]` returns `ErrorType("void[]")`, so the §5.3 rejection only needs to cover `WaterfallType.VoidType`, not `WaterfallType.ArrayType(WaterfallType.VoidType)`. §5.1 ships `VoidType` as a constructible variant; nothing in §5.1 enforces the rejection. Escalate if you discover any other site that conflated `"void"` with primitive types.
 
-**PITFALL #2** — Don't add variants speculatively. The IR (Section 3) will need more type variants for records and sum types (P12), generics (P14). Those are *not* part of P10. Add them in their phases. Leaving them out now means `when (t)` matches are exhaustive at P10 and will get a compile error when new variants land — that's the desired error, it tells the implementer "you must handle this here too."
+**PITFALL #2** — Don't add variants speculatively. The IR (Section 3) will need more type variants for records and sum types (P12), generics (P14). Those are *not* part of P10. Add them in their phases. Leaving them out now means `when (t)` matches are exhaustive at P10 and will get a compile error when new variants land — that's the desired error, it tells the implementer "you must handle this here too." **Function types as first-class values** (for higher-order lambdas) are deferred. P10 lambdas remain represented structurally via the existing `LambdaFunctionData`, not as `WaterfallType.FunctionType` values. If you find yourself wanting to add a function-type variant for lambdas, stop — that's P12 (with sum types) or P14 (with generics).
 
 ### 1.3 `SymbolKind` — the kind discriminator (closes D6)
 
@@ -153,10 +173,20 @@ sealed class SymbolKind {
      * available from P10 onward.
      */
     data class Function(
+        /**
+         * Parameter list. `Pair` is `kotlin.Pair` (not the custom
+         * `com.aaroncoplan.waterfall.parser.Pair`). Field convention: **first = name, second = type**.
+         * This ordering is the OPPOSITE of the legacy `(type, name)` convention used in
+         * `FunctionImplementationData.typedArguments` and `LambdaFunctionData` — when §5.2
+         * migrates those callsites, swap the order at the boundary. Per §5.1 → §5.2 contract
+         * below, do NOT introduce a `TypedArgument` data class in §5.1.
+         */
         val parameters: List<Pair<String, com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType>>
     ) : SymbolKind()
 }
 ```
+
+**Sub-task 5.1 → 5.2 contract on `parameters`.** §5.1 ships `SymbolKind.Function.parameters` typed as `List<Pair<String, WaterfallType>>` exactly as shown above. §5.2 may refactor this to `List<TypedArgument>` where `TypedArgument(name, type, sourcePosition)` is the small data class proposed in §7.3 — that refactor is needed to satisfy PITFALL #8 (per-argument source positions). §5.1 does NOT pre-introduce `TypedArgument`. **Specifically, §5.1 MUST NOT add any field to `SymbolKind.Function` beyond `parameters` — including a parallel `List<SourcePosition>` for arg positions.** Per-argument positions are §5.2's call; pre-introducing a parallel position list duplicates the eventual `TypedArgument` data and creates a refactor-on-refactor situation. The decision to refactor is made during §5.2's plan-mode loop, not §5.1's; if §5.2 chooses an alternative resolution to PITFALL #8 (e.g., position-as-fourth-Pair-field via a `Triple`-style wrapper), `SymbolKind.Function` is updated then. Implementers of §5.1 should NOT speculatively introduce `TypedArgument` based on §7.3 alone.
 
 **PITFALL #3** — Don't fold the function-signature info into `SymbolInfo.type`. The Audit Section 3 on `PrimitiveTypes` notes that today the function name is declared with its *return type* as the info value. That's stringly-typed and ambiguous (`add: "int"` is indistinguishable from a variable `int add = 0`). The fix is structural: store `kind = SymbolKind.Function(params)` and store the *return type* in `SymbolInfo.type`. This makes "what kind of thing is this?" answerable in one lookup.
 
@@ -175,13 +205,19 @@ import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
  * `SymbolTable.kt:5` (audit D2).
  *
  * Immutable. To "change" a binding's readonly state without a parent-scope
- * write (the §2c shadow model), the [SymbolTable] uses [SymbolTable.markReadonlyLocal];
- * to commit a flow-sensitive promotion at a branch join, it uses [SymbolTable.commitReadonly].
+ * write (the §2c shadow model), the SymbolTable uses markReadonlyLocal (added in §5.2);
+ * to commit a flow-sensitive promotion at a branch join, it uses commitReadonly (also §5.2).
  * Both produce new SymbolInfo values via `.copy(isReadonly = true)` — the original
- * is never mutated in place.
+ * is never mutated in place. (KDoc cross-reference links are deliberately written as
+ * plain prose here to avoid stale Dokka links during the §5.1 → §5.2 interim state.)
  *
- * Equality and hashCode are structural (data class). Two SymbolInfos are equal
- * iff every field is equal, including source position.
+ * Equality and hashCode are structural (data class). Two SymbolInfos are equal iff every
+ * field is equal, including source position. This requires `SourcePosition` to also
+ * provide structural equality — §5.1 converts `SourcePosition` to a data class (see §5.1
+ * Files changed). Without that change, `.copy(isReadonly = true)` would still work (the
+ * `sourcePosition` reference is shared), but two SymbolInfo values reconstructed from the
+ * same source location via different ANTLR walks would compare unequal, silently breaking
+ * test fixtures and any future invalidation logic.
  */
 data class SymbolInfo(
     /** The declared (or inferred at P11+) type. For functions this is the
@@ -212,7 +248,7 @@ data class SymbolInfo(
 
 ### 2.1 Why
 
-Today (`SymbolTable.kt:21`) `lookup` is `private`. No external caller can ask "is `x` readonly?" or "what's the type of `x`?". This blocks the type-inference work at P11, the call-site type-checking at P11, and the Form B `readonly` enforcement (audit Section 4).
+Today (`SymbolTable.kt:21`) `lookup` is `internal` and contractually treated as private — no production code outside `symboltables/` calls it. (Phase 0 PR2 widened from `private` to `internal` so the verifier-const-enforcement work could land; see commit `ea4e1cc`.) P10 widens to `public` and stabilizes the contract. This unblocks the type-inference work at P11, the call-site type-checking at P11, and the Form B `readonly` enforcement (audit Section 4).
 
 The full new API is below. Stick to these signatures; don't add helpers speculatively.
 
@@ -1082,7 +1118,7 @@ The implementer should encode the mappings below as a `when` over the `*Data` su
 | `UntypedVariableDeclarationAndAssignmentData` | `IrStatement.UntypedVarDecl` | `inferredType` from `WaterfallType.fromSourceText(.inferredType)` |
 | `VariableAssignmentData` | `IrStatement.VarAssignment` | `op`, `value` mapped directly |
 | `IncrementStatementData` | `IrStatement.IncrementStatement` | `op` directly |
-| `ReadonlyPromotionData` (new, from Piece 2 design) | `IrStatement.ReadonlyPromotion` | `name` only |
+| `ReadonlyPromotionData` (NOT in P10 — Piece 2 lands in P12) | `IrStatement.ReadonlyPromotion` | Forward-looking row. The `*Data` class does not exist in the P10 codebase; P10's lowering `when` does NOT include this case. The IR variant `IrStatement.ReadonlyPromotion` ships in P10 so the IR shape is stable for P12, but no P10 input produces it. P12 adds the parser/AST + lowering case + verifier handler together. |
 | `IfBlockData` | `IrStatement.IfBlock` | recursively lower bodies and conditions |
 | `WhileBlockData` | `IrStatement.WhileBlock` | recursively lower |
 | `ForBlockData` | `IrStatement.ForBlock` | preserve `iteratorName` and `collectionName` |
@@ -1145,7 +1181,7 @@ interface CodeGenerator {
 }
 ```
 
-**PITFALL #10** — Don't try to keep the old interface alive in parallel with the new one. The audit's D4 (backend duplication) is a real issue, but it's a *separate* problem from D1. P10 is just the IR migration. After P10, all four backends consume IR; addressing D4 (e.g., a shared "block-of-statements" helper) is post-P10 work.
+**PITFALL #10** — Don't try to keep the old interface alive in parallel with the new one. The audit's D4 (backend duplication) is a real issue, but it's a *separate* problem from D1. P10 is just the IR migration. After P10, all three backends consume IR; addressing D4 (e.g., a shared "block-of-statements" helper) is post-P10 work.
 
 ---
 
@@ -1266,16 +1302,22 @@ sealed class VerifyError {
             "(declared at ${declarationPosition.generateMessage()})."
     }
 
-    /**
-     * Catch-all for converting a symbol-table-level error into a verifier
-     * error. Used when [SymbolTable.declare] returns a Failure.
-     */
-    fun fromSymbolTable(e: DuplicateDeclarationError): DuplicateDeclaration =
-        DuplicateDeclaration(
-            name = e.name,
-            previousPosition = e.previouslyDeclaredAt,
-            primaryPosition = e.attemptedAt
-        )
+    companion object {
+        /**
+         * Catch-all for converting a symbol-table-level error into a verifier
+         * error. Used when [SymbolTable.declare] returns a Failure. Lives in
+         * the companion object so the §4.5 callsite `VerifyError.fromSymbolTable(...)`
+         * resolves correctly (an instance method would require a pre-existing
+         * VerifyError to dispatch on, which makes no contextual sense at this
+         * call site).
+         */
+        fun fromSymbolTable(e: DuplicateDeclarationError): DuplicateDeclaration =
+            DuplicateDeclaration(
+                name = e.name,
+                previousPosition = e.previouslyDeclaredAt,
+                primaryPosition = e.attemptedAt
+            )
+    }
 }
 
 /**
@@ -2126,7 +2168,7 @@ class IrLoweringPropertyTest {
 - [ ] Gradle dependency on `kotest-property` and `kotest-runner-junit4` added.
 - [ ] At least one property test per major subsystem: SymbolTable (the walk-depth boundary), JoinAnalysis (intersection over generated branches), JsonRenderer (schema round-trip).
 - [ ] Property tests run as part of `./gradlew test` — no separate command needed.
-- [ ] Each property test has at least 100 iterations by default; failure produces a *shrunk* counterexample (Kotest does this automatically).
+- [ ] Each property test has at least 100 iterations by default; failure produces a *shrunk* counterexample (Kotest does this automatically). Per `notes/team-output/00-EXECUTION-PLAYBOOK.md` §3 Leg 1, **production target is N=10000** for SymbolTable / JoinAnalysis / IR-shape invariants; N=1000 acceptable only for properties that compile a generated program and run it through a backend (call this out in the test KDoc). The §4.9 worked example uses `checkAll(100, ...)` solely for spec-doc legibility — implementer uses N=10000 unless the per-test rationale documents otherwise.
 
 #### Strategy implication
 
@@ -2141,11 +2183,19 @@ P10's six sub-tasks land in order. Tests stay green at every step; if they don't
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/symboltables/SymbolKind.kt`
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/symboltables/SymbolInfo.kt`
 
-**Files changed:** none yet. `SymbolTable.kt` still stores `Any?` at this step.
+**Files changed:**
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/statements/helpers/SourcePosition.kt` — convert from `class SourcePosition internal constructor(...)` (with three `private val` fields) to `data class SourcePosition(val fileName: String, val line: Int, val column: Int)` (public primary constructor; fields exposed as `val`). The existing `generateMessage()` method is preserved verbatim. Three structural consequences:
+  1. Structural `equals`/`hashCode` — load-bearing for `SymbolInfo`'s data-class equality (otherwise reconstructed SymbolInfos compare unequal even when describing the same binding).
+  2. Public constructor — needed by §5.2's per-argument position synthesis (PITFALL #8) and by test fixtures (every §2.7 SymbolTable test constructs a SourcePosition literal).
+  3. Field visibility widens from `private val` to `val`. Today's only field-reader is `generateMessage()` (same class); no production code outside the class reads the fields. Test fixtures will start reading them — that's intentional.
 
-**Expected test impact:** none — these are new files unused by anything yet.
+  Compile-impact: the one production caller — `TranslatableStatement.kt:10`'s `SourcePosition(ctx.start.text, ctx.start.line, ctx.start.charPositionInLine)` — continues to compile unchanged.
 
-**Sanity check:** `./gradlew build` passes.
+`SymbolTable.kt` still stores `Any?` at this step — that migration is §5.2.
+
+**Expected test impact:** existing tests pass unchanged (the SourcePosition change is structurally equivalent for the single production caller). New tests are not added at §5.1 — the §2.7 SymbolTable tests land with §5.2.
+
+**Sanity check:** `./gradlew build` passes; `./gradlew test` is byte-identical to baseline.
 
 ### Sub-task 5.2 — Migrate `SymbolTable` to typed storage + public `lookup` + shadow API
 
@@ -2154,10 +2204,10 @@ P10's six sub-tasks land in order. Tests stay green at every step; if they don't
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/symboltables/DuplicateDeclarationException.kt` (delete; replaced by `DuplicateDeclarationError` and `DeclareResult`).
 
 **Callsites updated** (these are the only ones today):
-- `compiler/.../statements/TypedVariableDeclarationAndAssignmentData.kt:30` — wrap declare in DeclareResult handling.
-- `compiler/.../statements/UntypedVariableDeclarationAndAssignmentData.kt:25` — same.
-- `compiler/.../statements/FunctionImplementationData.kt:35` — self-decl, wrap as Function.
-- `compiler/.../statements/FunctionImplementationData.kt:47` — per-arg declare.
+- `compiler/.../statements/TypedVariableDeclarationAndAssignmentData.kt:30` — wrap declare in DeclareResult handling. **MUST use `kind = SymbolKind.Variable`**.
+- `compiler/.../statements/UntypedVariableDeclarationAndAssignmentData.kt:25` — same. **MUST use `kind = SymbolKind.Variable`**.
+- `compiler/.../statements/FunctionImplementationData.kt:35` — self-decl, wrap as Function. **MUST use `kind = SymbolKind.Function(parameters)`** with `parameters` constructed as `List<Pair<String, WaterfallType>>` per the §1.3 ordering (name first, type second). Use `WaterfallType.forReturnType(returnType)` for the return type (handles the `String?` → `WaterfallType` conversion canonically). **MUST set `isReadonly = true`** (functions are implicitly readonly — PITFALL #7).
+- `compiler/.../statements/FunctionImplementationData.kt:47` — per-arg declare. **MUST use `kind = SymbolKind.Argument`** (NOT `Variable`). The kind discriminator only earns its keep if the per-arg call site sets it correctly at introduction time; collapsing it into `Variable` silently throws away the information P10's audit-D6 closure was supposed to provide.
 
 For each, the existing `verify` body now wraps the `declare` call in a check for `DeclareResult.Failure`. The existing string error messages are translated 1:1 to `VerificationResult(false, msg)` returns (the verify() method on Translatable still exists at this step — Section 4 separation lands in Sub-task 5.5).
 
@@ -2219,7 +2269,7 @@ This is the biggest single change. One backend at a time. The order to use:
 
 **Sanity check after each backend:** Run `./gradlew test --tests GoldenTests` filtered to the relevant target. All pass.
 
-After all four backends are migrated, `CodeGenerator.kt` itself updates (the interface signature change in Section 3.9).
+After all three backends are migrated, `CodeGenerator.kt` itself updates (the interface signature change in Section 3.9).
 
 **PITFALL #13** — The "produces the same output" check is *exactly* the verifier-overfitting failure mode the AI-research doc (07) warns about. The implementer will be tempted to write tests that the new IR-driven backend passes by construction, then declare victory. The honest test is: **goldens unchanged**. If the goldens have to change, something is wrong; if you find yourself updating a golden, **escalate**.
 
@@ -2331,7 +2381,7 @@ This is a phase-boundary question the strategist should weigh in on. P10 ships e
 
 The migration in §5.2 will touch every callsite of `SymbolTable.declare`. Three of those are inside `FunctionImplementationData.verify` which uses the custom `Pair<K, V>` class for `typedArguments`. If the per-argument source position fix (PITFALL #8) goes in, the `Pair<String, String>` for typedArguments becomes inadequate — it needs a third field for position. That's a small refactor of `FunctionImplementationData` that ripples into `LambdaFunctionData` (also stores `Pair<String, String>` for arg lists).
 
-Mitigation: introduce a small `TypedArgument(type, name, position)` data class in the `statements/` package and migrate both `FunctionImplementationData` and `LambdaFunctionData` to use it. The `Pair<K, V>` class itself stays (audit surprise #7 makes clear it's still used elsewhere; full removal is post-P10 cleanup).
+Mitigation: introduce a small `TypedArgument(name, type, sourcePosition)` data class in the `statements/` package and migrate both `FunctionImplementationData` and `LambdaFunctionData` to use it. The field ordering (name first, type second, position third) is canonical across §1.3, the §1.3 sub-task contract paragraph, and here — `SymbolKind.Function.parameters` and `TypedArgument` use the same ordering to make the §5.2 refactor mechanical. The `Pair<K, V>` class itself stays (audit surprise #7 makes clear it's still used elsewhere; full removal is post-P10 cleanup).
 
 ### 7.4 `VerifyError` will need rendering helpers at P11
 
