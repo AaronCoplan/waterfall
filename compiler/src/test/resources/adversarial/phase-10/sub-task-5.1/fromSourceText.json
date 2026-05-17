@@ -1,0 +1,288 @@
+{
+  "description": "Adversarial inputs for WaterfallType.fromSourceText — P10 Sub-task 5.1",
+  "spec_section": "§1.2",
+  "generated_by": "fresh-context Agent (spec-only context)",
+  "generated_at": "2026-05-16",
+  "entries": [
+    {
+      "input": "int",
+      "expected_class": "IntType",
+      "expected_element_class": null,
+      "expected_source_text": null,
+      "category": "happy-path",
+      "rationale": "Spec lists IntType as primitive; base matches \"int\" branch."
+    },
+    {
+      "input": "dec",
+      "expected_class": "DecType",
+      "expected_element_class": null,
+      "expected_source_text": null,
+      "category": "happy-path",
+      "rationale": "Spec lists DecType as primitive; base matches \"dec\" branch."
+    },
+    {
+      "input": "bool",
+      "expected_class": "BoolType",
+      "expected_element_class": null,
+      "expected_source_text": null,
+      "category": "happy-path",
+      "rationale": "Spec lists BoolType as primitive; base matches \"bool\" branch."
+    },
+    {
+      "input": "char",
+      "expected_class": "CharType",
+      "expected_element_class": null,
+      "expected_source_text": null,
+      "category": "happy-path",
+      "rationale": "Spec lists CharType as primitive; base matches \"char\" branch."
+    },
+    {
+      "input": "void",
+      "expected_class": "VoidType",
+      "expected_element_class": null,
+      "expected_source_text": null,
+      "category": "happy-path",
+      "rationale": "Bare \"void\" matches the \"void\" branch; VoidType is constructible per §1.2."
+    },
+    {
+      "input": "int[]",
+      "expected_class": "ArrayType",
+      "expected_element_class": "IntType",
+      "expected_source_text": null,
+      "category": "happy-path",
+      "rationale": "Ends in \"[]\"; base \"int\" → IntType; returns ArrayType(IntType)."
+    },
+    {
+      "input": "dec[]",
+      "expected_class": "ArrayType",
+      "expected_element_class": "DecType",
+      "expected_source_text": null,
+      "category": "happy-path",
+      "rationale": "Ends in \"[]\"; base \"dec\" → DecType; returns ArrayType(DecType)."
+    },
+    {
+      "input": "bool[]",
+      "expected_class": "ArrayType",
+      "expected_element_class": "BoolType",
+      "expected_source_text": null,
+      "category": "happy-path",
+      "rationale": "Ends in \"[]\"; base \"bool\" → BoolType; returns ArrayType(BoolType)."
+    },
+    {
+      "input": "char[]",
+      "expected_class": "ArrayType",
+      "expected_element_class": "CharType",
+      "expected_source_text": null,
+      "category": "happy-path",
+      "rationale": "Ends in \"[]\"; base \"char\" → CharType; returns ArrayType(CharType)."
+    },
+    {
+      "input": "void[]",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "void[]",
+      "category": "rejected",
+      "rationale": "PITFALL #1: the void[] guard explicitly returns ErrorType(text) before constructing ArrayType(VoidType)."
+    },
+    {
+      "input": "?int",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "?int",
+      "category": "rejected",
+      "rationale": "First check: startsWith(\"?\") returns ErrorType(text) verbatim (audit surprise #5)."
+    },
+    {
+      "input": "?int[]",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "?int[]",
+      "category": "rejected",
+      "rationale": "Leading \"?\" short-circuits before the array check; ErrorType holds full original text including the brackets."
+    },
+    {
+      "input": "?",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "?",
+      "category": "rejected",
+      "rationale": "startsWith(\"?\") fires even with no following identifier; returns ErrorType(\"?\")."
+    },
+    {
+      "input": "",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "",
+      "category": "rejected",
+      "rationale": "Empty string: no \"?\" prefix, doesn't end in \"[]\", base \"\" doesn't match any primitive → ErrorType(\"\")."
+    },
+    {
+      "input": "string",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "string",
+      "category": "rejected",
+      "rationale": "Not in {int,dec,bool,char,void}; falls through to else branch → ErrorType(text)."
+    },
+    {
+      "input": "String",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "String",
+      "category": "rejected",
+      "rationale": "Spec uses lowercase exact match in when-expression; \"String\" is unknown → ErrorType."
+    },
+    {
+      "input": "Int",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "Int",
+      "category": "rejected",
+      "rationale": "Case-sensitive when match; \"Int\" ≠ \"int\" → ErrorType(\"Int\")."
+    },
+    {
+      "input": "INT",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "INT",
+      "category": "rejected",
+      "rationale": "Case-sensitive when match; \"INT\" ≠ \"int\" → ErrorType(\"INT\")."
+    },
+    {
+      "input": "VoidType",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "VoidType",
+      "category": "rejected",
+      "rationale": "Kotlin class name leaked from caller; fromSourceText consumes source-language text only, not Kotlin identifiers."
+    },
+    {
+      "input": " int",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": " int",
+      "category": "rejected",
+      "rationale": "Leading whitespace not stripped by spec; \" int\" ≠ \"int\" in when match → ErrorType(\" int\")."
+    },
+    {
+      "input": "int ",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "int ",
+      "category": "rejected",
+      "rationale": "Trailing whitespace not stripped; doesn't end \"[]\", base \"int \" ≠ \"int\" → ErrorType(\"int \")."
+    },
+    {
+      "input": " ",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": " ",
+      "category": "rejected",
+      "rationale": "Single space: no \"?\" prefix, no \"[]\" suffix, base \" \" not in primitive set → ErrorType(\" \")."
+    },
+    {
+      "input": "int[][]",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "int[][]",
+      "category": "rejected",
+      "rationale": "Ends in \"[]\" → base = \"int[]\"; \"int[]\" is not in {int,dec,bool,char,void} → ErrorType(\"int[][]\"). Nested arrays not supported in P10."
+    },
+    {
+      "input": "[]",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "[]",
+      "category": "rejected",
+      "rationale": "Ends in \"[]\" → base = \"\"; empty base not in primitive set → ErrorType(\"[]\")."
+    },
+    {
+      "input": "int[",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "int[",
+      "category": "rejected",
+      "rationale": "Doesn't end exactly in \"[]\" (only single \"[\"); base \"int[\" ≠ \"int\" → ErrorType(\"int[\")."
+    },
+    {
+      "input": "int]",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "int]",
+      "category": "rejected",
+      "rationale": "Doesn't end in \"[]\"; base \"int]\" not in primitive set → ErrorType(\"int]\")."
+    },
+    {
+      "input": "void[][]",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "void[][]",
+      "category": "rejected",
+      "rationale": "Ends in \"[]\" → base = \"void[]\"; \"void[]\" not in primitive set → ErrorType. (Wouldn't reach the void[] guard since base isn't \"void\".)"
+    },
+    {
+      "input": "??int",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "??int",
+      "category": "rejected",
+      "rationale": "startsWith(\"?\") matches on first char, returns ErrorType verbatim including second \"?\"."
+    },
+    {
+      "input": "int?",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "int?",
+      "category": "rejected",
+      "rationale": "Trailing \"?\" doesn't trip the prefix check; base \"int?\" doesn't match any primitive → ErrorType(\"int?\")."
+    },
+    {
+      "input": "\tint",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "\tint",
+      "category": "boundary",
+      "rationale": "Spec says nothing about whitespace normalization. Reading §1.2 literally: the when-expression compares the raw base string against \"int\" — a leading tab byte makes it unequal. Prediction: ErrorType(\"\\tint\"). Alternative interpretation: caller is expected to pre-trim; spec is silent. If the parser ever feeds untrimmed text (e.g., from token whitespace) this is the regression vector. Going with the literal reading."
+    },
+    {
+      "input": "int[]extra",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "int[]extra",
+      "category": "boundary",
+      "rationale": "Doesn't end in \"[]\" (suffix is \"extra\"); base = \"int[]extra\" doesn't match. Prediction: ErrorType. Spec uses endsWith(\"[]\") which is unambiguous — but a careless impl using contains(\"[]\") would mis-parse this. This is the silent-resolution probe for substring-vs-suffix confusion."
+    },
+    {
+      "input": "voidvoid",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "voidvoid",
+      "category": "boundary",
+      "rationale": "Doesn't end in \"[]\"; base \"voidvoid\" ≠ any primitive in the when. Prediction: ErrorType. Probes whether the impl might accidentally use startsWith/contains instead of exact equality on base — a confused impl could see \"void\" prefix and dispatch to VoidType incorrectly."
+    },
+    {
+      "input": "intintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintint",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "intintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintintint",
+      "category": "boundary",
+      "rationale": "Very long identifier (>1KB): no \"?\" prefix, no \"[]\" suffix, base doesn't match any primitive → ErrorType with full original text preserved. Probes for any silent truncation in error-path code. Per §1.2 ErrorType(text), the sourceText field must equal the input exactly — no shortening even for debug-print convenience."
+    },
+    {
+      "input": "int []",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "int []",
+      "category": "boundary",
+      "rationale": "Ends in \"[]\" → base = \"int \" (trailing space); \"int \" ≠ \"int\" in when → ErrorType. Spec doesn't normalize whitespace inside the base after stripping suffix. A trim-the-base impl would (incorrectly per the literal spec) accept this as int[]. This is the silent-resolution probe for internal-whitespace handling."
+    },
+    {
+      "input": "ìnt",
+      "expected_class": "ErrorType",
+      "expected_element_class": null,
+      "expected_source_text": "ìnt",
+      "category": "boundary",
+      "rationale": "Unicode confusable: 'ì' (U+00EC) not 'i' (U+0069). Kotlin String equality is char-exact, so \"ìnt\" ≠ \"int\" → ErrorType. Spec doesn't mention Unicode normalization; predicting straight ErrorType. A future impl that runs the input through Unicode NFKD normalization would still preserve the accent; only a strip-accents pass (which spec doesn't authorize) would resolve it to IntType."
+    }
+  ]
+}
