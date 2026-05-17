@@ -2193,9 +2193,12 @@ P10's six sub-tasks land in order. Tests stay green at every step; if they don't
 
 `SymbolTable.kt` still stores `Any?` at this step — that migration is §5.2.
 
-**Expected test impact:** existing tests pass unchanged (the SourcePosition change is structurally equivalent for the single production caller). New tests are not added at §5.1 — the §2.7 SymbolTable tests land with §5.2.
+**Expected test impact:** existing tests pass unchanged (the SourcePosition change is structurally equivalent for the single production caller). §5.1 also adds **one new test file** that exercises the new `WaterfallType` surface — the new code is callable from tests as soon as 5.1 lands, so testing it here (rather than waiting for §5.2 to wire it in) catches `fromSourceText` silent-resolution bugs at the lowest possible layer. The §2.7 SymbolTable tests still land with §5.2.
 
-**Sanity check:** `./gradlew build` passes; `./gradlew test` is byte-identical to baseline.
+**Files added (tests):**
+- `compiler/src/test/kotlin/com/aaroncoplan/waterfall/compiler/typesystem/WaterfallTypeTest.kt` — covers `WaterfallType.fromSourceText` happy paths (4 primitives + 4 arrays + bare `void`), every rejected case (`void[]`, `int[][]`, `?int`, uppercase, leading/trailing whitespace, empty, whitespace-only, unknown identifiers), `ErrorType.sourceText` preservation, and `render()` round-trip for valid types; plus `forReturnType(text: String?)` (null, int, void, int[], void[], empty). ~28 test cases.
+
+**Sanity check:** `./gradlew build` passes; `./gradlew test` is byte-identical to baseline *except* for the addition of `WaterfallTypeTest` (~28 new test cases, all green).
 
 ### Sub-task 5.2 — Migrate `SymbolTable` to typed storage + public `lookup` + shadow API
 
