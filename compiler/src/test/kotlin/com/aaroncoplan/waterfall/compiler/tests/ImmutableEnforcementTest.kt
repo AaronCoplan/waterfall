@@ -4,7 +4,7 @@ import com.aaroncoplan.waterfall.compiler.CompilerError
 import com.aaroncoplan.waterfall.compiler.Main
 import org.junit.After
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.fail
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
@@ -80,6 +80,10 @@ class ImmutableEnforcementTest {
             "Expected CompilerError: assigning to const-typed binding should be rejected",
             err
         )
+        assertTrue(
+            "stderr should mention immutable binding; got:\n${capturedErr.toString()}",
+            capturedErr.toString().contains("immutable binding")
+        )
     }
 
     /**
@@ -100,6 +104,10 @@ class ImmutableEnforcementTest {
             "Expected CompilerError: compound-assigning to const-typed binding should be rejected",
             err
         )
+        assertTrue(
+            "stderr should mention immutable binding; got:\n${capturedErr.toString()}",
+            capturedErr.toString().contains("immutable binding")
+        )
     }
 
     /**
@@ -119,6 +127,10 @@ class ImmutableEnforcementTest {
         assertNotNull(
             "Expected CompilerError: incrementing a const-typed binding should be rejected",
             err
+        )
+        assertTrue(
+            "stderr should mention immutable binding; got:\n${capturedErr.toString()}",
+            capturedErr.toString().contains("immutable binding")
         )
     }
 
@@ -141,6 +153,10 @@ class ImmutableEnforcementTest {
             "Expected CompilerError: assigning to imm-typed binding should be rejected",
             err
         )
+        assertTrue(
+            "stderr should mention immutable binding; got:\n${capturedErr.toString()}",
+            capturedErr.toString().contains("immutable binding")
+        )
     }
 
     /**
@@ -162,6 +178,10 @@ class ImmutableEnforcementTest {
         assertNotNull(
             "Expected CompilerError: assigning to const untyped binding should be rejected",
             err
+        )
+        assertTrue(
+            "stderr should mention immutable binding; got:\n${capturedErr.toString()}",
+            capturedErr.toString().contains("immutable binding")
         )
     }
 }

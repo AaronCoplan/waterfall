@@ -17,6 +17,8 @@ class VariableAssignmentData(filePath: String, ctx: WaterfallParser.VariableAssi
 
     override fun verify(symbolTable: SymbolTable): VerificationResult {
         val info = symbolTable.lookup(name)
+        // TODO(P10): function names + args still store as raw String, so writes to them
+        // fail-open here. P10 PITFALL #7 closes this via SymbolInfo unification.
         if (info is VarInfo && info.isImmutable) {
             return VerificationResult(false, "Cannot assign to immutable binding '$name'")
         }
