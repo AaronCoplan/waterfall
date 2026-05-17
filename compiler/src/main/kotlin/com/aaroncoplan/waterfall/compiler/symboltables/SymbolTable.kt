@@ -18,7 +18,7 @@ class SymbolTable(private val parentSymbolTable: SymbolTable?) {
         nameToInfoMap[key] = info
     }
 
-    private fun lookup(key: String): Any? {
+    internal fun lookup(key: String): Any? {
         val info = nameToInfoMap[key]
         if (info != null) return info
         return parentSymbolTable?.lookup(key)

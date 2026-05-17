@@ -5,6 +5,7 @@ import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStateme
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult
 import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
+import com.aaroncoplan.waterfall.compiler.symboltables.VarInfo
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator
 
 class UntypedVariableDeclarationAndAssignmentData(
@@ -22,7 +23,7 @@ class UntypedVariableDeclarationAndAssignmentData(
 
     override fun verify(symbolTable: SymbolTable): VerificationResult {
         try {
-            symbolTable.declare(name, inferredType)
+            symbolTable.declare(name, VarInfo(inferredType, isImmutable()))
         } catch (e: DuplicateDeclarationException) {
             return VerificationResult(false, "Duplicate declaration: $name")
         }
