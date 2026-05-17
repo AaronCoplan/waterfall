@@ -9,7 +9,7 @@ package com.aaroncoplan.waterfall.compiler.typesystem
  */
 sealed class WaterfallType {
 
-    /** Render as the source-language form. Inverse of parsing a `type` rule. */
+    /** Render as the source-language form. For valid (non-error) types, the inverse of parsing a `type` rule. */
     abstract fun render(): String
 
     /** The four scalar primitives. */
@@ -76,7 +76,7 @@ sealed class WaterfallType {
             // not a value type that can be put in an array. The verifier-level
             // PITFALL #1 covers bare `void x = ...`; this guard covers the array
             // case so `ArrayType(VoidType)` is structurally unconstructible.
-            if (isArray && baseType === VoidType) return ErrorType(text)
+            if (isArray && baseType == VoidType) return ErrorType(text)
             return if (isArray) ArrayType(baseType) else baseType
         }
 

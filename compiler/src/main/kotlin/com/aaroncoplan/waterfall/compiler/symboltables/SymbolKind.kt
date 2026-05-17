@@ -19,7 +19,7 @@ sealed class SymbolKind {
     data object Argument : SymbolKind()
 
     /**
-     * A top-level `func ... {}` declaration. The [returnType] is also stored
+     * A top-level `func ... {}` declaration. The return type is also stored
      * on the SymbolInfo, but storing the parameter signature here lets a later
      * phase implement call-site type-checking without re-walking the AST.
      *
