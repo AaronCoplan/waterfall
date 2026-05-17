@@ -68,7 +68,7 @@ compiler/.../target/CodeGenerator             interface; one emit* method per no
 | `compiler/.../statements/ModuleAst.kt` | Assembles parsed module into two lists: `topLevelVariables`, `functions` |
 | `compiler/.../statements/helpers/Translatable.kt` | Interface: `verify(SymbolTable)` + `translate(CodeGenerator)` |
 | `compiler/.../statements/*Data.kt` | One class per AST node kind; each implements `Translatable` |
-| `compiler/.../symboltables/SymbolTable.kt` | Scoped name→info map; parent-linked for nested scopes; `declare` / `lookup` |
+| `compiler/.../symboltables/SymbolTable.kt` | Scoped name→info map; parent-linked for nested scopes; `declare` (public); `lookup` (made `internal` in P0-PR3 so the verifier can check immutability; P10 will further refine the SymbolInfo API) |
 | `compiler/.../statements/helpers/VerificationResult.kt` | Simple success/error wrapper returned by `verify()` |
 | `compiler/.../target/CodeGenerator.kt` | Backend interface; `emitProgram(ModuleAst)` is the top-level entry point |
 | `compiler/.../target/Backends.kt` | Registry + `DEFAULT_TARGET`; add one line to register a new backend |
@@ -91,7 +91,7 @@ compiler/.../target/CodeGenerator             interface; one emit* method per no
 | **Q11** Kotest as the property-test framework | **Load-bearing** — test infrastructure decision; changing mid-build invalidates existing property suites | `notes/PHASE-10-design.md` §4.9; not yet implemented |
 | `Translatable.verify()` / `translate()` split | **Load-bearing until P10** — P10 replaces this with a typed IR + central Verifier; do not add new verify/translate logic outside the P10 plan | `compiler/.../statements/helpers/Translatable.kt` |
 | Backend `emit*` method names | **Reversible** — rename freely; one-file change per backend | `compiler/.../target/CodeGenerator.kt` |
-| Golden test fixtures | **Reversible** — regenerate with `UPDATE_GOLDEN=1 ./gradlew test` | `compiler/src/test/resources/golden/` |
+| Golden test fixtures | **Reversible** — regenerate with `UPDATE_GOLDEN=1 ./gradlew test --tests GoldenTests` | `compiler/src/test/resources/golden/` |
 | Gradle wrapper version | **Reversible** — bump in `gradle/wrapper/gradle-wrapper.properties` | — |
 | Log4j calls in `Main.kt` | **Reversible** — cosmetic | `compiler/.../Main.kt` |
 
@@ -104,10 +104,13 @@ All tests run via `./gradlew test`. Requires `gcc`, `node`, and `python3` on PAT
 
 | Test class | What it covers |
 |---|---|
-| `GoldenTests` | Parameterized snapshot tests. Auto-enumerates `compiler/src/test/resources/golden/<target>/`; compares compiler stdout against the `.expected` file. Regenerate with `UPDATE_GOLDEN=1 ./gradlew test`. |
+| `GoldenTests` | Parameterized snapshot tests. Auto-enumerates `compiler/src/test/resources/golden/<target>/`; compares compiler stdout against the `.expected` file. Regenerate with `UPDATE_GOLDEN=1 ./gradlew test --tests GoldenTests`. |
 | `CRuntimeCheckTest` | Runs `gcc -fsyntax-only` on each C golden. |
 | `JsRuntimeCheckTest` | Runs `node --check` on each JS golden. |
 | `PythonRuntimeCheckTest` | Runs `python3 -c "import ast; ast.parse(...)"` on each Python golden. |
+
+All three runtime check classes and their shared `RuntimeCheckBase` superclass live in `compiler/src/test/kotlin/.../tests/RuntimeChecks.kt`.
+
 | `DuplicateInnerDeclarationTest` | Unit tests for duplicate-declaration rejection in nested scopes. |
 | `EndToEndSmokeTest` | End-to-end smoke tests on the example files using the JS backend. |
 
