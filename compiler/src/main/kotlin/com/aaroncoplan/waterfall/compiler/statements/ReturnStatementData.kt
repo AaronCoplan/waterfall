@@ -2,8 +2,6 @@ package com.aaroncoplan.waterfall.compiler.statements
 
 import com.aaroncoplan.waterfall.generated.WaterfallParser
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
-import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult
-import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator
 
 class ReturnStatementData(filePath: String, ctx: WaterfallParser.ReturnStatementContext)
@@ -11,8 +9,6 @@ class ReturnStatementData(filePath: String, ctx: WaterfallParser.ReturnStatement
 
     /** Null for a bare `return` with no value. */
     @JvmField val value: ExpressionData? = ctx.expression()?.let { ExpressionData(filePath, it) }
-
-    override fun verify(symbolTable: SymbolTable): VerificationResult = VerificationResult(true, null)
 
     override fun translate(backend: CodeGenerator): String = backend.emitReturnStatement(this)
 }

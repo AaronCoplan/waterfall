@@ -103,6 +103,58 @@ Templates from `notes/team-output/00-EXECUTION-PLAYBOOK.md` §2.
 
 ---
 
+## Sub-task 5.3 outcome — 2026-05-18 (PR opening; awaiting Aaron merge)
+
+- **Triad:** Leg 1 = N/A (JoinAnalysis stubbed per OQ-1=C; verifier dispatch is
+  routing logic, no rich invariants to probe) • Leg 2 = zero golden diffs ✓ •
+  Leg 3 = 60/60 adversarial (25 positive + 35 negative; fresh-context Agent
+  reading post-edit §4 + §5.3 + branch diff). **Leg 3 caught `VoidNotAValueType`
+  declared-but-never-emitted bug pre-merge — textbook triad working as designed
+  per playbook §5 "1–5 finds/phase = healthy."**
+- **Plan-mode iterations:** 1 (engineer's v1 plan-back covered all 13 mandatory
+  skeptic spec-edits + 4 SA resolutions; cleanly acked)
+- **Pre-review skeptic (§3 + §4 + §5.3):** 5 FATAL + 13 RISK + 6 MINOR → all
+  resolved before implementation. The 4 OQs (1, 2, 3, 4) decided by Aaron:
+  OQ-1=C (stub JoinAnalysis); OQ-2=B (drop target param); OQ-3=C (document
+  identifier-resolution gap, P11 closes); OQ-4=D (ship renderer interface +
+  HumanRenderer; JsonRenderer stub)
+- **Post-review skeptic (PR diff):** 0 FATAL + 5 RISK + 6 MINOR → R2, R3, R4,
+  R5 + coverage gaps C1/C2/C3 applied as commit 7; R1 (function-scope-lifetime
+  gap) documented as §5.4 carry-forward (see below); M1 + M5 applied; remaining
+  MINOR accepted-with-comment
+- **Spec edits during sub-task:** 13 mandatory edits (commit `fa68661`) + small
+  follow-ups in commit 7 (R2 iterator-declaration spec comment + R3 message
+  wording)
+- **Commits landed (8):** spec(13 edits), feat(verifier skeleton), refactor(atomic
+  migration), test(VerifierTest 7 cases), test(JoinAnalysisStubTest 3 cases),
+  fix(VoidNotAValueType emission — Leg 3 catch), test(Sub53AdversarialTest +
+  60-entry fixture), refactor(post-skeptic R2–R5 + coverage + MINOR fixups)
+- **Carry-forward into §5.4 — Aaron decision required at §5.4 plan-mode:**
+  - **F1 (function-scope-lifetime gap):** `verifyFunctionDeclaration` discards
+    function-body scopes after `exitScope`. §5.4's `IrLowering.lowerExpression`
+    cannot resolve function-local names (parameters, local vars) from the
+    top-level `symbolTable`. Three options:
+    - **(a)** Verifier returns per-function-scope map (`Map<String, SymbolTable>`).
+    - **(b)** IrLowering recreates scopes during lowering (skeptic: "bad").
+    - **(c)** Verifier elaborates each `ExpressionData` with
+      `resolvedType: WaterfallType?` at verify time; IrLowering reads from there.
+      Standard elaboration pattern; P11 inference builds on top.
+      **Skeptic-recommended option.** Aaron decides at §5.4 plan-mode.
+  - **OQ-3=C identifier-resolution gap:** `verifyVarAssignment` and
+    `verifyIncrement` silently no-op on null lookup. §5.4 IrLowering owns the
+    escalation branch (documented in §5.3 carry-forward at spec line ~2420).
+  - **`commitReadonly` per-name lookup perf** (§5.2 carry-forward): still
+    applicable; revisit if §5.5 backend migration makes it hot.
+  - **`exitScope` snapshot consumers:** JoinAnalysis and StatementVerifier
+    discard the returned snapshot in §5.3; P12 join-intersection will consume.
+- **One sentence on what surprised:** Leg 3 fresh-context Agent caught the
+  `VoidNotAValueType`-never-emitted bug at adversarial-fixture-validation time —
+  the verifier guard checked `ErrorType` but not `VoidType`, so `void x = 5`
+  compiled cleanly; bug + regression tests landed atomically in commit `1d64587`
+  before the fixture committed.
+
+---
+
 ## Phase 10 retrospective — (pending)
 
 _Filled when the phase-exit ritual completes (playbook §2). Template:_
