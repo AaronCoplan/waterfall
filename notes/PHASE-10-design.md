@@ -1189,7 +1189,7 @@ The implementer should encode the mappings below as a `when` over the `*Data` su
 | `INT_LITERAL` | `IrExpression.IntLiteral` | literalText preserved |
 | `DEC_LITERAL` | `IrExpression.DecLiteral` | literalText preserved |
 | `STRING_LITERAL` | `IrExpression.StringLiteral` | literalText preserved (backticks and all); type = `IrType.Char` (audit gap) |
-| `IDENTIFIER` | `IrExpression.Identifier` | **F1=C**: `type` read from `resolvedTypes[expr]`; if null, `throw IllegalStateException("${e.literalText} undeclared at ${pos.generateMessage()}; verifier should have caught this")` |
+| `IDENTIFIER` | `IrExpression.Identifier` | **F1=C + OQ-5.4-1**: `type` read from `resolvedTypes[expr]`. If the entry is ABSENT (elaboration missed this expression entirely), throw `IllegalStateException(...)`. If the entry IS PRESENT but is `WaterfallType.VoidType` (which `Elaboration` stores for undeclared names per the OQ-3=C gap), lower to `IrExpression.Identifier(name, IrType.Void)` — **do NOT throw**. This preserves the differential-oracle invariant: backends migrated in §5.5 receive valid IR they can lower to byte-equivalent output. See OQ-5.4-1 resolved note below this table. |
 | `LAMBDA` | `IrExpression.Lambda` | **F1=C**: At VERIFY time (in `Elaboration.elaborateExpression`), declare lambda params into a child scope and elaborate the body's single function-call expression; the body's arg expressions get entries in `resolvedTypes`. At LOWERING time: map `typedArguments` to `IrParameter` (note: legacy ordering `firstVal=type, secondVal=name`; swap to `name, type` per §1.3), lower body `FunctionCallData` using `resolvedTypes`; type = `IrType.Void` placeholder. Empty body (`body == null`) → `IrExpression.Lambda(parameters, body = null, type = IrType.Void)`. |
 | `BUNDLE` | `IrExpression.BundleLiteral` | **R3 edge case**: lower each positional element; names are dropped (P10 has no named-field IR). type = `IrType.Void` placeholder. The grammar's BundleLiteral stores elements in `BundleLiteralData` — read that class before implementing. |
 | `ARRAY` | `IrExpression.ArrayLiteral` | element type from first element's type in `resolvedTypes`; if empty (`elements.isEmpty()`), type = `IrType.Void` placeholder per **Q3 decision** |
@@ -2462,6 +2462,10 @@ Add §4.7 tests from commit 4. Add JoinAnalysis stub test from commit 5.
 **Expected test impact:** Add `IrLoweringTest` that verifies the lowering produces structurally-correct IR for every example. No golden changes.
 
 **Sanity check:** Manually inspect the IR output for `FibonacciModule.wf`. Confirm it has the expected shape.
+
+**OQ-5.4-1 resolved (identifier-resolution gap + F1=C interaction):** For identifiers that pass §5.3 verification but reference undeclared names (per the OQ-3=C gap), `Elaboration` stores `WaterfallType.VoidType` in the side-table rather than leaving the entry absent. `IrLowering` reads VoidType and produces `IrExpression.Identifier(name, IrType.Void)` — it does NOT throw. This preserves the differential-oracle invariant: backends migrated in §5.5 receive valid IR they can lower to byte-equivalent output (same behavior as today's `*Data`-driven backends, which also silently compile undeclared-name programs to broken output). P11 closes the gap by validating identifier resolution at verify time and producing `VerifyError.UnknownIdentifier` — at which point the side-table never reaches IrLowering with VoidType for an undeclared name. Cross-reference: `IrLowering.kt:18-19` KDoc.
+
+This was a silent resolution: the plan-back v1 said "throw if entry absent" but Elaboration's VoidType-for-undeclared approach means the entry is present (just VoidType), so IrLowering never throws for a normal undeclared identifier. The Leg 3 Agent caught the divergence during adversarial fixture validation.
 
 ### Sub-task 5.5 — Migrate backends to consume IR
 

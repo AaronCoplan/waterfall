@@ -140,9 +140,13 @@ Templates from `notes/team-output/00-EXECUTION-PLAYBOOK.md` §2.
       `resolvedType: WaterfallType?` at verify time; IrLowering reads from there.
       Standard elaboration pattern; P11 inference builds on top.
       **Skeptic-recommended option.** Aaron decides at §5.4 plan-mode.
-  - **OQ-3=C identifier-resolution gap:** `verifyVarAssignment` and
-    `verifyIncrement` silently no-op on null lookup. §5.4 IrLowering owns the
-    escalation branch (documented in §5.3 carry-forward at spec line ~2420).
+  - **OQ-3=C + OQ-5.4-1 (identifier-resolution gap + F1=C interaction):**
+    `verifyVarAssignment` and `verifyIncrement` silently no-op on null lookup.
+    §5.4 Elaboration stores `WaterfallType.VoidType` for undeclared names (not
+    absent); IrLowering produces `IrExpression.Identifier(name, IrType.Void)`
+    without throwing — preserves differential-oracle invariant. P11 closes the
+    gap with `VerifyError.UnknownIdentifier`. (Leg 3 Agent caught the
+    divergence from plan-back v1 "throw if absent" during fixture validation.)
   - **`commitReadonly` per-name lookup perf** (§5.2 carry-forward): still
     applicable; revisit if §5.5 backend migration makes it hot.
   - **`exitScope` snapshot consumers:** JoinAnalysis and StatementVerifier
