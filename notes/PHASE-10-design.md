@@ -2263,13 +2263,20 @@ This is a separate early commit on the §5.2 branch so the property test files c
 
 ```kotlin
 class SymbolTablePropertyTest {
-    @Test fun `declare then lookup returns the declared SymbolInfo`() = runBlocking {
-        checkAll(10000, arbName, arbType) { name, type ->
-            // ...
+    @Test fun `declare then lookup returns the declared SymbolInfo`() {
+        runBlocking {
+            checkAll(10000, arbName, arbType) { name, type ->
+                // ...
+            }
         }
     }
 }
 ```
+
+Note: block body required because `checkAll` returns `PropertyContext`; expression body
+`= runBlocking { ... }` infers non-Unit return type which JUnit 4's `@Test` rejects
+(`InvalidTestClassError: Method should be void`). Caught by the trip-wire below before
+any property test was committed.
 
 Reasons: (a) the project's existing test runner config in root `build.gradle` is wired for JUnit 4 via `useJUnit()`; the Kotest `kotest-runner-junit4` module integrates by exposing Kotest specs as JUnit 4 tests, but plain `@Test`-annotated methods using `checkAll` work without any spec-class machinery. (b) Mixed test styles across one module risk one style silently not running. (c) Plain `@Test` makes individual properties bisectable via `./gradlew test --tests ClassName.propertyName`. If `./gradlew test --tests SymbolTablePropertyTest` reports zero tests after the Kotest dep + a property test file land, that's the trip-wire — pause and confirm runner integration before adding more tests.
 
