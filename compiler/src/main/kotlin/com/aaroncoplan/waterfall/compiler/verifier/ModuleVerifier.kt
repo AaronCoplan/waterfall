@@ -1,5 +1,6 @@
 package com.aaroncoplan.waterfall.compiler.verifier
 
+import com.aaroncoplan.waterfall.compiler.statements.ExpressionData
 import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
@@ -23,23 +24,28 @@ internal object ModuleVerifier {
 
     fun verifyModule(module: ModuleAst, symbolTable: SymbolTable): VerifyResult {
         val errors = mutableListOf<VerifyError>()
+        // F1=C: build the resolvedTypes side-table during the same scope walk.
+        // IdentityHashMap ensures ExpressionData instances are keyed by object identity.
+        val resolvedTypes = java.util.IdentityHashMap<ExpressionData, WaterfallType>()
 
         // Pass 1: top-level variables
         for (v in module.topLevelVariables) {
             errors += StatementVerifier.verifyStatement(v, symbolTable)
+            Elaboration.elaborateStatement(v, symbolTable, resolvedTypes)
         }
 
         // Pass 2: function declarations
         for (f in module.functions) {
-            errors += verifyFunctionDeclaration(f, symbolTable)
+            errors += verifyFunctionDeclaration(f, symbolTable, resolvedTypes)
         }
 
-        return VerifyResult(errors)
+        return VerifyResult(errors, resolvedTypes)
     }
 
     private fun verifyFunctionDeclaration(
         f: FunctionImplementationData,
-        moduleScope: SymbolTable
+        moduleScope: SymbolTable,
+        resolvedTypes: java.util.IdentityHashMap<ExpressionData, WaterfallType>
     ): List<VerifyError> {
         val errors = mutableListOf<VerifyError>()
 
@@ -82,6 +88,7 @@ internal object ModuleVerifier {
         }
         for (stmt in f.statements) {
             errors += StatementVerifier.verifyStatement(stmt, functionScope)
+            Elaboration.elaborateStatement(stmt, functionScope, resolvedTypes)
         }
         moduleScope.exitScope(functionScope)
 
