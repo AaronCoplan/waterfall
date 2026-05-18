@@ -34,20 +34,20 @@ class IfBlockData(filePath: String, ctx: WaterfallParser.IfBlockContext)
 
     override fun verify(symbolTable: SymbolTable): VerificationResult {
         // TODO(audit): condition is not type-checked; phase 5+ should require bool.
-        val scope = SymbolTable(symbolTable)
+        val scope = symbolTable.enterScope()
         for (s in ifBranch.body) {
             val r = s.verify(scope)
             if (!r.isSuccessful()) return r
         }
         for (elif in elifBranches) {
-            val elifScope = SymbolTable(symbolTable)
+            val elifScope = symbolTable.enterScope()
             for (s in elif.body) {
                 val r = s.verify(elifScope)
                 if (!r.isSuccessful()) return r
             }
         }
         if (elseBody != null) {
-            val elseScope = SymbolTable(symbolTable)
+            val elseScope = symbolTable.enterScope()
             for (s in elseBody) {
                 val r = s.verify(elseScope)
                 if (!r.isSuccessful()) return r

@@ -15,7 +15,7 @@ class WhileBlockData(filePath: String, ctx: WaterfallParser.WhileBlockContext)
         StatementDispatcher.fromStatementBlock(filePath, ctx.statementBlock())
 
     override fun verify(symbolTable: SymbolTable): VerificationResult {
-        val scope = SymbolTable(symbolTable)
+        val scope = symbolTable.enterScope()
         for (s in body) {
             val r = s.verify(scope)
             if (!r.isSuccessful()) return r
