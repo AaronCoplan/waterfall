@@ -129,15 +129,23 @@ internal object StatementVerifier {
     /**
      * For-loop body verification. Same scope-enter/exit pattern as while;
      * no readonly-intersection logic (loops never propagate readonly per PITFALL #9).
-     * The iterator variable is not declared into scope here — ForBlockData doesn't
-     * track its type in P10; P11 infers the element type from the collection.
+     *
+     * R2 fix (post-review skeptic): the iterator variable IS declared into the body
+     * scope as [SymbolKind.Argument] with [WaterfallType.IntType] (implicit-int per
+     * the existing ForBlockData convention). P11 will infer the proper element type
+     * from the collection expression.
      */
     internal fun verifyForBlock(s: ForBlockData, scope: SymbolTable): List<VerifyError> {
-        val errors = mutableListOf<VerifyError>()
         val bodyScope = scope.enterScope()
-        for (stmt in s.body) {
-            errors += verifyStatement(stmt, bodyScope)
-        }
+        // Declare the iterator into the body scope (R2 fix; IntType per P10 implicit-int)
+        bodyScope.declare(s.iteratorName, SymbolInfo(
+            type = WaterfallType.IntType,
+            isReadonly = false,
+            kind = SymbolKind.Argument,
+            sourcePosition = s.getSourcePosition()
+        ))
+        val errors = mutableListOf<VerifyError>()
+        s.body.forEach { errors += verifyStatement(it, bodyScope) }
         scope.exitScope(bodyScope)  // snapshot returned but not consumed (P12 join)
         return errors
     }

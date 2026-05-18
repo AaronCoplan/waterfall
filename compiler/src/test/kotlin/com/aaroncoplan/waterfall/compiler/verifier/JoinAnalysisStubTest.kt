@@ -80,6 +80,24 @@ class JoinAnalysisStubTest {
         assertTrue(result.errors[0] is VerifyError.DuplicateDeclaration)
     }
 
+    @Test fun forBlockBodyErrorsAreCollected() {
+        // C1: analogous to ifElseBodyErrorsAreCollected but for ForBlock.
+        // Guards the SA-1 trap in StatementVerifier.verifyForBlock.
+        val module = parseAndAst("""
+            module Foo {
+                func go() {
+                    for(item in things) {
+                        int x = 1
+                        int x = 2
+                    }
+                }
+            }
+        """.trimIndent())
+        val result = Verifier.verifyModule(module, SymbolTable())
+        assertEquals(1, result.errors.size)
+        assertTrue(result.errors[0] is VerifyError.DuplicateDeclaration)
+    }
+
     @Test fun joinAnalysisStubDoesNotPropagateReadonlyToOuterScope() {
         // A mutable variable declared before an if block must remain mutable
         // after the if block. Confirms that verifyBranch uses a fresh child scope

@@ -1572,9 +1572,10 @@ object StatementVerifier {
      * per the existing implicit-int convention in ForBlockData; P11 will
      * infer the proper element type from the collection.
      *
-     * Note: the iterator variable is NOT declared into scope here — ForBlockData
-     * today doesn't declare it either; the verifier just verifies the body
-     * statements within a child scope.
+     * R2 fix (post-review skeptic): the iterator variable IS declared into the
+     * body scope as [SymbolKind.Argument] / [WaterfallType.IntType] per the
+     * implicit-int convention. P11 will infer the proper element type from the
+     * collection expression.
      */
     private fun verifyForBlock(s: ForBlockData, scope: SymbolTable): List<VerifyError> {
         val errors = mutableListOf<VerifyError>()

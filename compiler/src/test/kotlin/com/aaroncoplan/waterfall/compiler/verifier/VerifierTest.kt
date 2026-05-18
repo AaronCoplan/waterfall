@@ -158,6 +158,41 @@ class VerifierTest {
      * Leg 3 catch (OQ-5.3-4): defensive check — top-level void var also rejected.
      * Covers the top-level TypedVariableDeclarationAndAssignmentData path.
      */
+    /**
+     * C2: HumanRenderer distinguishes top-level vs. inner duplicate declarations.
+     * Guards that the `topLevel` flag on [VerifyError.DuplicateDeclaration] flows
+     * through HumanRenderer correctly.
+     */
+    @Test fun humanRendererDistinguishesTopLevelVsInnerDuplicateDeclaration() {
+        val pos = com.aaroncoplan.waterfall.compiler.statements.helpers.SourcePosition("t.wf", 1, 0)
+        val inner = VerifyError.DuplicateDeclaration("x", null, pos, topLevel = false)
+        val topLevel = VerifyError.DuplicateDeclaration("x", null, pos, topLevel = true)
+        val innerMsg = HumanRenderer.render(inner)
+        val topMsg = HumanRenderer.render(topLevel)
+        assertTrue("inner should contain 'Duplicate declaration'", innerMsg.contains("Duplicate declaration"))
+        assertTrue("inner should NOT contain 'top-level'", !innerMsg.contains("top-level"))
+        assertTrue("top-level should contain 'Duplicate top-level declaration'", topMsg.contains("Duplicate top-level declaration"))
+    }
+
+    /**
+     * C3: assigning to an undeclared LHS is a P10 no-op per OQ-3=C carry-forward.
+     * §5.4 IrLowering will escalate on null-lookup. Regression guard: must NOT
+     * produce an AssignToReadonly error (it's not readonly; it's not even declared).
+     */
+    @Test fun assignToUndeclaredLhsIsP10NoOp() {
+        // OQ-3=C: verifyVarAssignment silently passes on null lookup — P11 closes this gap.
+        val module = parseAndAst("""
+            module Foo {
+                func go() {
+                    undeclaredVar = 5
+                }
+            }
+        """.trimIndent())
+        val result = Verifier.verifyModule(module, SymbolTable())
+        // No AssignToReadonly error; no error at all from the verifier in P10.
+        assertTrue(result.errors.none { it is VerifyError.AssignToReadonly })
+    }
+
     @Test fun voidTopLevelVarDeclFails() {
         val module = parseAndAst("""
             module Foo {

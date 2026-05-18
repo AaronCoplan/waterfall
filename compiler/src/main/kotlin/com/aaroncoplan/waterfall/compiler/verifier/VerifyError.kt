@@ -103,13 +103,19 @@ sealed class VerifyError {
     /**
      * Unknown / unrecognized type text. Error code WF1101.
      */
+    /**
+     * Unknown / unrecognized type text. Error code WF1101.
+     *
+     * Note: the `message` field is the short canonical form. [HumanRenderer]
+     * appends the "Known: ..." suffix; consumers that need the verbose form
+     * should go through the renderer, not the `message` field directly.
+     */
     data class UnknownType(
         val typeText: String,
         override val primaryPosition: SourcePosition
     ) : VerifyError() {
         override val code = "WF1101"
-        override val message = "Type '$typeText' is not a recognized primitive or primitive array. " +
-            "Known: int, dec, bool, char, and their array forms."
+        override val message = "Type '$typeText' is not a recognized primitive or primitive array."
     }
 
     /**
@@ -126,8 +132,13 @@ sealed class VerifyError {
     companion object {
         /**
          * Convert a symbol-table-level [DuplicateDeclarationError] into a
-         * [DuplicateDeclaration] verifier error. Set [topLevel] = true when
-         * the duplicate is a function self-declaration (top-level scope).
+         * [DuplicateDeclaration] verifier error.
+         *
+         * Set [topLevel] = true ONLY for function self-declarations (where
+         * [ModuleVerifier.verifyFunctionDeclaration] detects the collision at
+         * module scope). Top-level variable duplicates use [topLevel] = false
+         * (they're caught at the same module scope but are not function names).
+         * All inner-scope duplicates use [topLevel] = false.
          */
         fun fromSymbolTable(
             e: DuplicateDeclarationError,

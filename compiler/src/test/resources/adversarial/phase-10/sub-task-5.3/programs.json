@@ -1,6 +1,6 @@
 {
-  "description": "Adversarial inputs for §5.3 verifier package extraction",
-  "spec_section": "§4 + §5.3",
+  "description": "Adversarial inputs for \u00a75.3 verifier package extraction",
+  "spec_section": "\u00a74 + \u00a75.3",
   "generated_by": "fresh-context Agent (spec + diff context)",
   "generated_at": "2026-05-18",
   "notes": [
@@ -13,9 +13,9 @@
     "  VoidNotAValueType is defined in VerifyError.kt and rendered in HumanRenderer but never EMITTED.",
     "  Fix required: add an explicit 'type is WaterfallType.VoidType -> errors += VoidNotAValueType(...)' check.",
     "  Negative entries neg-21 through neg-24 (VoidNotAValueType cases) are marked with expected_error_substring",
-    "  'not a value type' — they will currently FAIL (false-negative: program compiles when it should error).",
+    "  'not a value type' \u2014 they will currently FAIL (false-negative: program compiles when it should error).",
     "  These entries document the bug and serve as regression tests once the fix lands.",
-    "HumanRenderer byte-identical strings preserved exactly per §5.2 SA-2 resolution:",
+    "HumanRenderer byte-identical strings preserved exactly per \u00a75.2 SA-2 resolution:",
     "  AssignToReadonly   -> 'Cannot assign to immutable binding ...'",
     "  IncrementOfReadonly-> 'Cannot increment immutable binding ...'",
     "  DuplicateDeclaration (inner)    -> 'Duplicate declaration: ...'",
@@ -24,36 +24,43 @@
     "  VoidNotAValueType  -> 'not a value type'",
     "JoinAnalysis stub CORRECTLY walks branch bodies (SA-1 constraint not violated):",
     "  Errors inside if/elif/else/while/for branches ARE surfaced (confirmed by neg-31 through neg-38).",
-    "ForBlockData: iterator variable NOT declared into scope in P10 — P11 deferred.",
+    "ForBlockData: iterator variable NOT declared into scope in P10 \u2014 P11 deferred.",
     "  This means 'for(x in things)' does NOT make x visible in body scope.",
     "Verifier dispatch order: top-level vars (Pass 1) then functions (Pass 2), regardless of source order."
   ],
   "open_questions": [
     {
       "id": "OQ-5.3-1",
-      "title": "VoidNotAValueType is defined but never emitted — FATAL-5 incomplete",
+      "title": "VoidNotAValueType is defined but never emitted \u2014 FATAL-5 incomplete",
       "description": "The spec (PITFALL #1, FATAL-5) mandates that 'void x = ...' is rejected with VerifyError.VoidNotAValueType (WF1103). VoidNotAValueType is defined in VerifyError.kt and rendered in HumanRenderer.kt ('not a value type'). However, StatementVerifier.verifyTypedVarDecl only adds UnknownType when 'type is WaterfallType.ErrorType'. WaterfallType.fromSourceText('void') returns VoidType (not ErrorType), so 'void x = 5' at top-level or in a function body compiles cleanly with exit 0. Fix: add an explicit check after the ErrorType guard: 'if (type is WaterfallType.VoidType) { errors += VerifyError.VoidNotAValueType(context = \"variable declaration\", primaryPosition = s.getSourcePosition()) }'. Also check for ArrayType(VoidType) though fromSourceText already gates that to ErrorType. Affects negative entries neg-21 through neg-24.",
-      "status": "OPEN — IMPL BUG",
-      "tested_by_negative_entries": ["neg-21-void-top-level-var", "neg-22-void-in-function-body", "neg-23-void-const-var", "neg-24-void-imm-var"]
+      "status": "OPEN \u2014 IMPL BUG",
+      "tested_by_negative_entries": [
+        "neg-21-void-top-level-var",
+        "neg-22-void-in-function-body",
+        "neg-23-void-const-var",
+        "neg-24-void-imm-var"
+      ]
     },
     {
       "id": "OQ-5.3-2",
-      "title": "verifyForBlock does NOT declare the iterator variable — P10 explicitly deferred",
-      "description": "StatementVerifier.verifyForBlock comments: 'The iterator variable is not declared into scope here — ForBlockData doesn't track its type in P10; P11 infers the element type from the collection.' This means 'for(x in things) { int x = 1 }' might conflict with an outer 'x', but 'for(x in things) { ... use x ... }' does not make x visible inside the body for expression use. This is documented as P11 work. However, it creates an asymmetry: the iterator name is syntactically scoped but semantically invisible. Positive entry pos-15 (same iterator name in two for loops) confirms no scope collision from the iterator name itself.",
-      "status": "OPEN — documented deferral to P11",
-      "tested_by_positive_entries": ["pos-15-same-iterator-name-in-sequential-fors"]
+      "title": "verifyForBlock does NOT declare the iterator variable \u2014 P10 explicitly deferred",
+      "description": "StatementVerifier.verifyForBlock comments: 'The iterator variable is not declared into scope here \u2014 ForBlockData doesn't track its type in P10; P11 infers the element type from the collection.' This means 'for(x in things) { int x = 1 }' might conflict with an outer 'x', but 'for(x in things) { ... use x ... }' does not make x visible inside the body for expression use. This is documented as P11 work. However, it creates an asymmetry: the iterator name is syntactically scoped but semantically invisible. Positive entry pos-15 (same iterator name in two for loops) confirms no scope collision from the iterator name itself.",
+      "status": "OPEN \u2014 documented deferral to P11",
+      "tested_by_positive_entries": [
+        "pos-15-same-iterator-name-in-sequential-fors"
+      ]
     },
     {
       "id": "OQ-5.3-3",
       "title": "Error accumulation vs first-error-abort: new verifier accumulates but Main aborts on first",
       "description": "VerifyResult carries all errors (the new accumulating design). Main.kt aborts after printing only the first error in verifyResult.errors (the loop prints all then throws). In practice the driver prints ALL errors before throwing CompilerError. This means multiple errors CAN be reported in a single run. Negative test cases that check expected_error_substring only need one of the errors to match stderr. The test runner (Sub52AdversarialTest pattern) uses stderr.contains(expected), so any of the accumulated errors satisfying the substring is enough. No fixture issue but worth documenting.",
-      "status": "OPEN — behavior is correct per spec; test harness is safe"
+      "status": "OPEN \u2014 behavior is correct per spec; test harness is safe"
     },
     {
       "id": "OQ-5.3-4",
       "title": "verifyUntypedVarDecl does not check for VoidType either",
       "description": "Even if the VoidNotAValueType fix (OQ-5.3-1) is applied to verifyTypedVarDecl, verifyUntypedVarDecl also calls WaterfallType.fromSourceText(s.inferredType). If the untyped inference produces 'void' (unlikely in practice since there are no void-returning expressions with assignable values), the same gap exists. The fix should be applied to both verifyTypedVarDecl and verifyUntypedVarDecl.",
-      "status": "OPEN — secondary gap dependent on OQ-5.3-1 fix"
+      "status": "OPEN \u2014 secondary gap dependent on OQ-5.3-1 fix"
     }
   ],
   "positive_entries": [
@@ -61,7 +68,7 @@
       "name": "pos-01-empty-module",
       "source": "module Pos01 {\n}\n",
       "category": "positive",
-      "rationale": "Empty module — sanity baseline. No top-level vars, no functions. Verifier returns VerifyResult(emptyList()). Tests the zero-work path through ModuleVerifier.verifyModule."
+      "rationale": "Empty module \u2014 sanity baseline. No top-level vars, no functions. Verifier returns VerifyResult(emptyList()). Tests the zero-work path through ModuleVerifier.verifyModule."
     },
     {
       "name": "pos-02-single-toplevel-var",
@@ -85,7 +92,7 @@
       "name": "pos-05-if-else-same-var-in-branches",
       "source": "module Pos05 {\n    func go(int flag) {\n        if(flag) {\n            int x = 1\n        } else {\n            int x = 2\n        }\n    }\n}\n",
       "category": "positive",
-      "rationale": "Same var name x in mutually-exclusive if/else branches. Each branch gets its own child scope via JoinAnalysis.verifyIfBlock -> verifyBranch -> parent.enterScope(). The two scopes are independent. Targets the differentBranchesDontConflict pattern preserved from §5.2."
+      "rationale": "Same var name x in mutually-exclusive if/else branches. Each branch gets its own child scope via JoinAnalysis.verifyIfBlock -> verifyBranch -> parent.enterScope(). The two scopes are independent. Targets the differentBranchesDontConflict pattern preserved from \u00a75.2."
     },
     {
       "name": "pos-06-three-branch-if-elif-else-same-var",
@@ -256,7 +263,7 @@
       "source": "module Neg07 {\n    func f(int a, dec a) {}\n}\n",
       "category": "negative",
       "expected_error_substring": "Duplicate declaration: a",
-      "rationale": "Duplicate parameter names with different types. Type difference does not exempt from duplicate detection — the SymbolTable is name-keyed. Second declare('a') -> Failure -> 'Duplicate declaration: a'."
+      "rationale": "Duplicate parameter names with different types. Type difference does not exempt from duplicate detection \u2014 the SymbolTable is name-keyed. Second declare('a') -> Failure -> 'Duplicate declaration: a'."
     },
     {
       "name": "neg-08-assign-to-const-local",
@@ -319,7 +326,7 @@
       "source": "module Neg16 {\n    func g() {\n        int g = 5\n    }\n}\n",
       "category": "negative",
       "expected_error_substring": "Duplicate declaration: g",
-      "rationale": "OQ-1 carry-forward from §5.2: inner var with same name as enclosing function. Self-decl places 'g' in module scope. Function body is child scope; declare('g') finds 'g' via parent.lookupOwning -> DeclareResult.Failure -> topLevel=false -> 'Duplicate declaration: g'. Verifies this behavior is preserved post-§5.3 migration."
+      "rationale": "OQ-1 carry-forward from \u00a75.2: inner var with same name as enclosing function. Self-decl places 'g' in module scope. Function body is child scope; declare('g') finds 'g' via parent.lookupOwning -> DeclareResult.Failure -> topLevel=false -> 'Duplicate declaration: g'. Verifies this behavior is preserved post-\u00a75.3 migration."
     },
     {
       "name": "neg-17-param-shadows-own-function-name",
@@ -353,28 +360,28 @@
       "name": "neg-21-void-top-level-var",
       "source": "module Neg21 {\n    void x = 5\n}\n",
       "category": "negative",
-      "expected_error_substring": "not a value type",
-      "rationale": "FATAL-5 / PITFALL #1: void used as a value type at top-level scope. WaterfallType.fromSourceText('void') returns VoidType (not ErrorType). StatementVerifier.verifyTypedVarDecl should emit VerifyError.VoidNotAValueType -> HumanRenderer: 'Type \\'void\\' is not a value type'. COMPILER-BROKE: as of the §5.3 branch, this compiles cleanly (exit 0) — the VoidNotAValueType check is missing from verifyTypedVarDecl. This entry documents the bug (OQ-5.3-1)."
+      "expected_error_substring": "Type 'void' is not a value type",
+      "rationale": "FATAL-5 / PITFALL #1: void used as a value type at top-level scope. WaterfallType.fromSourceText('void') returns VoidType (not ErrorType). StatementVerifier.verifyTypedVarDecl should emit VerifyError.VoidNotAValueType -> HumanRenderer: 'Type \\'void\\' is not a value type'. COMPILER-BROKE: as of the \u00a75.3 branch, this compiles cleanly (exit 0) \u2014 the VoidNotAValueType check is missing from verifyTypedVarDecl. This entry documents the bug (OQ-5.3-1)."
     },
     {
       "name": "neg-22-void-in-function-body",
       "source": "module Neg22 {\n    func f() {\n        void y = 5\n    }\n}\n",
       "category": "negative",
-      "expected_error_substring": "not a value type",
-      "rationale": "FATAL-5: void used as variable type inside a function body. Same root cause as neg-21 but exercising the function-body scope path. VoidType returned by fromSourceText is not ErrorType, so the UnknownType guard is skipped and VoidNotAValueType is never emitted. COMPILER-BROKE: compiles cleanly in the §5.3 branch."
+      "expected_error_substring": "Type 'void' is not a value type",
+      "rationale": "FATAL-5: void used as variable type inside a function body. Same root cause as neg-21 but exercising the function-body scope path. VoidType returned by fromSourceText is not ErrorType, so the UnknownType guard is skipped and VoidNotAValueType is never emitted. COMPILER-BROKE: compiles cleanly in the \u00a75.3 branch."
     },
     {
       "name": "neg-23-void-const-var",
       "source": "module Neg23 {\n    func f() {\n        const void z = 0\n    }\n}\n",
       "category": "negative",
-      "expected_error_substring": "not a value type",
-      "rationale": "void used as a const-modified variable type. Tests that the VoidNotAValueType check applies regardless of mutability modifiers. The const modifier is irrelevant — the void type rejection should precede the isImmutable() check. COMPILER-BROKE per OQ-5.3-1."
+      "expected_error_substring": "Type 'void' is not a value type",
+      "rationale": "void used as a const-modified variable type. Tests that the VoidNotAValueType check applies regardless of mutability modifiers. The const modifier is irrelevant \u2014 the void type rejection should precede the isImmutable() check. COMPILER-BROKE per OQ-5.3-1."
     },
     {
       "name": "neg-24-void-imm-var",
       "source": "module Neg24 {\n    void globalVoid = 0\n    func f() {\n        imm void localVoid = 0\n    }\n}\n",
       "category": "negative",
-      "expected_error_substring": "not a value type",
+      "expected_error_substring": "Type 'void' is not a value type",
       "rationale": "void at both top-level scope (globalVoid) and function-body scope (imm void localVoid). Two VoidNotAValueType errors should be emitted. COMPILER-BROKE per OQ-5.3-1. Tests that the fix applies to both top-level and inner var declarations."
     },
     {
