@@ -1,0 +1,458 @@
+{
+  "description": "Adversarial inputs for §5.3 verifier package extraction",
+  "spec_section": "§4 + §5.3",
+  "generated_by": "fresh-context Agent (spec + diff context)",
+  "generated_at": "2026-05-18",
+  "notes": [
+    "All positive programs validated against phase-10/sub-task-5.3-verifier-package JAR (exit 0).",
+    "All negative programs validated against the same JAR (exit 1, stderr contains expected_error_substring).",
+    "CRITICAL IMPLEMENTATION BUG FOUND (compiler-broke): void as value type is NOT rejected.",
+    "  void x = 5 compiles cleanly (exit 0) when it should fail with VoidNotAValueType (WF1103).",
+    "  Root cause: StatementVerifier.verifyTypedVarDecl checks 'type is WaterfallType.ErrorType' only.",
+    "  WaterfallType.fromSourceText('void') returns VoidType (NOT ErrorType), so the guard is bypassed.",
+    "  VoidNotAValueType is defined in VerifyError.kt and rendered in HumanRenderer but never EMITTED.",
+    "  Fix required: add an explicit 'type is WaterfallType.VoidType -> errors += VoidNotAValueType(...)' check.",
+    "  Negative entries neg-21 through neg-24 (VoidNotAValueType cases) are marked with expected_error_substring",
+    "  'not a value type' — they will currently FAIL (false-negative: program compiles when it should error).",
+    "  These entries document the bug and serve as regression tests once the fix lands.",
+    "HumanRenderer byte-identical strings preserved exactly per §5.2 SA-2 resolution:",
+    "  AssignToReadonly   -> 'Cannot assign to immutable binding ...'",
+    "  IncrementOfReadonly-> 'Cannot increment immutable binding ...'",
+    "  DuplicateDeclaration (inner)    -> 'Duplicate declaration: ...'",
+    "  DuplicateDeclaration (topLevel) -> 'Duplicate top-level declaration: ...'",
+    "  UnknownType        -> 'not a recognized primitive'",
+    "  VoidNotAValueType  -> 'not a value type'",
+    "JoinAnalysis stub CORRECTLY walks branch bodies (SA-1 constraint not violated):",
+    "  Errors inside if/elif/else/while/for branches ARE surfaced (confirmed by neg-31 through neg-38).",
+    "ForBlockData: iterator variable NOT declared into scope in P10 — P11 deferred.",
+    "  This means 'for(x in things)' does NOT make x visible in body scope.",
+    "Verifier dispatch order: top-level vars (Pass 1) then functions (Pass 2), regardless of source order."
+  ],
+  "open_questions": [
+    {
+      "id": "OQ-5.3-1",
+      "title": "VoidNotAValueType is defined but never emitted — FATAL-5 incomplete",
+      "description": "The spec (PITFALL #1, FATAL-5) mandates that 'void x = ...' is rejected with VerifyError.VoidNotAValueType (WF1103). VoidNotAValueType is defined in VerifyError.kt and rendered in HumanRenderer.kt ('not a value type'). However, StatementVerifier.verifyTypedVarDecl only adds UnknownType when 'type is WaterfallType.ErrorType'. WaterfallType.fromSourceText('void') returns VoidType (not ErrorType), so 'void x = 5' at top-level or in a function body compiles cleanly with exit 0. Fix: add an explicit check after the ErrorType guard: 'if (type is WaterfallType.VoidType) { errors += VerifyError.VoidNotAValueType(context = \"variable declaration\", primaryPosition = s.getSourcePosition()) }'. Also check for ArrayType(VoidType) though fromSourceText already gates that to ErrorType. Affects negative entries neg-21 through neg-24.",
+      "status": "OPEN — IMPL BUG",
+      "tested_by_negative_entries": ["neg-21-void-top-level-var", "neg-22-void-in-function-body", "neg-23-void-const-var", "neg-24-void-imm-var"]
+    },
+    {
+      "id": "OQ-5.3-2",
+      "title": "verifyForBlock does NOT declare the iterator variable — P10 explicitly deferred",
+      "description": "StatementVerifier.verifyForBlock comments: 'The iterator variable is not declared into scope here — ForBlockData doesn't track its type in P10; P11 infers the element type from the collection.' This means 'for(x in things) { int x = 1 }' might conflict with an outer 'x', but 'for(x in things) { ... use x ... }' does not make x visible inside the body for expression use. This is documented as P11 work. However, it creates an asymmetry: the iterator name is syntactically scoped but semantically invisible. Positive entry pos-15 (same iterator name in two for loops) confirms no scope collision from the iterator name itself.",
+      "status": "OPEN — documented deferral to P11",
+      "tested_by_positive_entries": ["pos-15-same-iterator-name-in-sequential-fors"]
+    },
+    {
+      "id": "OQ-5.3-3",
+      "title": "Error accumulation vs first-error-abort: new verifier accumulates but Main aborts on first",
+      "description": "VerifyResult carries all errors (the new accumulating design). Main.kt aborts after printing only the first error in verifyResult.errors (the loop prints all then throws). In practice the driver prints ALL errors before throwing CompilerError. This means multiple errors CAN be reported in a single run. Negative test cases that check expected_error_substring only need one of the errors to match stderr. The test runner (Sub52AdversarialTest pattern) uses stderr.contains(expected), so any of the accumulated errors satisfying the substring is enough. No fixture issue but worth documenting.",
+      "status": "OPEN — behavior is correct per spec; test harness is safe"
+    },
+    {
+      "id": "OQ-5.3-4",
+      "title": "verifyUntypedVarDecl does not check for VoidType either",
+      "description": "Even if the VoidNotAValueType fix (OQ-5.3-1) is applied to verifyTypedVarDecl, verifyUntypedVarDecl also calls WaterfallType.fromSourceText(s.inferredType). If the untyped inference produces 'void' (unlikely in practice since there are no void-returning expressions with assignable values), the same gap exists. The fix should be applied to both verifyTypedVarDecl and verifyUntypedVarDecl.",
+      "status": "OPEN — secondary gap dependent on OQ-5.3-1 fix"
+    }
+  ],
+  "positive_entries": [
+    {
+      "name": "pos-01-empty-module",
+      "source": "module Pos01 {\n}\n",
+      "category": "positive",
+      "rationale": "Empty module — sanity baseline. No top-level vars, no functions. Verifier returns VerifyResult(emptyList()). Tests the zero-work path through ModuleVerifier.verifyModule."
+    },
+    {
+      "name": "pos-02-single-toplevel-var",
+      "source": "module Pos02 {\n    int x = 4\n}\n",
+      "category": "positive",
+      "rationale": "Single top-level int var. Exercises StatementVerifier.verifyTypedVarDecl via Pass 1 in ModuleVerifier. Baseline: declare into module scope with isReadonly=false, kind=Variable, type=IntType."
+    },
+    {
+      "name": "pos-03-single-void-function",
+      "source": "module Pos03 {\n    func go() {}\n}\n",
+      "category": "positive",
+      "rationale": "Single empty void function. Exercises ModuleVerifier.verifyFunctionDeclaration: self-decl with forReturnType(null)=VoidType, isReadonly=true, kind=Function(parameters=[]). Zero-parameter, zero-body path."
+    },
+    {
+      "name": "pos-04-function-with-valid-local-var",
+      "source": "module Pos04 {\n    func f(int n) returns int {\n        int x = n\n        return x\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Function with a local int var computed from a parameter. Exercises StatementVerifier.verifyTypedVarDecl in a function-body scope (child of module scope). Confirms function body creates independent child scope."
+    },
+    {
+      "name": "pos-05-if-else-same-var-in-branches",
+      "source": "module Pos05 {\n    func go(int flag) {\n        if(flag) {\n            int x = 1\n        } else {\n            int x = 2\n        }\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Same var name x in mutually-exclusive if/else branches. Each branch gets its own child scope via JoinAnalysis.verifyIfBlock -> verifyBranch -> parent.enterScope(). The two scopes are independent. Targets the differentBranchesDontConflict pattern preserved from §5.2."
+    },
+    {
+      "name": "pos-06-three-branch-if-elif-else-same-var",
+      "source": "module Pos06 {\n    func go(int flag) {\n        if(flag) {\n            int result = 1\n        } elif(flag) {\n            int result = 2\n        } else {\n            int result = 3\n        }\n    }\n}\n",
+      "category": "positive",
+      "rationale": "All three branches of if/elif/else declare the same local var 'result'. JoinAnalysis.verifyIfBlock calls verifyBranch three times, each with a fresh enterScope(). All three scopes are independent. Exercises the three-callsite path through JoinAnalysis."
+    },
+    {
+      "name": "pos-07-while-scope-isolated-from-outer",
+      "source": "module Pos07 {\n    func go() {\n        while(1) {\n            int x = 1\n        }\n        int x = 2\n    }\n}\n",
+      "category": "positive",
+      "rationale": "While body declares int x, then function scope declares int x after the loop. The while body's child scope is exited (JoinAnalysis.verifyWhileBlock -> verifyBranch -> exitScope). The outer int x = 2 is in the function scope, not the while scope. Confirms while body scope does not persist into the enclosing scope."
+    },
+    {
+      "name": "pos-08-for-scope-isolated-from-outer",
+      "source": "module Pos08 {\n    func go() {\n        for(item in things) {\n            int x = 1\n        }\n        int x = 2\n    }\n}\n",
+      "category": "positive",
+      "rationale": "For body declares int x, then function scope declares int x after the loop. Same scope-isolation property as pos-07 but exercising StatementVerifier.verifyForBlock (not JoinAnalysis). Confirms for body scope does not persist."
+    },
+    {
+      "name": "pos-09-recursive-fibonacci",
+      "source": "module Pos09 {\n    func fib(int n) returns int {\n        if(n < 2) {\n            return n\n        }\n        return fib(n - 1) + fib(n - 2)\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Recursive function. The self-decl in ModuleVerifier.verifyFunctionDeclaration places 'fib' in the module scope before the body is verified, making fib visible inside its own body for the recursive call. Verifies recursion self-decl timing."
+    },
+    {
+      "name": "pos-10-function-returning-int-array",
+      "source": "module Pos10 {\n    func arr() returns int[] {\n        int[] xs = [1, 2, 3]\n        return xs\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Function returning int[]. Exercises WaterfallType.forReturnType('int[]') -> ArrayType(IntType) in ModuleVerifier self-decl. Also exercises verifyTypedVarDecl with type=int[] inside the function body."
+    },
+    {
+      "name": "pos-11-multi-param-mixed-types",
+      "source": "module Pos11 {\n    func f(int a, dec b, bool c) returns dec {\n        return b\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Three parameters of distinct types. Exercises ModuleVerifier per-arg loop with three distinct WaterfallType branches in arg declaration. Adversarially targets PITFALL #8 parameter ordering inversion. name=secondVal, type=firstVal in the Pair."
+    },
+    {
+      "name": "pos-12-function-calls-sibling",
+      "source": "module Pos12 {\n    func helper(int n) returns int {\n        return n\n    }\n    func compute(int x) returns int {\n        return helper(x)\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Function calling a sibling declared before it. Both functions self-declare into the module scope. The call-site check is a P11 no-op in P10. Confirms two-function module verifies cleanly."
+    },
+    {
+      "name": "pos-13-function-forward-reference",
+      "source": "module Pos13 {\n    func main(int n) returns int {\n        return helper(n)\n    }\n    func helper(int n) returns int {\n        return n\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Forward reference: main calls helper declared after main in source. P10 call-site type-checking is a no-op stub (verifyFunctionCallStatement -> emptyList()). Confirms forward references are not rejected in P10."
+    },
+    {
+      "name": "pos-14-const-top-level-var-used-in-function",
+      "source": "module Pos14 {\n    const int MAX = 100\n    func go() {\n        int x = MAX\n    }\n}\n",
+      "category": "positive",
+      "rationale": "PITFALL #7 baseline: top-level const var used (read) inside a function body. Reading a const var is fine; only writes are rejected. Confirms lookup(MAX) from function scope returns non-null but the read path has no error check."
+    },
+    {
+      "name": "pos-15-same-iterator-name-in-sequential-fors",
+      "source": "module Pos15 {\n    func go() {\n        for(item in things) {\n            int x = 1\n        }\n        for(item in others) {\n            int x = 2\n        }\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Same iterator name 'item' and same body var 'x' in two sequential for loops. Iterator variable is NOT declared into scope in P10 (OQ-5.3-2). Each for body gets an independent child scope. Both loops complete without collision. Exercises StatementVerifier.verifyForBlock twice sequentially."
+    },
+    {
+      "name": "pos-16-deeply-nested-if-while-for",
+      "source": "module Pos16 {\n    func go() {\n        if(1) {\n            int a = 1\n            while(a) {\n                int b = 2\n                for(item in things) {\n                    int c = 3\n                }\n            }\n        }\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Four scope levels: function -> if -> while -> for. Each level declares a distinct var (a, b, c). Exercises all three non-function scope-construction callsites: JoinAnalysis.verifyIfBlock, JoinAnalysis.verifyWhileBlock, StatementVerifier.verifyForBlock. Validates stub body-walking through arbitrary depth."
+    },
+    {
+      "name": "pos-17-mutable-function-parameter",
+      "source": "module Pos17 {\n    func go(int n) {\n        n = 5\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Reassigning a function parameter. Parameters are declared with isReadonly=false (per ModuleVerifier per-arg loop). VariableAssignmentData verifier finds info.isReadonly=false -> no error. Confirms function params are mutable (unlike function names which are readonly per PITFALL #7)."
+    },
+    {
+      "name": "pos-18-two-functions-same-param-name",
+      "source": "module Pos18 {\n    func f(int n) returns int {\n        return n\n    }\n    func g(int n) returns int {\n        return n\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Two sibling functions each with a parameter named 'n'. Each function body uses its own independent child scope. After ModuleVerifier.verifyFunctionDeclaration exits functionScope, the scope is discarded. The second function's 'n' does not conflict with the first's."
+    },
+    {
+      "name": "pos-19-const-and-imm-local-vars",
+      "source": "module Pos19 {\n    func go() {\n        const int limit = 10\n        imm int page = 4\n        int total = 0\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Both 'const' and 'imm' modifier keywords at function scope. Exercises isImmutable() -> isReadonly=true path for both modifier keywords. FATAL-2 fix: StatementVerifier uses s.isImmutable() not modifiers.contains('readonly')."
+    },
+    {
+      "name": "pos-20-untyped-walrus-declarations",
+      "source": "module Pos20 {\n    func go() {\n        x := 5\n        y := true\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Two untyped (walrus-operator) variable declarations in a function body. Exercises StatementVerifier.verifyUntypedVarDecl. inferredType is derived from the literal expression. Both names distinct, no collision."
+    },
+    {
+      "name": "pos-21-two-toplevel-vars-and-function",
+      "source": "module Pos21 {\n    int counter = 0\n    dec ratio = 1.5\n    func increment() {\n        counter = counter + 1\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Two top-level vars of different types (int, dec) plus a function that assigns to the mutable top-level var. Pass 1 declares counter and ratio; Pass 2 verifies increment. The assignment to counter finds isReadonly=false via parent-chain lookup. Exercises the two-pass module verification loop."
+    },
+    {
+      "name": "pos-22-deeply-nested-error-free-path",
+      "source": "module Pos22 {\n    func go() {\n        if(1) {\n            if(1) {\n                if(1) {\n                    while(1) {\n                        for(item in things) {\n                            int deepVar = 42\n                        }\n                    }\n                }\n            }\n        }\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Five scope levels deep with no errors. Validates the stub body-walking recurses through arbitrary nesting without false positives. Tests that JoinAnalysis and verifyForBlock correctly propagate empty error lists upward."
+    },
+    {
+      "name": "pos-23-array-typed-parameter",
+      "source": "module Pos23 {\n    func sum(int[] xs) returns int {\n        return xs[0]\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Array-typed parameter int[]. Exercises WaterfallType.fromSourceText('int[]') -> ArrayType(IntType) in the per-arg declare path inside ModuleVerifier."
+    },
+    {
+      "name": "pos-24-function-with-no-params-no-body",
+      "source": "module Pos24 {\n    func noop() {}\n    func also() {}\n    func third() {}\n}\n",
+      "category": "positive",
+      "rationale": "Three distinct zero-param void functions. Each self-declares as Function(parameters=[]) with forReturnType(null). Confirms that multiple distinct function names coexist in the same module scope without collision."
+    },
+    {
+      "name": "pos-25-while-body-var-same-name-as-sibling-for-var",
+      "source": "module Pos25 {\n    func go() {\n        while(1) {\n            int tmp = 1\n        }\n        for(item in things) {\n            int tmp = 2\n        }\n    }\n}\n",
+      "category": "positive",
+      "rationale": "Same var name 'tmp' in sequential while and for blocks. Each creates its own independent child scope (JoinAnalysis.verifyWhileBlock and StatementVerifier.verifyForBlock respectively). The scopes don't overlap. Exercises scope isolation across both loop kinds."
+    }
+  ],
+  "negative_entries": [
+    {
+      "name": "neg-01-duplicate-toplevel-var-var",
+      "source": "module Neg01 {\n    int x = 1\n    int x = 2\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: x",
+      "rationale": "Two top-level vars with the same name. StatementVerifier.verifyTypedVarDecl declares the second 'x' into the module scope where the first already lives. DeclareResult.Failure -> VerifyError.DuplicateDeclaration(topLevel=false) -> HumanRenderer: 'Duplicate declaration: x'. Note: top-level vars use topLevel=false (not a function self-decl)."
+    },
+    {
+      "name": "neg-02-duplicate-toplevel-func-func",
+      "source": "module Neg02 {\n    func add(int x, int y) returns int {}\n    func add(int a, int b) returns int {}\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate top-level declaration: add",
+      "rationale": "Two functions with identical names. First function's self-decl succeeds. Second function's self-decl in ModuleVerifier finds 'add' already in module scope -> DeclareResult.Failure -> VerifyError.fromSymbolTable(result.error, topLevel=true) -> 'Duplicate top-level declaration: add'."
+    },
+    {
+      "name": "neg-03-duplicate-toplevel-func-var",
+      "source": "module Neg03 {\n    int x = 5\n    func x() {}\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate top-level declaration: x",
+      "rationale": "Top-level var 'x' then function 'x'. Main.kt processes topLevelVariables first (Pass 1): 'int x=5' is declared. Then func x() self-decl finds 'x' already in module scope -> topLevel=true -> 'Duplicate top-level declaration: x' at function's source position."
+    },
+    {
+      "name": "neg-04-duplicate-toplevel-var-func",
+      "source": "module Neg04 {\n    func add(int a, int b) returns int {}\n    int add = 99\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate top-level declaration: add",
+      "rationale": "Function declared before top-level var of same name. Pass 1 processes top-level vars first regardless of source order: 'int add=99' is declared first. Pass 2 verifies func add() self-decl, finds 'add' already in scope -> topLevel=true -> 'Duplicate top-level declaration: add'. Note: source-order-independent per two-pass design."
+    },
+    {
+      "name": "neg-05-duplicate-var-in-function-body",
+      "source": "module Neg05 {\n    func go() {\n        int x = 1\n        int x = 2\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: x",
+      "rationale": "Two typed vars with same name in function body. Both declared in the function's own child scope. Second declare() finds 'x' already in owned map -> DeclareResult.Failure -> topLevel=false -> 'Duplicate declaration: x'."
+    },
+    {
+      "name": "neg-06-duplicate-param-names-same-type",
+      "source": "module Neg06 {\n    func f(int a, int a) {}\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: a",
+      "rationale": "Duplicate parameter names with same type. First arg 'a' is declared into functionScope. Second arg 'a' tries to declare into the same scope and finds 'a' already owned -> 'Duplicate declaration: a'. Exercises the per-arg declare loop in ModuleVerifier."
+    },
+    {
+      "name": "neg-07-duplicate-param-names-mixed-types",
+      "source": "module Neg07 {\n    func f(int a, dec a) {}\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: a",
+      "rationale": "Duplicate parameter names with different types. Type difference does not exempt from duplicate detection — the SymbolTable is name-keyed. Second declare('a') -> Failure -> 'Duplicate declaration: a'."
+    },
+    {
+      "name": "neg-08-assign-to-const-local",
+      "source": "module Neg08 {\n    func go() {\n        const int x = 5\n        x = 10\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot assign to immutable binding 'x'",
+      "rationale": "Assigning to a const local var. isImmutable() returns true for 'const' modifier -> isReadonly=true in SymbolInfo. StatementVerifier.verifyVarAssignment -> info.isReadonly=true -> VerifyError.AssignToReadonly -> HumanRenderer: 'Cannot assign to immutable binding \\'x\\''."
+    },
+    {
+      "name": "neg-09-increment-imm-local",
+      "source": "module Neg09 {\n    func go() {\n        imm int x = 5\n        x++\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot increment immutable binding 'x'",
+      "rationale": "Incrementing an imm local var. isImmutable() returns true for 'imm' modifier -> isReadonly=true. StatementVerifier.verifyIncrement -> info.isReadonly=true -> VerifyError.IncrementOfReadonly -> 'Cannot increment immutable binding \\'x\\''."
+    },
+    {
+      "name": "neg-10-assign-to-const-toplevel-from-function",
+      "source": "module Neg10 {\n    const int MAX = 100\n    func go() {\n        MAX = 5\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot assign to immutable binding 'MAX'",
+      "rationale": "Assigning to a const top-level var from inside a function. The module scope stores MAX with isReadonly=true. lookup() from the function's child scope walks the parent chain, finds MAX in module scope with isReadonly=true -> 'Cannot assign to immutable binding \\'MAX\\''."
+    },
+    {
+      "name": "neg-11-increment-const-toplevel-from-function",
+      "source": "module Neg11 {\n    const int total = 100\n    func go() {\n        total++\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot increment immutable binding 'total'",
+      "rationale": "Incrementing a const top-level var from inside a function. Same lookup path as neg-10 but via verifyIncrement -> 'Cannot increment immutable binding \\'total\\''."
+    },
+    {
+      "name": "neg-12-pitfall7-assign-to-function-name",
+      "source": "module Neg12 {\n    func f() {}\n    func go() {\n        f = 5\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot assign to immutable binding 'f'",
+      "rationale": "PITFALL #7: reassigning a function name. 'f' is stored in the module scope with isReadonly=true (functions are implicitly readonly per ModuleVerifier.verifyFunctionDeclaration self-decl). verifyVarAssignment finds isReadonly=true -> 'Cannot assign to immutable binding \\'f\\''."
+    },
+    {
+      "name": "neg-13-pitfall7-increment-function-name",
+      "source": "module Neg13 {\n    func f() {}\n    func go() {\n        f++\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot increment immutable binding 'f'",
+      "rationale": "PITFALL #7 increment variant. verifyIncrement looks up 'f', finds isReadonly=true -> 'Cannot increment immutable binding \\'f\\''."
+    },
+    {
+      "name": "neg-14-pitfall7-assign-to-function-own-name",
+      "source": "module Neg14 {\n    func f() {\n        f = 5\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot assign to immutable binding 'f'",
+      "rationale": "PITFALL #7 variant: function assigns to its own name inside its own body. Self-decl places 'f' in module scope with isReadonly=true. Function body is a child scope; lookup('f') walks up to the module scope, finds isReadonly=true -> 'Cannot assign to immutable binding \\'f\\''."
+    },
+    {
+      "name": "neg-15-pitfall7-increment-function-own-name",
+      "source": "module Neg15 {\n    func counter() {\n        counter++\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot increment immutable binding 'counter'",
+      "rationale": "PITFALL #7 increment from own body. 'counter' in module scope with isReadonly=true. verifyIncrement from child scope -> 'Cannot increment immutable binding \\'counter\\''."
+    },
+    {
+      "name": "neg-16-inner-var-shadows-own-function-name",
+      "source": "module Neg16 {\n    func g() {\n        int g = 5\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: g",
+      "rationale": "OQ-1 carry-forward from §5.2: inner var with same name as enclosing function. Self-decl places 'g' in module scope. Function body is child scope; declare('g') finds 'g' via parent.lookupOwning -> DeclareResult.Failure -> topLevel=false -> 'Duplicate declaration: g'. Verifies this behavior is preserved post-§5.3 migration."
+    },
+    {
+      "name": "neg-17-param-shadows-own-function-name",
+      "source": "module Neg17 {\n    func f(int f) {}\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: f",
+      "rationale": "Function parameter with same name as the function. Self-decl places 'f' in module scope first. Per-arg declare loop in ModuleVerifier declares the arg 'f' into functionScope (child of module scope). Child's declare finds 'f' via parent chain -> Failure -> 'Duplicate declaration: f'."
+    },
+    {
+      "name": "neg-18-inner-var-shadows-toplevel-var",
+      "source": "module Neg18 {\n    int x = 1\n    func go() {\n        int x = 10\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: x",
+      "rationale": "Inner typed var shadows a top-level module var. Module scope owns 'x'; function body is a child scope. declare('x') in child finds 'x' via parent.lookupOwning -> Failure -> 'Duplicate declaration: x'. Anti-shadowing rule applies across scope levels."
+    },
+    {
+      "name": "neg-19-param-shadows-toplevel-var",
+      "source": "module Neg19 {\n    int counter = 0\n    func go(int counter) {\n        return\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: counter",
+      "rationale": "Function parameter named same as top-level var. Per-arg declare in functionScope (child of module scope). parent.lookupOwning('counter') finds 'counter' in module scope -> DeclareResult.Failure -> 'Duplicate declaration: counter'."
+    },
+    {
+      "name": "neg-20-duplicate-inner-var-in-for-body",
+      "source": "module Neg20 {\n    func go() {\n        for(item in things) {\n            int x = 1\n            int x = 2\n        }\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: x",
+      "rationale": "Two vars with same name inside a for-loop body (same-scope conflict, not ancestor conflict). Both declared in the for body's child scope. Second declare finds 'x' in owned map -> 'Duplicate declaration: x'. Tests that StatementVerifier.verifyForBlock surfaces inner-body errors correctly."
+    },
+    {
+      "name": "neg-21-void-top-level-var",
+      "source": "module Neg21 {\n    void x = 5\n}\n",
+      "category": "negative",
+      "expected_error_substring": "not a value type",
+      "rationale": "FATAL-5 / PITFALL #1: void used as a value type at top-level scope. WaterfallType.fromSourceText('void') returns VoidType (not ErrorType). StatementVerifier.verifyTypedVarDecl should emit VerifyError.VoidNotAValueType -> HumanRenderer: 'Type \\'void\\' is not a value type'. COMPILER-BROKE: as of the §5.3 branch, this compiles cleanly (exit 0) — the VoidNotAValueType check is missing from verifyTypedVarDecl. This entry documents the bug (OQ-5.3-1)."
+    },
+    {
+      "name": "neg-22-void-in-function-body",
+      "source": "module Neg22 {\n    func f() {\n        void y = 5\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "not a value type",
+      "rationale": "FATAL-5: void used as variable type inside a function body. Same root cause as neg-21 but exercising the function-body scope path. VoidType returned by fromSourceText is not ErrorType, so the UnknownType guard is skipped and VoidNotAValueType is never emitted. COMPILER-BROKE: compiles cleanly in the §5.3 branch."
+    },
+    {
+      "name": "neg-23-void-const-var",
+      "source": "module Neg23 {\n    func f() {\n        const void z = 0\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "not a value type",
+      "rationale": "void used as a const-modified variable type. Tests that the VoidNotAValueType check applies regardless of mutability modifiers. The const modifier is irrelevant — the void type rejection should precede the isImmutable() check. COMPILER-BROKE per OQ-5.3-1."
+    },
+    {
+      "name": "neg-24-void-imm-var",
+      "source": "module Neg24 {\n    void globalVoid = 0\n    func f() {\n        imm void localVoid = 0\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "not a value type",
+      "rationale": "void at both top-level scope (globalVoid) and function-body scope (imm void localVoid). Two VoidNotAValueType errors should be emitted. COMPILER-BROKE per OQ-5.3-1. Tests that the fix applies to both top-level and inner var declarations."
+    },
+    {
+      "name": "neg-25-error-inside-if-then-branch",
+      "source": "module Neg25 {\n    func go(int flag) {\n        if(flag) {\n            const int x = 1\n            x = 2\n        }\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot assign to immutable binding 'x'",
+      "rationale": "Error (assign to const) inside the if-then branch. JoinAnalysis.verifyIfBlock calls verifyBranch(s.ifBranch.body, scope). The error inside the branch body is collected and returned. Validates that the SA-1 constraint is satisfied: stub walks branch bodies and surfaces errors."
+    },
+    {
+      "name": "neg-26-error-inside-elif-branch",
+      "source": "module Neg26 {\n    func go(int flag) {\n        if(flag) {\n            int ok = 1\n        } elif(flag) {\n            const int locked = 5\n            locked = 10\n        }\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot assign to immutable binding 'locked'",
+      "rationale": "Error inside the elif branch only. JoinAnalysis.verifyIfBlock iterates elifBranches and calls verifyBranch for each. The elif branch error is collected. Tests that the elif loop path in JoinAnalysis correctly propagates errors."
+    },
+    {
+      "name": "neg-27-error-inside-else-branch",
+      "source": "module Neg27 {\n    func go(int flag) {\n        if(flag) {\n            int ok = 1\n        } else {\n            imm int frozen = 3\n            frozen++\n        }\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot increment immutable binding 'frozen'",
+      "rationale": "Error inside the else branch. JoinAnalysis.verifyIfBlock calls verifyBranch(s.elseBody, scope). The else branch error is collected and returned. Tests the else-body path."
+    },
+    {
+      "name": "neg-28-error-inside-while-body",
+      "source": "module Neg28 {\n    func go() {\n        while(1) {\n            int n = 5\n            int n = 6\n        }\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: n",
+      "rationale": "Duplicate var inside while body. JoinAnalysis.verifyWhileBlock -> verifyBranch -> walks body statements -> finds duplicate in child scope. Tests that while body errors surface correctly through the stub."
+    },
+    {
+      "name": "neg-29-error-inside-for-body",
+      "source": "module Neg29 {\n    func go() {\n        for(item in things) {\n            int i = 0\n            for(sub in stuff) {\n                int i = 1\n            }\n        }\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: i",
+      "rationale": "Nested for loops where the inner for body's var 'i' shadows the outer for body's 'i'. Outer for body's child scope has 'i'; inner for body's child scope finds 'i' via parent chain -> Failure. Tests that StatementVerifier.verifyForBlock correctly propagates errors from nested for bodies."
+    },
+    {
+      "name": "neg-30-deeply-nested-error-if-while-for",
+      "source": "module Neg30 {\n    func go() {\n        if(1) {\n            while(1) {\n                for(item in things) {\n                    const int q = 1\n                    q = 99\n                }\n            }\n        }\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Cannot assign to immutable binding 'q'",
+      "rationale": "Assign-to-const error at the deepest level of a 3-level nesting (if -> while -> for). Tests that the stub body-walking correctly propagates errors up through all three nesting levels: verifyForBlock -> verifyWhileBlock (via JoinAnalysis) -> verifyIfBlock (via JoinAnalysis) -> function body -> module verifier."
+    },
+    {
+      "name": "neg-31-duplicate-in-while-shadows-outer",
+      "source": "module Neg31 {\n    func go() {\n        int n = 5\n        while(n) {\n            int n = 10\n        }\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: n",
+      "rationale": "While-loop body var shadowing a var in the enclosing function scope. JoinAnalysis.verifyWhileBlock -> verifyBranch creates a child scope. declare('n') in child walks ancestors and finds 'n' in function scope -> Failure -> 'Duplicate declaration: n'."
+    },
+    {
+      "name": "neg-32-unknown-type-in-function-body",
+      "source": "module Neg32 {\n    func go() {\n        string name = `hello`\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "not a recognized primitive",
+      "rationale": "Unknown type 'string' used in a function body. StatementVerifier.verifyTypedVarDecl: WaterfallType.fromSourceText('string') -> ErrorType('string') -> VerifyError.UnknownType -> HumanRenderer: 'Type \\'string\\' is not a recognized primitive or primitive array'. Tests the UnknownType path inside function-body scope."
+    },
+    {
+      "name": "neg-33-unknown-return-type",
+      "source": "module Neg33 {\n    func f() returns string {}\n}\n",
+      "category": "negative",
+      "expected_error_substring": "not a recognized primitive",
+      "rationale": "Unknown return type 'string'. ModuleVerifier.verifyFunctionDeclaration: returnType != null && !PrimitiveTypes.isPrimitiveOrArray(returnType) -> VerifyError.UnknownType(f.returnType, f.getSourcePosition()). Tests the return-type validation path in ModuleVerifier."
+    },
+    {
+      "name": "neg-34-inner-var-shadows-function-param",
+      "source": "module Neg34 {\n    func f(int n) {\n        int n = 1\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: n",
+      "rationale": "Inner typed var shadows a function parameter. The arg 'n' is declared in functionScope. A subsequent 'int n = 1' in the same scope hits the own-scope check first -> 'Duplicate declaration: n'. Exercises that parameter names are protected by the same anti-shadowing rule as all other bindings."
+    },
+    {
+      "name": "neg-35-duplicate-walrus-vars",
+      "source": "module Neg35 {\n    func go() {\n        x := 1\n        x := 2\n    }\n}\n",
+      "category": "negative",
+      "expected_error_substring": "Duplicate declaration: x",
+      "rationale": "Duplicate untyped (walrus-operator) var declarations. Exercises StatementVerifier.verifyUntypedVarDecl's declare() path. Second 'x :=' in same scope -> 'Duplicate declaration: x'."
+    }
+  ]
+}
