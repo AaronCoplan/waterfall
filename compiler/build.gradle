@@ -4,6 +4,10 @@ dependencies {
     implementation 'net.sourceforge.argparse4j:argparse4j:0.8.1'
 
     implementation project(':parser')
+
+    // Kotest property-based testing (compiler module only)
+    testImplementation 'io.kotest:kotest-property:5.9.1'
+    testImplementation 'io.kotest:kotest-runner-junit4:5.9.1'
 }
 
 jar {
