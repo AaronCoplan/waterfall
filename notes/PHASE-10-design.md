@@ -1278,70 +1278,111 @@ import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
 sealed class VerifyError {
     abstract val primaryPosition: SourcePosition
     abstract val message: String
+    /** Stable error code for LSP/machine-readable consumers. See §4.8 code allocation table. */
+    abstract val code: String
 
+    // WF1xxx — P10-era errors
+
+    /** Error code WF1101 */
     data class UnknownType(
         val typeText: String,
         override val primaryPosition: SourcePosition
     ) : VerifyError() {
+        override val code = "WF1101"
         override val message = "Type '$typeText' is not a recognized primitive or primitive array. " +
             "Known: int, dec, bool, char, and their array forms."
     }
 
+    /**
+     * Duplicate binding name. Set [topLevel] = true when this is a function
+     * self-declaration collision (so [HumanRenderer] can emit the
+     * "Duplicate top-level declaration" form that existing tests depend on).
+     * Error code WF1102.
+     */
     data class DuplicateDeclaration(
         val name: String,
         val previousPosition: SourcePosition?,
-        override val primaryPosition: SourcePosition
+        override val primaryPosition: SourcePosition,
+        val topLevel: Boolean = false
     ) : VerifyError() {
-        override val message: String = if (previousPosition != null) {
-            "Duplicate declaration: '$name' was previously declared at ${previousPosition.generateMessage()}."
+        override val code = "WF1102"
+        override val message: String = if (topLevel) {
+            "Duplicate top-level declaration: $name"
         } else {
-            "Duplicate declaration: '$name'."
+            "Duplicate declaration: $name"
         }
     }
 
     /**
-     * Form B promotion of a name not visible in scope.
+     * Form B promotion of a name not visible in scope (P12+).
+     * Error code WF1003.
      */
     data class ReadonlyOfUndeclared(
         val name: String,
         override val primaryPosition: SourcePosition
     ) : VerifyError() {
+        override val code = "WF1003"
         override val message = "Cannot freeze undeclared binding '$name'. " +
             "A `readonly $name` statement requires `$name` to already be declared."
     }
 
     /**
-     * Form A duplicate of a readonly declaration: this is the existing
-     * "binding is already readonly" error, kept for double-`readonly x` cases.
+     * Form A duplicate of a readonly declaration (P12+). Error code WF1004.
      */
     data class AlreadyReadonly(
         val name: String,
         override val primaryPosition: SourcePosition
     ) : VerifyError() {
+        override val code = "WF1004"
         override val message = "Binding '$name' is already readonly."
     }
 
     /**
-     * Write to a readonly binding (assignment, compound assignment, increment).
+     * Write to an immutable/readonly binding (assignment or compound assignment).
+     * Error code WF1001.
+     *
+     * **Byte-identical string contract**: [HumanRenderer] emits
+     * `"Cannot assign to immutable binding '$name'"` — preserving the
+     * §5.2-mandated substring that [ImmutableEnforcementTest] asserts on.
+     * The `message` field carries the same short form for consistency.
      */
     data class AssignToReadonly(
         val name: String,
         val declarationPosition: SourcePosition,
         override val primaryPosition: SourcePosition
     ) : VerifyError() {
-        override val message =
-            "Cannot assign to readonly binding '$name' " +
-            "(declared at ${declarationPosition.generateMessage()})."
+        override val code = "WF1001"
+        override val message = "Cannot assign to immutable binding '$name'"
     }
 
+    /**
+     * Increment/decrement of an immutable/readonly binding. Error code WF1002.
+     *
+     * **Byte-identical string contract**: [HumanRenderer] emits
+     * `"Cannot increment immutable binding '$name'"` — preserving the
+     * §5.2-mandated substring that [ImmutableEnforcementTest] asserts on.
+     */
     data class IncrementOfReadonly(
         val name: String,
         val declarationPosition: SourcePosition,
         override val primaryPosition: SourcePosition
     ) : VerifyError() {
-        override val message =
-            "Cannot increment/decrement readonly binding '$name' " +
-            "(declared at ${declarationPosition.generateMessage()})."
+        override val code = "WF1002"
+        override val message = "Cannot increment immutable binding '$name'"
+    }
+
+    /**
+     * `void` used as a value type (e.g., `void x = ...`). P10 already gates
+     * this via [WaterfallType.fromSourceText] returning [WaterfallType.ErrorType]
+     * for `void` in value position; §5.3 adds a dedicated typed error for richer
+     * rendering. Error code WF1103.
+     */
+    data class VoidNotAValueType(
+        val context: String,    // e.g. "variable declaration", "parameter type"
+        override val primaryPosition: SourcePosition
+    ) : VerifyError() {
+        override val code = "WF1103"
+        override val message = "Type 'void' is not a value type"
     }
 
     companion object {
@@ -1388,7 +1429,6 @@ package com.aaroncoplan.waterfall.compiler.verifier
 
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
-import com.aaroncoplan.waterfall.compiler.target.TargetKeyword
 
 object Verifier {
     /**
@@ -1399,78 +1439,23 @@ object Verifier {
      * errors list (the current driver aborts on first; future drivers may
      * collect across modules).
      *
-     * Target parameter (round-4 F12 fix):
-     *
-     *   - When `target == null`: verify the module as **target-agnostic**.
-     *     Every `@external` annotation across every supported target keyword
-     *     must be present for any function called via `@external`; any
-     *     function called from Waterfall code with no Waterfall body AND a
-     *     missing `@external` for any reserved target produces an error.
-     *     This is the "library author wants to know it's callable everywhere"
-     *     mode. Used by `wfpm publish` to validate before producing artifacts.
-     *
-     *   - When `target` is a specific `TargetKeyword` (Js, Python, C, Wasm):
-     *     verify the module specifically for that target. A function call to
-     *     a function with no `@external(<target>, ...)` and no Waterfall body
-     *     produces an error; calls to functions with an `@external(<target>, ...)`
-     *     are fine even if the function lacks support on OTHER targets. This
-     *     is the "I'm building for this one target right now" mode.
-     *
-     * In P10, the only target-conditional check is `@external` partial-support
-     * (per language-design §4.2 and §4.5). Beyond P10, more checks will use
-     * this parameter — e.g., target-specific lints, target-conditional type
-     * narrowing for FFI-bound types.
-     *
-     * AI-implementation note: `null` does NOT mean "default to some target."
-     * It means "verify against ALL targets simultaneously." A common wrong
-     * inference would be to treat `null` as "skip target-conditional checks
-     * entirely" — that's silently permissive and exactly the failure mode
-     * §4.2 was designed to prevent. The explicit semantics are: null = union;
-     * specific = filter.
+     * **OQ-2 decision (B = drop):** The `target: TargetKeyword?` parameter
+     * has been dropped from the P10 API. Target-conditional checks
+     * (`@external` partial-support, P12+) are deferred to P12. When P12
+     * lands, the parameter will be re-added as `target: TargetKeyword? = null`
+     * with the full semantics described in the round-4 design. No `TargetKeyword`
+     * enum or `TargetKeyword.kt` file is created in P10.
      */
     fun verifyModule(
         module: ModuleAst,
-        symbolTable: SymbolTable,
-        target: TargetKeyword? = null
+        symbolTable: SymbolTable
     ): VerifyResult {
-        return ModuleVerifier.verifyModule(module, symbolTable, target)
-    }
-}
-```
-
-The target is threaded through every level of verification that needs it:
-
-- `ModuleVerifier.verifyModule(module, symbolTable, target)` — passes target down.
-- `StatementVerifier.verifyStatement(stmt, scope, target)` — most statements don't care; pass-through.
-- `ExpressionVerifier.verifyExpression(expr, scope, target, expectedType?)` — call-site checks use the target to decide whether a callee is reachable.
-
-The `TargetKeyword` enum lives in `compiler/.../target/TargetKeyword.kt` (new file):
-
-```kotlin
-package com.aaroncoplan.waterfall.compiler.target
-
-/** The set of valid first-argument values for `@external(...)`. */
-enum class TargetKeyword {
-    Js, Python, C, Wasm;
-
-    companion object {
-        /** Parse from the source text in an `@external` annotation. Null if unknown. */
-        fun fromSourceText(text: String): TargetKeyword? = when (text) {
-            "js" -> Js
-            "python" -> Python
-            "c" -> C
-            "wasm" -> Wasm
-            else -> null
-        }
+        return ModuleVerifier.verifyModule(module, symbolTable)
     }
 }
 ```
 
 `ModuleVerifier.verifyModule` (in its own file) does the existing two-pass walk: top-level vars first, then functions. The implementation mirrors today's loops in `Main.run` (lines 91-105) but uses `verifier/StatementVerifier.kt:verifyStatement` instead of `Translatable.verify`.
-
-**Driver wiring** (`compiler/.../Main.kt`): the CLI's `--target` flag is parsed to a `TargetKeyword?` — when `--target` is passed, that's the specific value; when omitted, `null` (target-agnostic). The driver passes that value into `Verifier.verifyModule`. The legacy backend was dropped pre-P10 (Q5); `--target legacy` is rejected at CLI-parse time.
-
-**PITFALL #14** — `target == null` is "verify against all targets," NOT "skip target-conditional checks." The wrong inference: "no target specified means I don't have to think about FFI." The right inference: "no target specified means EVERY target's `@external` set must be complete." When `wfpm publish` runs, it expects target-agnostic verification to fail loudly if any function is only callable on some targets — because that's exactly the situation the user wants flagged before pushing artifacts to npm/PyPI/headers. AI implementers must not collapse `null` into "permissive": that's a silently broken implementation that ships under-tested code to library consumers. Tests in §4.7 (`nestedIfDoubleInnerPromoteDoesNotLeak` and friends) use target=null; add explicit target-specific test cases when P12 lands the `@external` enforcement.
 
 ```kotlin
 package com.aaroncoplan.waterfall.compiler.verifier
@@ -1513,13 +1498,13 @@ object StatementVerifier {
         if (type is WaterfallType.ErrorType) {
             errors += VerifyError.UnknownType(s.type, s.getSourcePosition())
         }
-        val isReadonly = s.modifiers.contains("readonly")
-        // Per language-design §2g, `readonly` is the only modifier in v1.
-        // `const`/`imm` were removed; the parser rejects them with a friendly
-        // migration error before this point, so they never reach the verifier.
+        // FATAL-2 fix (§5.2 preservation): use s.isImmutable() which checks
+        // `const`/`imm` modifiers. DO NOT use s.modifiers.contains("readonly") —
+        // the grammar still emits `const`/`imm` in P10; the `readonly` keyword
+        // unification happens in the future grammar-unification sub-task (P12).
         val info = SymbolInfo(
             type = type,
-            isReadonly = isReadonly,
+            isReadonly = s.isImmutable(),
             kind = SymbolKind.Variable,
             sourcePosition = s.getSourcePosition()
         )
@@ -1527,10 +1512,22 @@ object StatementVerifier {
         if (result is DeclareResult.Failure) {
             errors += VerifyError.fromSymbolTable(result.error)
         }
-        // Verify the initializer expression. P10: no type-check (that's P11);
-        // just walk for any nested errors (today's verify chain doesn't do this either).
-        // Implementation: ExpressionVerifier.verifyExpression(s.value, scope, expectedType = null)
         return errors
+    }
+
+    private fun verifyUntypedVarDecl(s: UntypedVariableDeclarationAndAssignmentData, scope: SymbolTable): List<VerifyError> {
+        // Mirror of verifyTypedVarDecl; type is inferred not declared.
+        val type = WaterfallType.fromSourceText(s.inferredType)
+        val info = SymbolInfo(
+            type = type,
+            isReadonly = s.isImmutable(),  // same isImmutable() preservation per §5.2
+            kind = SymbolKind.Variable,
+            sourcePosition = s.getSourcePosition()
+        )
+        val result = scope.declare(s.name, info)
+        return if (result is DeclareResult.Failure) {
+            listOf(VerifyError.fromSymbolTable(result.error))
+        } else emptyList()
     }
 
     private fun verifyVarAssignment(s: VariableAssignmentData, scope: SymbolTable): List<VerifyError> {
@@ -1561,8 +1558,6 @@ object StatementVerifier {
     }
 
     private fun verifyIfBlock(s: IfBlockData, scope: SymbolTable): List<VerifyError> {
-        // Per JoinAnalysis: for each branch, enter a child scope, verify the body,
-        // snapshot the shadow, check termination. Intersect at the join. Commit.
         return JoinAnalysis.verifyIfBlock(s, scope)
     }
 
@@ -1570,13 +1565,57 @@ object StatementVerifier {
         return JoinAnalysis.verifyWhileBlock(s, scope)
     }
 
-    // ... etc.
+    /**
+     * For-loop body verification. Same scope-enter/exit pattern as while;
+     * no readonly-intersection logic (loops never propagate readonly per
+     * PITFALL #9). The iterator variable is currently treated as IntType
+     * per the existing implicit-int convention in ForBlockData; P11 will
+     * infer the proper element type from the collection.
+     *
+     * Note: the iterator variable is NOT declared into scope here — ForBlockData
+     * today doesn't declare it either; the verifier just verifies the body
+     * statements within a child scope.
+     */
+    private fun verifyForBlock(s: ForBlockData, scope: SymbolTable): List<VerifyError> {
+        val errors = mutableListOf<VerifyError>()
+        val bodyScope = scope.enterScope()
+        for (stmt in s.body) {
+            errors += verifyStatement(stmt, bodyScope)
+        }
+        scope.exitScope(bodyScope)  // snapshot returned but not consumed (P12 join)
+        return errors
+    }
+
+    /**
+     * Return statement verification. P10 no-op — return-type checking against
+     * the enclosing function's declared return type is P11 work.
+     */
+    private fun verifyReturn(s: ReturnStatementData, scope: SymbolTable): List<VerifyError> =
+        emptyList()  // TODO(P11): check return expression type against enclosing function's return type
+
+    /**
+     * Function-call-statement verification. P10 no-op — arg-type checking
+     * against the called function's parameter list is P11 work.
+     */
+    private fun verifyFunctionCallStatement(s: FunctionCallStatementData, scope: SymbolTable): List<VerifyError> =
+        emptyList()  // TODO(P11): check argument types against callee's parameter list
 }
 ```
 
-### 4.5 The join algorithm (per design doc §2d)
+### 4.5 The join algorithm (per design doc §2d) — P10 stub
 
-The branch-intersection logic lives in `JoinAnalysis.kt`. The algorithm was specified in design doc §2d; here it's encoded as production Kotlin.
+**OQ-1 decision (C = stub):** `JoinAnalysis.kt` ships in P10 as a partial stub. The
+body-verification work (walk each branch, collect errors, enter/exit child scopes) is
+**P10-final**. The readonly-intersection work (accumulating `readonlyShadow` snapshots,
+intersecting across non-terminating predecessors, calling `scope.commitReadonly`) is
+**TODO(P12)** because the `readonly x` statement (Form B promotion) does not exist in the
+P10 grammar — there is no parser path that calls `markReadonlyLocal` in P10.
+
+**Critical SA-1 constraint:** The stub MUST still walk branch bodies. A pure
+`return emptyList()` stub would silently swallow errors inside if/else/while/for bodies,
+breaking neg-14/15/16 in the §5.2 adversarial fixture (and `differentBranchesDontConflict`
+in `DuplicateInnerDeclarationTest`). The body-walking code below is **P10-final**; only
+the intersection-and-commit block is replaced with a TODO comment.
 
 ```kotlin
 package com.aaroncoplan.waterfall.compiler.verifier
@@ -1586,82 +1625,54 @@ import com.aaroncoplan.waterfall.compiler.statements.WhileBlockData
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
 
+/**
+ * Branch-join readonly-intersection algorithm (§2d). P10 stub: body verification
+ * is wired; the `readonly x` intersection logic is TODO(P12) pending the `readonly`
+ * keyword landing in the grammar.
+ */
 object JoinAnalysis {
-
-    /**
-     * Result of verifying one branch: the errors found and a structured summary
-     * for the join.
-     */
-    private data class BranchSnapshot(
-        val errors: List<VerifyError>,
-        val localShadow: Set<String>,
-        val terminates: Boolean
-    )
 
     private fun verifyBranch(
         body: List<TranslatableStatement>,
         parent: SymbolTable
-    ): BranchSnapshot {
+    ): List<VerifyError> {
         val child = parent.enterScope()
         val errors = mutableListOf<VerifyError>()
         for (s in body) {
             errors += StatementVerifier.verifyStatement(s, child)
         }
-        val terminates = bodyEndsTerminating(body)
-        val localShadow = parent.exitScope(child)
-        return BranchSnapshot(errors, localShadow, terminates)
+        parent.exitScope(child)  // snapshot returned but not used yet (P12 intersection)
+        return errors
     }
 
     /**
-     * True if the body's last statement is a `return` (which guarantees the
-     * branch doesn't reach the join). P10 understands only `return`; later
-     * phases that add `panic` or unreachable will extend this.
+     * Verify an if/elif/else block. Body verification is P10-final;
+     * readonly intersection is TODO(P12).
      */
-    private fun bodyEndsTerminating(body: List<TranslatableStatement>): Boolean {
-        val last = body.lastOrNull() ?: return false
-        return last is com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData
-    }
-
     fun verifyIfBlock(s: IfBlockData, scope: SymbolTable): List<VerifyError> {
-        val snapshots = mutableListOf<BranchSnapshot>()
-
-        snapshots += verifyBranch(s.ifBranch.body, scope)
+        val errors = mutableListOf<VerifyError>()
+        errors += verifyBranch(s.ifBranch.body, scope)
         for (elif in s.elifBranches) {
-            snapshots += verifyBranch(elif.body, scope)
+            errors += verifyBranch(elif.body, scope)
         }
         if (s.elseBody != null) {
-            snapshots += verifyBranch(s.elseBody, scope)
-        } else {
-            // The implicit "skip the if entirely" path. Empty shadow,
-            // non-terminating.
-            snapshots += BranchSnapshot(emptyList(), emptySet(), terminates = false)
+            errors += verifyBranch(s.elseBody, scope)
         }
-
-        // Collect errors from every branch (don't bail on the first).
-        val allErrors = snapshots.flatMap { it.errors }
-
-        // Intersection over non-terminating predecessors only.
-        val reaching = snapshots.filter { !it.terminates }
-        if (reaching.isNotEmpty()) {
-            val intersection = reaching
-                .map { it.localShadow }
-                .reduce { a, b -> a intersect b }
-            if (intersection.isNotEmpty()) {
-                scope.commitReadonly(intersection)
-            }
-        }
-
-        return allErrors
+        // TODO(P12): compute intersection of non-terminating-branch shadow snapshots,
+        //            then scope.commitReadonly(intersection). The readonly-promotion
+        //            path (`readonly x` statement) does not exist in P10 grammar;
+        //            adding the intersection now would be dead code.
+        return errors
     }
 
+    /**
+     * Verify a while block. Body verification is P10-final; readonly propagation
+     * is moot (loops never propagate past the body per PITFALL #9 + §2d).
+     */
     fun verifyWhileBlock(s: WhileBlockData, scope: SymbolTable): List<VerifyError> {
-        // Single-pass body verification — see design doc §2d for the proof
-        // that one pass is sound. The body's promotions land in the body
-        // scope's local shadow and die when the body scope dies. No
-        // commitReadonly call — loops never propagate `readonly` past the
-        // body. (PITFALL #9 in Section 2.5.)
-        val snapshot = verifyBranch(s.body, scope)
-        return snapshot.errors
+        return verifyBranch(s.body, scope)
+        // TODO(P12): loops never commitReadonly past the body (PITFALL #9);
+        //            the exitScope snapshot is intentionally discarded.
     }
 }
 ```
@@ -1731,40 +1742,45 @@ A test case in §2.7 (`commitReadonlyDoesNotLeakToSibling`) enforces this direct
 
 ### 4.6 Driver changes
 
-`compiler/Main.kt:74-109` today calls `v.verify(symbolTable)` on each top-level `*Data`. After P10:
+`compiler/Main.kt:74-109` today calls `v.verify(symbolTable)` on each top-level `*Data`. After §5.3:
 
 ```kotlin
 // In Main.run, replacing the loop at lines 91-105:
 val symbolTable = SymbolTable()
 val moduleAst = ModuleAst(parseResult.getFilePath(), module)
-// The CLI's --target flag is parsed into a TargetKeyword?: null for "verify
-// against all targets" (e.g., when `wfpm publish`-ing), or a specific value
-// when building for one target. Pass-through to the verifier per §4.4.
-val target: TargetKeyword? = arguments.targetKeyword()  // null if --target omitted
-val verifyResult = Verifier.verifyModule(moduleAst, symbolTable, target)
+// OQ-2 (B = drop): no target parameter in P10. Passes nothing to Verifier.
+val verifyResult = Verifier.verifyModule(moduleAst, symbolTable)
 if (!verifyResult.isSuccessful) {
+    val renderer = HumanRenderer  // OQ-4(D): interface + P10 implementation in verifier/
     for (err in verifyResult.errors) {
-        System.err.println("${err.message} in ${err.primaryPosition.generateMessage()}")
+        System.err.println(renderer.render(err))
     }
     throw CompilerError("verification failed")
 }
-
-val ir = IrLowering.lowerModule(moduleAst, symbolTable)
-println(backend.emitProgram(ir))
+// IrLowering (§5.4) will consume the same symbolTable here; §5.3 stops before IR.
+println(backend.emitProgram(moduleAst))  // backends still consume *Data directly in §5.3
 ```
 
-The driver gets shorter — verification and lowering are two function calls — and the symbol-table-aware lowering pass has access to the same symbol table the verifier used (for looking up call return types and identifier types when filling in IR `type` fields).
+The driver's verify loop shrinks to one call. `HumanRenderer.render(err)` produces the
+byte-identical error strings (see §4.8 renderer section). §5.3 does NOT introduce
+`IrLowering` — that is §5.4's work. The backend still emits from `*Data` in §5.3.
 
 ### 4.7 Required test cases (verifier)
+
+**P10 tests (surviving — use `const`/`imm` modifiers, no `readonly x` statement):**
 
 ```kotlin
 // Verifier tests — full module level.
 // These complement the SymbolTable tests in §2.7.
+// NOTE: P10 has no parser path to `markReadonlyLocal`; tests that depend on
+// the `readonly x` statement (Form B promotion) are P12-deferred — see below.
+// Tests here use `const`/`imm` modifiers (the existing immutability mechanism).
+// `parseAndAst(source)` is a private test helper in VerifierTest; see commit 4.
 
 class VerifierTest {
 
     @Test fun emptyModule() {
-        val module = parseAndAst("module Foo { }")  // helper that returns ModuleAst
+        val module = parseAndAst("module Foo { }")
         val result = Verifier.verifyModule(module, SymbolTable())
         assertTrue(result.isSuccessful)
     }
@@ -1781,12 +1797,13 @@ class VerifierTest {
         assertTrue(result.errors[0] is VerifyError.DuplicateDeclaration)
     }
 
-    @Test fun readonlyAssignmentFails() {
+    @Test fun constAssignmentFails() {
+        // Uses `const` modifier (isImmutable() = true) — exercises AssignToReadonly
+        // without the P12 `readonly x` statement.
         val module = parseAndAst("""
             module Foo {
                 func f() {
-                    int x = 1
-                    readonly x
+                    const int x = 1
                     x = 2
                 }
             }
@@ -1796,12 +1813,11 @@ class VerifierTest {
         assertTrue(result.errors[0] is VerifyError.AssignToReadonly)
     }
 
-    @Test fun readonlyIncrementFails() {
+    @Test fun constIncrementFails() {
         val module = parseAndAst("""
             module Foo {
                 func f() {
-                    int x = 1
-                    readonly x
+                    const int x = 1
                     x++
                 }
             }
@@ -1811,130 +1827,93 @@ class VerifierTest {
         assertTrue(result.errors[0] is VerifyError.IncrementOfReadonly)
     }
 
-    @Test fun bothBranchesReadonlyPromotesAtJoin() {
-        val module = parseAndAst("""
-            module Foo {
-                func f(bool b) {
-                    int x = 1
-                    if (b) { readonly x }
-                    else { readonly x }
-                    x = 2
-                }
-            }
-        """.trimIndent())
-        val result = Verifier.verifyModule(module, SymbolTable())
-        assertEquals(1, result.errors.size)
-        assertTrue(result.errors[0] is VerifyError.AssignToReadonly)
-    }
-
-    @Test fun oneBranchReadonlyDoesNotPromote() {
-        val module = parseAndAst("""
-            module Foo {
-                func f(bool b) {
-                    int x = 1
-                    if (b) { readonly x }
-                    else { /* nothing */ }
-                    x = 2
-                }
-            }
-        """.trimIndent())
-        val result = Verifier.verifyModule(module, SymbolTable())
-        assertTrue(result.isSuccessful)  // x is still mutable after the join
-    }
-
-    @Test fun terminatingBranchIgnoredAtJoin() {
-        val module = parseAndAst("""
-            module Foo {
-                func f(bool b) returns int {
-                    int x = 1
-                    if (b) { return 0 }
-                    else { readonly x }
-                    x = 2
-                    return x
-                }
-            }
-        """.trimIndent())
-        val result = Verifier.verifyModule(module, SymbolTable())
-        // The `return 0` branch is terminating, so the else-branch is the only
-        // predecessor of the join; it promoted, so x is readonly at `x = 2`.
-        assertEquals(1, result.errors.size)
-        assertTrue(result.errors[0] is VerifyError.AssignToReadonly)
-    }
-
-    @Test fun loopBodyPromotionDoesNotEscape() {
+    @Test fun unknownTypeFails() {
         val module = parseAndAst("""
             module Foo {
                 func f() {
-                    int x = 1
-                    while (true) {
-                        readonly x
-                    }
-                    x = 2
-                }
-            }
-        """.trimIndent())
-        val result = Verifier.verifyModule(module, SymbolTable())
-        // After the while, x is still mutable. (PITFALL #9.)
-        assertTrue(result.isSuccessful)
-    }
-
-    /**
-     * Walk-depth boundary test (round-4 F8 fix), end-to-end at the module
-     * level. The inner if/else both branches promote, so the inner join
-     * commits the promotion to the outer if's then-scope. The outer else
-     * branch does NOT promote. The outer join intersects and finds the
-     * promotion isn't durable past the outer if. The post-outer-if
-     * `x = 5` must be legal.
-     */
-    @Test fun nestedIfDoubleInnerPromoteDoesNotLeak() {
-        val module = parseAndAst("""
-            module Foo {
-                func f(bool a, bool b) {
-                    int x = 1
-                    if (a) {
-                        if (b) { readonly x }
-                        else { readonly x }
-                        // inner join: x is readonly within T_outer
-                    } else {
-                        // outer-else: x is NOT promoted
-                    }
-                    // outer join: intersection is empty; x is mutable here
-                    x = 5
-                }
-            }
-        """.trimIndent())
-        val result = Verifier.verifyModule(module, SymbolTable())
-        assertTrue(result.isSuccessful)
-    }
-
-    /**
-     * Companion case to the above: the inner if/else BOTH promote AND the
-     * outer else ALSO promotes. The outer join's intersection then promotes
-     * durably and the post-outer-if `x = 5` is rejected.
-     */
-    @Test fun nestedIfDoublePromoteThenOuterElsePromoteDoesLeak() {
-        val module = parseAndAst("""
-            module Foo {
-                func f(bool a, bool b) {
-                    int x = 1
-                    if (a) {
-                        if (b) { readonly x }
-                        else { readonly x }
-                    } else {
-                        readonly x
-                    }
-                    x = 5
+                    unknown x = 1
                 }
             }
         """.trimIndent())
         val result = Verifier.verifyModule(module, SymbolTable())
         assertEquals(1, result.errors.size)
-        assertTrue(result.errors[0] is VerifyError.AssignToReadonly)
+        assertTrue(result.errors[0] is VerifyError.UnknownType)
+    }
+
+    @Test fun duplicateInnerVarFails() {
+        val module = parseAndAst("""
+            module Foo {
+                func go() {
+                    int x = 1
+                    int x = 2
+                }
+            }
+        """.trimIndent())
+        val result = Verifier.verifyModule(module, SymbolTable())
+        assertEquals(1, result.errors.size)
+        assertTrue(result.errors[0] is VerifyError.DuplicateDeclaration)
+    }
+
+    @Test fun differentBranchesAllowSameVar() {
+        // Each branch gets its own scope; same var name in sibling branches is fine.
+        val module = parseAndAst("""
+            module Foo {
+                func go(int flag) {
+                    if(flag) {
+                        int x = 1
+                    } else {
+                        int x = 2
+                    }
+                }
+            }
+        """.trimIndent())
+        val result = Verifier.verifyModule(module, SymbolTable())
+        assertTrue(result.isSuccessful)
     }
 }
 ```
 
-If the implementer skips any of these, the verifier separation is not complete.
+**P12-deferred tests (depend on `readonly x` statement — not P10):** The following
+8 cases from the original §4.7 spec are deferred to P12 because they require
+`readonly x` as a parseable statement (Form B promotion), which does not exist in the
+P10 grammar. They must NOT be added to `VerifierTest.kt` in §5.3 — add them when P12
+lands the grammar rule:
+
+- `readonlyAssignmentFails` / `readonlyIncrementFails` — direct `readonly x` then write
+- `bothBranchesReadonlyPromotesAtJoin` — join intersection test
+- `oneBranchReadonlyDoesNotPromote` — one-sided promotion test
+- `terminatingBranchIgnoredAtJoin` — terminating-branch test
+- `loopBodyPromotionDoesNotEscape` — PITFALL #9 test
+- `nestedIfDoubleInnerPromoteDoesNotLeak` — walk-depth boundary test
+- `nestedIfDoublePromoteThenOuterElsePromoteDoesLeak` — outer-join duplication
+
+**JoinAnalysis stub sanity test** (goes in `JoinAnalysisStubTest.kt`, commit 5):
+
+```kotlin
+@Test fun ifElseBodyErrorsAreCollected() {
+    // Confirms the stub walks branch bodies and collects errors.
+    // (Would silently pass if the stub returned emptyList() — the SA-1 trap.)
+    val module = parseAndAst("""
+        module Foo {
+            func go(int flag) {
+                if(flag) {
+                    int x = 1
+                    int x = 2
+                } else {
+                    int y = 1
+                    int y = 2
+                }
+            }
+        }
+    """.trimIndent())
+    val result = Verifier.verifyModule(module, SymbolTable())
+    assertEquals(2, result.errors.size)
+    assertTrue(result.errors.all { it is VerifyError.DuplicateDeclaration })
+}
+```
+
+If the implementer skips the body-walking in the stub (returns emptyList()),
+this test catches it immediately.
 
 ### 4.8 Error format: JSON-first (Aaron's call, round-4 Q10)
 
@@ -2090,24 +2069,82 @@ The JSON Schema document lives at `notes/error-schema-v1.json` and is shipped in
 
 The implementer is responsible for keeping `VerifyError` Kotlin types and this schema in sync. v1.1+ may introduce automated schema generation from `VerifyError` via Kotlin reflection; v1 doesn't bother — the hand-maintained schema is fine for the P10-era error set.
 
-#### Renderer responsibilities split
+#### Renderer responsibilities split — P10 scope (OQ-4=D)
 
-| Concern | Lives in | Notes |
+**OQ-4 decision (D = interface only):** P10 ships `ErrorRenderer.kt` interface +
+`HumanRenderer.kt` implementation in the `verifier/` package. `JsonRenderer.kt` is a
+stub. The full JSON-first output path (§4.8), schema file, and colorized multi-line
+rendering are deferred to §5.3.5 or P13. P13's `diagnostics/` package label is
+reserved for when the renderer set grows; in P10 with 3 renderer files, splitting into
+a sub-package would be over-engineering.
+
+| Concern | Lives in | P10 status |
 |---|---|---|
-| Building `VerifyError` from verification | `verifier/` package | P10 spec'd; uses the typed sealed class. |
-| Serializing `VerifyError` → JSON | `diagnostics/JsonRenderer.kt` (new) | One function per `VerifyError` variant. Tested per-variant. |
-| Rendering JSON → human text | `diagnostics/HumanRenderer.kt` (new) | Reads the canonical JSON form; produces colorized multi-line text. Can be invoked from the compiler OR by an external tool feeding it stdin. |
-| LSP-side consumption | (P13) | Reads JSONL via subprocess stderr. Maps to LSP `Diagnostic`. Not part of P10. |
+| Building `VerifyError` from verification | `verifier/` package | **P10-final** |
+| Rendering `VerifyError` → human stderr | `verifier/ErrorRenderer.kt` (interface) + `verifier/HumanRenderer.kt` | **P10-final** (simple format, byte-identical strings — see below) |
+| Serializing `VerifyError` → JSON | `verifier/JsonRenderer.kt` (stub) | **Deferred** — stub body `error("JsonRenderer not implemented; deferred to §5.3.5")` |
+| Full colorized multi-line format | deferred | P13 (Elm/Roc style) |
+| LSP-side consumption | (P13) | Reads JSONL via subprocess stderr. |
 
-The split exists so the human converter is testable in isolation: feed it JSON, check the rendered output. No need to round-trip through full compilation.
+**`ErrorRenderer` interface (P10-final):**
 
-**Acceptance criteria for this section (P10):**
+```kotlin
+package com.aaroncoplan.waterfall.compiler.verifier
 
-- [ ] `notes/error-schema-v1.json` exists, validates as Draft 2020-12 JSON Schema.
-- [ ] `diagnostics/JsonRenderer.kt` exists and produces output that validates against the schema for every `VerifyError` variant.
-- [ ] `diagnostics/HumanRenderer.kt` exists and produces readable output for every variant. "Readable" at P10 means: error code visible, primary location formatted as `file:line:col`, message on the next line, related info as sub-bullets if present.
-- [ ] The compiler's default behavior detects TTY and selects format accordingly.
-- [ ] At least one round-trip test: produce JSON from a `VerifyError`, parse it back, assert the result matches the original.
+/** Renders a [VerifyError] to a user-facing string. */
+interface ErrorRenderer {
+    fun render(error: VerifyError): String
+}
+```
+
+**`HumanRenderer` implementation (P10-final):**
+
+The P10 human renderer produces the same format as today's `Main.kt:95` — `"${message} in ${primaryPosition.generateMessage()}"` — with byte-identical error strings for the immutability variants (§5.2-mandated, see §5.2 expected-test-impact). The `when` expression is exhaustive over all `VerifyError` subclasses:
+
+```kotlin
+package com.aaroncoplan.waterfall.compiler.verifier
+
+object HumanRenderer : ErrorRenderer {
+    override fun render(error: VerifyError): String {
+        val pos = error.primaryPosition.generateMessage()
+        val msg = when (error) {
+            is VerifyError.AssignToReadonly ->
+                "Cannot assign to immutable binding '${error.name}'"
+            is VerifyError.IncrementOfReadonly ->
+                "Cannot increment immutable binding '${error.name}'"
+            is VerifyError.DuplicateDeclaration ->
+                if (error.topLevel) "Duplicate top-level declaration: ${error.name}"
+                else "Duplicate declaration: ${error.name}"
+            is VerifyError.UnknownType ->
+                "Type '${error.typeText}' is not a recognized primitive or primitive array. Known: ${PrimitiveTypes.ALL}"
+            is VerifyError.VoidNotAValueType ->
+                "Type 'void' is not a value type"
+            is VerifyError.ReadonlyOfUndeclared ->
+                "Cannot freeze undeclared binding '${error.name}'"
+            is VerifyError.AlreadyReadonly ->
+                "Binding '${error.name}' is already readonly"
+        }
+        return "$msg in $pos"
+    }
+}
+```
+
+**Byte-identical string contract:** `AssignToReadonly` renders as
+`"Cannot assign to immutable binding '$name'"` (preserving `ImmutableEnforcementTest`'s
+`stderr.contains("immutable binding")` assertion). `IncrementOfReadonly` renders as
+`"Cannot increment immutable binding '$name'"`. No test assertions change in §5.3 due
+to this migration — the bytes are preserved by design.
+
+**`JsonRenderer` stub (deferred):**
+
+```kotlin
+package com.aaroncoplan.waterfall.compiler.verifier
+
+object JsonRenderer : ErrorRenderer {
+    override fun render(error: VerifyError): String =
+        error("JsonRenderer not implemented; deferred to §5.3.5 or P13")
+}
+```
 
 ### 4.9 Test framework: property-based testing with Kotest (round-4 Q11)
 
@@ -2346,24 +2383,56 @@ That's a 14th test in `SymbolTableTest.kt` (deliverable count updated below).
 
 ### Sub-task 5.3 — Add verifier package; move `verify()` out of `Translatable`
 
-**Files added:**
+**Files added (production):**
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/VerifyResult.kt`
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/VerifyError.kt`
-- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/Verifier.kt`
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/Verifier.kt` (no `target` parameter — OQ-2=B)
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/ModuleVerifier.kt`
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/StatementVerifier.kt`
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/ExpressionVerifier.kt`
-- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/JoinAnalysis.kt`
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/JoinAnalysis.kt` (P10 stub: body-walking P10-final; readonly-intersection TODO(P12))
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/ErrorRenderer.kt` (interface)
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/HumanRenderer.kt` (OQ-4=D: simple format, byte-identical strings)
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/JsonRenderer.kt` (stub, error("deferred"))
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/README.md`
 
-**Files changed:**
+**Files changed (production):**
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/statements/helpers/Translatable.kt` — `verify(symbolTable)` removed from the interface.
 - Every `*Data` class — its `override fun verify` method is removed; the body migrates into the corresponding `verifyXxx` function in `StatementVerifier.kt` (or `ModuleVerifier.kt` for `FunctionImplementationData`).
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/statements/helpers/VerificationResult.kt` — delete. Replaced by `VerifyResult` + `VerifyError`.
-- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/Main.kt:91-105` — the verify loop becomes a single call to `Verifier.verifyModule`.
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/Main.kt:91-105` — the verify loop becomes a single call to `Verifier.verifyModule` + `HumanRenderer.render` per error.
 
-**Expected test impact:** all existing tests still pass. Error messages may shift slightly in formatting (now structured); update any test that asserts on exact error text.
+**Expected test impact (no test changes required):**
 
-**Sanity check:** Run `./gradlew test`. Add tests from §4.7. All goldens unchanged.
+- All existing tests pass unchanged.
+- `ImmutableEnforcementTest` (5 cases): continues to pass — `HumanRenderer` emits
+  byte-identical `"Cannot assign to immutable binding '$name'"` and
+  `"Cannot increment immutable binding '$name'"` per §4.8 renderer spec. **No test
+  assertion updates needed.**
+- `DuplicateInnerDeclarationTest` (3 cases): continues to pass — `HumanRenderer`
+  emits `"Duplicate declaration: $name"` containing the `"Duplicate declaration"` substring.
+  **No test assertion updates needed.**
+- `adversarial/phase-10/sub-task-5.2/programs.json` fixture: continues to pass —
+  byte-identical strings preserved by `HumanRenderer`. **No fixture updates needed.**
+- All goldens unchanged (verifier doesn't affect backend output; goldens are backend output).
+- All §4.7 P10-surviving test cases pass (see §4.7 above).
+
+**Carry-forward into §5.4 (OQ-3=C, documented):**
+
+§5.3 does NOT validate identifier resolution. The verifier walks declarations and
+immutability checks but does not verify that every identifier used in an expression
+is in scope. This is a pre-existing gap (today's `VariableAssignmentData.verify` silently
+passes on unknown LHS per line 1538–1539). The gap stays open in §5.3; P11 closes it.
+
+Specifically: `§5.4 IrLowering.lowerExpression` calls `symbolTable.lookup(name).type`
+to fill in `IrExpression.Identifier.type`. If `lookup` returns null (identifier not
+declared), `IrLowering` MUST escalate (throw or return an error IrExpression) — not
+silently use a placeholder type. This surfaces the identifier-resolution gap at lowering
+time, which is better than silently lowering broken programs. P11 will push the check
+earlier (into the verifier) so it produces a friendly error before lowering even runs.
+
+**Sanity check:** `./gradlew test` (full suite, 313 tests expected, zero golden diffs).
+Add §4.7 tests from commit 4. Add JoinAnalysis stub test from commit 5.
 
 ### Sub-task 5.4 — Add `ir/` package; write the lowering pass
 
