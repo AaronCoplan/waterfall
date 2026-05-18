@@ -537,10 +537,22 @@ A reference table for the AI implementer to cross-check their implementation aga
 
 The existing `declare(key, info)` calls pass a string. Each one must be rewritten:
 
-- `TypedVariableDeclarationAndAssignmentData.verify` (line 30) → use `SymbolInfo(type = WaterfallType.fromSourceText(type), isReadonly = modifiers.contains("readonly"), kind = SymbolKind.Variable, sourcePosition = getSourcePosition())`. The existing `isImmutable()` helper (line 22) is removed during the migration — under the unified `readonly` keyword (language-design §2g), the modifier set has exactly one entry and the explicit `.contains("readonly")` check is clearer than a wrapper method.
-- `UntypedVariableDeclarationAndAssignmentData.verify` (line 25) → same shape, with `WaterfallType.fromSourceText(inferredType)`.
-- `FunctionImplementationData.verify` (line 35, self-decl for recursion) → `SymbolInfo(type = WaterfallType.fromSourceText(returnType ?: "void"), isReadonly = true, kind = SymbolKind.Function(parameters = [...]), sourcePosition = getSourcePosition())`. **PITFALL #7**: functions are *implicitly readonly*. You can't reassign a function's name. Today the verifier doesn't reject `fib = 5` after `func fib(...)` (audit Section 1, row "Function-arg type-checking") but P10 should — once functions store `isReadonly = true`, the assignment verifier (P11 work) rejects them automatically.
-- `FunctionImplementationData.verify` (line 47, each typed argument) → `SymbolInfo(type = WaterfallType.fromSourceText(arg.firstVal), isReadonly = false, kind = SymbolKind.Argument, sourcePosition = ... /* position of the argument in the parameter list, not the function decl */)`. The position computation here is fiddly — see PITFALL #8.
+- `TypedVariableDeclarationAndAssignmentData.verify` (line 30) → use `SymbolInfo(type = WaterfallType.fromSourceText(type), isReadonly = isImmutable(), kind = SymbolKind.Variable, sourcePosition = getSourcePosition())`. **Reality note**: the spec was originally written assuming the §2g `readonly` keyword unification (replacing `const`/`imm` → `readonly`) had landed; it has not (grammar still emits `const`/`imm` as of Phase 0). §5.2 therefore PRESERVES the existing `isImmutable()` helper (which today returns `"const" in modifiers || "imm" in modifiers`) and passes its result to `isReadonly`. The `modifiers.contains("readonly")` rewrite happens in the future sub-task that lands the grammar unification (P12). Calling out so the §5.2 implementer doesn't silently regress all five `ImmutableEnforcementTest` cases.
+- `UntypedVariableDeclarationAndAssignmentData.verify` (line 25) → same shape, with `WaterfallType.fromSourceText(inferredType)` and `isReadonly = isImmutable()` per the same reality note.
+- `FunctionImplementationData.verify` (line 35, self-decl for recursion) → `SymbolInfo(type = WaterfallType.forReturnType(returnType), isReadonly = true, kind = SymbolKind.Function(parameters = [...]), sourcePosition = getSourcePosition())`. **Note on the return-type adapter**: use `WaterfallType.forReturnType(returnType)` (the canonical nullable adapter introduced by §5.1 / §1.2), NOT `WaterfallType.fromSourceText(returnType ?: "void")` — the latter is forbidden per the §1.2 contract; the round-trip-through-`fromSourceText` path coincides with `forReturnType` today only by the `void[]` guard's design and could silently diverge under future spec evolution. **PITFALL #7**: functions are *implicitly readonly*. You can't reassign a function's name. Today the verifier doesn't reject `fib = 5` after `func fib(...)` (audit Section 1, row "Function-arg type-checking") but P10 should — once functions store `isReadonly = true`, the assignment verifier (P11 work) rejects them automatically.
+- `FunctionImplementationData.verify` (line 47, each typed argument) → `SymbolInfo(type = WaterfallType.fromSourceText(arg.firstVal), isReadonly = false, kind = SymbolKind.Argument, sourcePosition = getSourcePosition() /* function's position, NOT the per-arg position — see PITFALL #8 deferral */)`. **Sub-task deferral on per-arg positions** (PITFALL #8): the proper per-argument source position requires changing `FunctionImplementationData.typedArguments` from `List<Pair<String, String>>` to a richer record (e.g., `TypedArgument(name, type, sourcePosition)` per §7.3). That ripples into all three backends which today consume `typedArguments.firstVal`/`.secondVal` directly (`JavaScriptBackend`, `PythonBackend`, `CBackend`, plus `LambdaFunctionData`). §5.2 therefore uses the function's own `getSourcePosition()` for every per-arg `SymbolInfo`, with a `// TODO(P10): per-arg source positions blocked on typedArguments record migration — see PITFALL #8` comment. The cost is the "useless 'arg at line N' errors" PITFALL #8 warns about; the §5.2 test set + §2.7's tests do not exercise per-arg position friendliness, so the deferral is acceptable until a future sub-task tackles the backend `typedArguments` migration.
+
+**Scope-construction callsites (in addition to the four `declare` migrations above).** The §2.2 rewrite makes `SymbolTable.kt`'s parent-taking constructor `private`; the only public path to a child scope is `parent.enterScope()`. Every production callsite that today writes `SymbolTable(symbolTable)` breaks compile and must migrate to `symbolTable.enterScope()`. Root-scope construction goes from `SymbolTable(null)` to `SymbolTable()` (no-arg constructor delegates to `this(null)`). The callsites today (verified by grep at §5.2 plan-mode time):
+
+| File:line | Today | Migration |
+|---|---|---|
+| `Main.kt:89` | `SymbolTable(null)` | `SymbolTable()` |
+| `ForBlockData.kt:28` | `SymbolTable(symbolTable)` | `symbolTable.enterScope()` |
+| `WhileBlockData.kt:18` | `SymbolTable(symbolTable)` | `symbolTable.enterScope()` |
+| `IfBlockData.kt:37,43,50` | `SymbolTable(symbolTable)` (×3 — if/elif/else) | `symbolTable.enterScope()` (×3) |
+| `FunctionImplementationData.kt:40` | `SymbolTable(symbolTable)` | `symbolTable.enterScope()` |
+
+Six callsites total. None of them yet add a paired `exitScope` call — the §2.5 branch-join semantics that consume `exitScope` are §5.3's verifier work; §5.2 only widens the API surface, it does not introduce join calls. The §5.2-era code path is `child = parent.enterScope()` followed by walking the body statements against `child`, then letting `child` go out of scope (GC'd) — semantically equivalent to today's behavior.
 
 **PITFALL #8** — Argument source position. Today, `FunctionImplementationData` stores `typedArguments: List<Pair<String, String>>` (type, name). There's no per-arg `SourcePosition`. The fix: change `FunctionImplementationData` to store a list of richer records that include the per-arg `SourcePosition` extracted from the ANTLR `typedArgument` rule context. Specifically, in the existing `FunctionImplementationData.kt:20-23` init block, walk `ctx.typedArgumentList()?.typedArgument()` and for each one capture `arg.name.symbol`'s line + column. Don't try to point at the function's `getSourcePosition()` for each arg — that produces useless "argument at line 5" errors when the function decl is on line 5 and the arg is column 30. Real per-arg positions are needed for friendly errors. **Escalate** if the existing `*Data` class hierarchy resists this change without a sweep.
 
@@ -2236,9 +2248,84 @@ P10's six sub-tasks land in order. Tests stay green at every step; if they don't
 
 For each, the existing `verify` body now wraps the `declare` call in a check for `DeclareResult.Failure`. The existing string error messages are translated 1:1 to `VerificationResult(false, msg)` returns (the verify() method on Translatable still exists at this step — Section 4 separation lands in Sub-task 5.5).
 
-**Expected test impact:** all existing tests still pass. `DuplicateInnerDeclarationTest` tests the same shape but with the new typed errors.
+**Also in §5.2 — also delete `VarInfo.kt`** after the four `declare` callsites stop using it and the two reader callsites (`VariableAssignmentData.verify`, `IncrementStatementData.verify`) migrate from `info is VarInfo && info.isImmutable` → `info != null && info.isReadonly`. Preserve the existing error strings (`"Cannot assign to immutable binding '$name'"` and `"Cannot increment immutable binding '$name'"`) verbatim so `ImmutableEnforcementTest`'s `stderr.contains("immutable binding")` assertions continue to pass. The error-format restructuring is §5.3's work, not §5.2's.
 
-**Sanity check:** Run `./gradlew test`. All goldens unchanged. Run the SymbolTable unit tests from §2.7.
+**Build wiring — also in §5.2: add Kotest property-test dependency.** Per §4.9 acceptance criteria, P10 requires `kotest-property:5.9.1` + `kotest-runner-junit4:5.9.1` on the test classpath; §5.2 is the natural place because the SymbolTable property tests below want them. Add to `compiler/build.gradle`:
+
+```groovy
+testImplementation 'io.kotest:kotest-property:5.9.1'
+testImplementation 'io.kotest:kotest-runner-junit4:5.9.1'
+```
+
+This is a separate early commit on the §5.2 branch so the property test files compile when they land.
+
+**Kotest test-class style — PINNED.** Use the JUnit-4-annotated style throughout P10, NOT `StringSpec`/`BehaviorSpec`/`FunSpec`. The Kotest body goes inside a `runBlocking { checkAll(N, ...) { ... } }` inside a regular `@Test fun` method:
+
+```kotlin
+class SymbolTablePropertyTest {
+    @Test fun `declare then lookup returns the declared SymbolInfo`() = runBlocking {
+        checkAll(10000, arbName, arbType) { name, type ->
+            // ...
+        }
+    }
+}
+```
+
+Reasons: (a) the project's existing test runner config in root `build.gradle` is wired for JUnit 4 via `useJUnit()`; the Kotest `kotest-runner-junit4` module integrates by exposing Kotest specs as JUnit 4 tests, but plain `@Test`-annotated methods using `checkAll` work without any spec-class machinery. (b) Mixed test styles across one module risk one style silently not running. (c) Plain `@Test` makes individual properties bisectable via `./gradlew test --tests ClassName.propertyName`. If `./gradlew test --tests SymbolTablePropertyTest` reports zero tests after the Kotest dep + a property test file land, that's the trip-wire — pause and confirm runner integration before adding more tests.
+
+**Kotest version compatibility note.** `kotest-property:5.9.1` is the last Kotest 5.x release. Project is on Kotlin 2.0.21 / JVM 1.8. The pure-JVM property module of Kotest 5.9.1 works under Kotlin 2.0.x (the K2-compiler-specific issues affected the multiplatform plugin, not the JVM module). If dep resolution fails or `./gradlew compileTestKotlin` errors, escalate; acceptable fallbacks: pin to `kotest-property:5.8.1` (slightly older but identical API) or upgrade to a Kotest 6.x milestone. Do not silently switch.
+
+**Files added (tests):**
+- `compiler/src/test/kotlin/com/aaroncoplan/waterfall/compiler/symboltables/SymbolTableTest.kt` — all 13 §2.7 cases (pure JUnit 4, no Kotest dep).
+- `compiler/src/test/kotlin/com/aaroncoplan/waterfall/compiler/symboltables/SymbolTablePropertyTest.kt` — Kotest-based property tests at N=10000 covering the SymbolTable invariants from §2.7 generalized: declare/lookup round-trip, shadow isolation (markReadonlyLocal doesn't escape its scope), walk-depth boundary (commitReadonly stays in invoking scope per PITFALL #5b), exitScope snapshot contract, markReadonlyLocal-on-undeclared no-op. Lands the playbook §3 Leg 1 invariant coverage for SymbolTable (the most invariant-rich subsystem in P10).
+
+**Byte-identical error strings (MUST preserve verbatim).** Three existing test assertions depend on substring matches; the §5.2 migration MUST preserve these exact strings in the `VerificationResult(false, msg)` returns:
+
+| Error message | Asserted by | Returned from |
+|---|---|---|
+| `"Duplicate declaration: $name"` | `DuplicateInnerDeclarationTest` (substring `"Duplicate declaration"`) | TypedVar / UntypedVar / FunctionImpl per-arg `declare` failure paths |
+| `"Duplicate top-level declaration: $name"` | (no test today) | FunctionImpl self-decl failure path; keep verbatim for consistency |
+| `"Cannot assign to immutable binding '$name'"` | `ImmutableEnforcementTest` (substring `"immutable binding"`) | `VariableAssignmentData.verify` |
+| `"Cannot increment immutable binding '$name'"` | `ImmutableEnforcementTest` (substring `"immutable binding"`) | `IncrementStatementData.verify` |
+
+Other error wordings may be reworded as needed.
+
+**Parameter-ordering inversion at `FunctionImplementationData.kt:35` self-decl — explicit code.** The legacy `typedArguments: List<com.aaroncoplan.waterfall.parser.Pair<String, String>>` stores `firstVal=type, secondVal=name`. The new `SymbolKind.Function.parameters: List<kotlin.Pair<String, WaterfallType>>` requires `first=name, second=type` per §1.3 ordering. The migration code MUST invert at the boundary:
+
+```kotlin
+parameters = typedArguments.map {
+    kotlin.Pair(it.secondVal, WaterfallType.fromSourceText(it.firstVal))
+    //         ^^^^^^^^^^^^^                         ^^^^^^^^^^^^
+    //         name first                            type second
+}
+```
+
+Common silent-resolution failure: implementer writes `Pair(it.firstVal, ...)` (type-first), inverting the field order. No §2.7 test catches it because `functionKindIsDistinguishable` only asserts `kind is SymbolKind.Function`, not the parameter contents. **Add this round-trip test to `SymbolTableTest.kt`** to catch the inversion at §5.2 time:
+
+```kotlin
+@Test fun functionParametersPreserveNameTypeOrdering() {
+    val st = SymbolTable()
+    val fnInfo = SymbolInfo(
+        type = WaterfallType.IntType,
+        isReadonly = true,
+        kind = SymbolKind.Function(parameters = listOf(
+            "a" to WaterfallType.IntType,
+            "b" to WaterfallType.DecType
+        )),
+        sourcePosition = pos()
+    )
+    st.declare("add", fnInfo)
+    val looked = st.lookup("add")
+    val fnKind = looked!!.kind as SymbolKind.Function
+    assertEquals(listOf("a" to WaterfallType.IntType, "b" to WaterfallType.DecType), fnKind.parameters)
+}
+```
+
+That's a 14th test in `SymbolTableTest.kt` (deliverable count updated below).
+
+**Expected test impact:** all existing tests still pass. `DuplicateInnerDeclarationTest` tests the same shape but with the new typed errors. `ImmutableEnforcementTest` continues to pass via the preserved error strings + new `isReadonly` semantics. **PITFALL #7 behavior change automatically takes effect**: any source that reassigns to a function name (e.g., `func fib(...) { ... }; fib = 5`) will now fail with `"Cannot assign to immutable binding 'fib'"` because functions now store `isReadonly = true`. Pre-flight check: `grep -rn "[a-zA-Z_][a-zA-Z_0-9]* *=" examples/ compiler/src/test/resources/` for any source that assigns to a function name — if found, the source must be updated OR the test set extended; if not found (expected), document "no examples reassign function names; PITFALL #7 is a no-op behavior change for the current corpus." New: 14 example-based (was 13 — adds the parameter-ordering test above) + 12 property-based SymbolTable tests.
+
+**Sanity check:** Run `./gradlew test`. All goldens unchanged. Run the SymbolTable unit tests from §2.7. Run the property tests (added at this step).
 
 **PITFALL #12** — During this sub-task, the `Any?` -> `SymbolInfo` migration is the most error-prone step in the whole phase. Klabnik-style review: the operator should read every commit. Any place that does `info as String` or relies on the type being a `String` needs to switch to `info.type.render()` (returning a `String`) — but you can't blanket-replace `as String` with `.type.render()` because the bare reads of `info` should now be SymbolInfo, not String. Take it one callsite at a time and verify.
 
