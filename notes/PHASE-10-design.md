@@ -365,6 +365,14 @@ class SymbolTable private constructor(private val parent: SymbolTable?) {
      *   - DuplicateDeclarationError if `name` is already declared in this scope
      *     or any ancestor scope. (Shadowing is rejected — current behavior,
      *     preserved here.)
+     *
+     * Note on function self-names: a function's self-declaration is placed in the
+     * *outer* (module) scope before the function body's child scope is created.
+     * Consequently, declaring a binding with the function's own name inside its own
+     * body is rejected as a shadowing violation (e.g., `func f() { int f = 5 }`
+     * fails with `Duplicate declaration: f`). This is a direct consequence of the
+     * anti-shadowing rule and the self-decl timing, not a special case. Surfaced by
+     * the Leg 3 adversarial fixture (neg-22).
      */
     fun declare(name: String, info: SymbolInfo): DeclareResult {
         // Reject if any ancestor scope owns it.
