@@ -85,11 +85,11 @@ class Sub52AdversarialTest(private val entry: Sub52Entry) {
                         thrown
                     )
                     val expected = entry.expectedErrorSubstring
-                        ?: fail("Negative entry [${entry.name}] missing expected_error_substring")
+                        ?: error("Negative entry [${entry.name}] missing expected_error_substring")
                     assertTrue(
                         "Negative program [${entry.name}] failed with wrong error. " +
                         "Expected substring: \"$expected\"\nstderr was:\n$stderr",
-                        stderr.contains(expected as String)
+                        stderr.contains(expected)
                     )
                 }
                 else -> fail("Unknown category for entry [${entry.name}]: ${entry.category}")

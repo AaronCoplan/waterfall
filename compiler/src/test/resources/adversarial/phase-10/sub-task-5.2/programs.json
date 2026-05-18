@@ -13,13 +13,13 @@
     "The function's self-decl puts its name in the outer (module) scope BEFORE the inner scope is created.",
     "So the function body's declare('f') finds 'f' in the ancestor scope and fails.",
     "This is unambiguous in the implementation but the spec (§2.2 declare semantics) does not call it out explicitly.",
-    "Flagged as OPEN QUESTION #1 below — the team should confirm this is intentional and document it."
+    "OQ-1 RESOLVED at commit ee7a8d6 — §2.2 declare() KDoc updated to enumerate the function-self-name shadowing case explicitly."
   ],
   "open_questions": [
     {
       "id": "OQ-1",
       "title": "Function self-name leaks into own body scope — shadowing rejected",
-      "description": "When func f() is declared, its name 'f' is placed in the MODULE scope (outer). The function body uses a CHILD scope. Inside the body, declaring 'int f = 5' fails because declare() walks ancestor scopes and finds 'f' in the module scope. The spec §2.2 says 'Shadowing is rejected — current behavior, preserved here' but does not explicitly enumerate the function-self-name case. The behavior is consistent with the current rule, but a reader of the spec might expect the function body to be exempt from its own name (i.e., allowing 'int f = 5' as a local var inside f). Confirmed behavior: REJECTED with 'Duplicate declaration: f'. Recommend adding a sentence to §2.2 or §5.2 PITFALL list explicitly stating: 'A function's self-declaration (placed in the outer scope) blocks any inner binding with the same name, including inside the function's own body.'",
+      "description": "When func f() is declared, its name 'f' is placed in the MODULE scope (outer). The function body uses a CHILD scope. Inside the body, declaring 'int f = 5' fails because declare() walks ancestor scopes and finds 'f' in the module scope. The spec §2.2 says 'Shadowing is rejected — current behavior, preserved here' but does not explicitly enumerate the function-self-name case. The behavior is consistent with the current rule, but a reader of the spec might expect the function body to be exempt from its own name (i.e., allowing 'int f = 5' as a local var inside f). Confirmed behavior: REJECTED with 'Duplicate declaration: f'. RESOLVED at commit ee7a8d6 — §2.2 declare() KDoc updated to enumerate the function-self-name shadowing case explicitly.",
       "tested_by_negative_entry": "neg-22-inner-var-shadows-own-function-name"
     },
     {

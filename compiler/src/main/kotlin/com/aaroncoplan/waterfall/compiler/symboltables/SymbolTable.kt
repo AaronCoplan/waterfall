@@ -53,6 +53,9 @@ class SymbolTable private constructor(private val parent: SymbolTable?) {
      *     val child = parent.enterScope()
      *     // ... verify statements against `child` ...
      *     parent.exitScope(child)  // see [exitScope] for what this does
+     *
+     * In §5.2 the `exitScope` call is omitted (no production caller yet —
+     * §5.3 wires the join logic that consumes the snapshot).
      */
     fun enterScope(): SymbolTable = SymbolTable(parent = this)
 

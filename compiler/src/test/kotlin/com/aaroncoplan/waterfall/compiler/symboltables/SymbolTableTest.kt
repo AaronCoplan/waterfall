@@ -139,6 +139,18 @@ class SymbolTableTest {
         assertFalse(grandparent.lookup("x")!!.isReadonly)
     }
 
+    @Test fun exitScopeWithWrongParentFailsLoudly() {
+        val a = SymbolTable()
+        val b = SymbolTable()
+        val childOfA = a.enterScope()
+        try {
+            b.exitScope(childOfA)
+            fail("exitScope should throw IllegalArgumentException when child.parent !== this")
+        } catch (e: IllegalArgumentException) {
+            // expected
+        }
+    }
+
     @Test fun functionParametersPreserveNameTypeOrdering() {
         val st = SymbolTable()
         val fnInfo = SymbolInfo(

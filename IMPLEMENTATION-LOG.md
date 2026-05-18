@@ -59,45 +59,47 @@ Templates from `notes/team-output/00-EXECUTION-PLAYBOOK.md` §2.
 
 ---
 
-## Sub-task 5.2 status — IN PROGRESS at session checkpoint 2026-05-17
+## Sub-task 5.2 outcome — 2026-05-17 (PR opening; awaiting Aaron merge)
 
-- **State:** plan-mode converged (2 iterations); fresh-context skeptic
-  pre-review of §2 completed (0 FATAL + 12 RISK + 6 MINOR); material spec edits
-  applied. **Engineer dispatch pending** — they plan-backed v1 against stale
-  spec, were redirected to stand down until the full post-skeptic dispatch
-  arrives.
-- **Branch:** not yet cut. Will be `phase-10/sub-task-5.2-symboltable-typed-api`
-  from `origin/master` (currently `755483d`).
-- **Working-tree state to preserve:** uncommitted edits to
-  `notes/PHASE-10-design.md` (~14 additions across §2.4 + §5.2 spec text); these
-  will land as commit 1 of the §5.2 PR.
-- **Spec edits applied during §5.2 ramp-up:**
-  1. §2.4 — clarified `isImmutable()` preservation (grammar still uses
-     `const`/`imm`, not `readonly`)
-  2. §2.4 — explicit `forReturnType(returnType)` use (per §1.2 locked contract)
-  3. §2.4 — enumerated 6 scope-construction callsite migrations to
-     `.enterScope()` (`Main.kt:89`, `ForBlockData:28`, `WhileBlockData:18`,
-     `IfBlockData:37,43,50`, `FunctionImplementationData:40`)
-  4. §2.4 — PITFALL #8 deferral pattern (function position + TODO comment;
-     defer `TypedArgument` to a future sub-task that also touches 3 backends)
-  5. §5.2 — added Kotest wiring + `VarInfo.kt` deletion + reader migrations
-     (`VariableAssignmentData`, `IncrementStatementData`) + `SymbolTablePropertyTest`
-     deliverable
-  6. §5.2 — Kotest test-class style PINNED (JUnit-4 `@Test` + `runBlocking { checkAll(...) }`)
-  7. §5.2 — Kotest version compatibility note (5.9.1 + Kotlin 2.0.21 fallback)
-  8. §5.2 — byte-identical error-strings table (`Duplicate declaration:`,
-     `immutable binding` — must survive verbatim for existing tests)
-  9. §5.2 — explicit `kotlin.Pair(it.secondVal, ...)` inversion code +
-     `functionParametersPreserveNameTypeOrdering` round-trip test (skeptic R9
-     mitigation: high-risk silent inversion)
-  10. §5.2 — PITFALL #7 behavior change explicitly called out in Expected test
-      impact (`fib = 5` after `func fib(...)` now fails verification — pre-flight
-      grep across examples/ + test resources required)
-- **Team state at pause:** engineer holding, tester holding with 2 drafts
-  (`SymbolTableTest.kt` 14 cases including the new parameter-ordering test;
-  `SymbolTablePropertyTest.kt` 12 properties at N=10000) plus fixture drafts;
-  all background Agents completed; no in-flight work.
-- **Resume protocol:** see `notes/team-output/00-KICKOFF-PROMPT-5.2-RESUME.md`.
+- **Triad:** Leg 1 = 12 properties at N=10,000 ✓ • Leg 2 = zero golden diffs ✓ •
+  Leg 3 = 48/48 adversarial (25 positive + 23 negative; fresh-context Agent
+  reading §2 + §5.2 + branch diff)
+- **Plan-mode iterations:** 2 (converged at zero silent resolutions in the
+  resumed session; the original session's v1 plan-back pre-dated the post-
+  skeptic spec edits and was directed to stand down)
+- **Pre-review skeptic (§2):** 0 FATAL + 12 RISK + 6 MINOR → material findings
+  (R4 / R6 / R9 / R12 + Kotest style pin + version fallback) folded into spec
+  edits during ramp-up; remaining items accepted-as-is per skeptic verdict
+- **Post-review skeptic (PR diff):** 0 FATAL + 5 RISK + 6 MINOR → R1–R5 applied
+  as commit 7 (this commit); MINOR #4–#6 accepted-with-comment (Arb.string
+  printable-ASCII KDoc clarity, top-level error string wording, commitReadonly
+  per-name lookup perf — all low-impact)
+- **Spec edits during sub-task:** 12 (10 ramp-up edits from IMPLEMENTATION-LOG
+  pre-resume + commit 5.5 PINNED-style fix + commit 5.75 OQ-1 function-self-name
+  clarification)
+- **Commits landed (9):** docs(spec+log), build(Kotest deps), refactor(atomic
+  SymbolTable rewrite + callsite migrations), test(SymbolTableTest 14 cases),
+  test(SymbolTablePropertyTest 12 properties), spec(PINNED style fix), spec(OQ-1
+  self-name shadowing), test(Sub52AdversarialTest + 48-entry fixture),
+  refactor(post-skeptic fixups)
+- **Carry-forward into §5.3:**
+  - OQ-2 deferred: top-level decl-order error position UX — when `func add() {}`
+    and `int add = 99` collide at module level, Main.kt processes vars first so
+    the error reports at the function's source position regardless of source
+    order. Not a correctness bug; surface for P11+ diagnostics quality work.
+  - `commitReadonly` calls `lookup(name)` per name (O(names × scope-depth));
+    revisit if §5.3's join code measurements show it as hot.
+  - `exitScope` is wired in §5.3 (no production caller yet in §5.2); see §2.5
+    branch-join API contract.
+  - PITFALL #7 (functions implicitly readonly) is now a no-op for the current
+    corpus per pre-flight grep; verified no example source reassigns a function
+    name.
+- **One sentence on what surprised:** the playbook §1 trip-wire (`./gradlew
+  test --tests SymbolTablePropertyTest` reports zero tests) fired exactly as
+  designed — tester caught the §5.2 PINNED-style expression-body example as a
+  spec defect (`InvalidTestClassError: Method should be void`), surfaced as F10
+  cross-tree drift rather than silently fixing in code, and the spec was synced
+  at commit ac5ab5e.
 
 ---
 

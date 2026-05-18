@@ -11,8 +11,8 @@ import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
  * write (the §2c shadow model), the SymbolTable uses markReadonlyLocal (added in §5.2);
  * to commit a flow-sensitive promotion at a branch join, it uses commitReadonly (also §5.2).
  * Both produce new SymbolInfo values via `.copy(isReadonly = true)` — the original
- * is never mutated in place. (KDoc cross-reference links are deliberately written as
- * plain prose here to avoid stale Dokka links during the §5.1 → §5.2 interim state.)
+ * is never mutated in place. KDoc cross-references are written as plain prose throughout
+ * this package to avoid stale Dokka links across refactors.
  *
  * Equality and hashCode are structural (data class). Two SymbolInfos are equal iff every
  * field is equal, including source position. This requires `SourcePosition` to also
