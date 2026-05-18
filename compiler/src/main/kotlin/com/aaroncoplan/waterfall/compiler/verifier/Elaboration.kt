@@ -127,7 +127,10 @@ internal object Elaboration {
             is FunctionCallStatementData ->
                 elaborateFunctionCall(stmt.call, scope, table)
 
-            else -> { /* FunctionImplementationData handled at module level */ }
+            is FunctionImplementationData -> error(
+                "FunctionImplementationData unreachable in Elaboration.elaborateStatement; " +
+                "handled at module level by ModuleVerifier"
+            )
         }
     }
 
@@ -185,7 +188,10 @@ internal object Elaboration {
                 val r = expr.right ?: return
                 elaborateExpression(l, scope, table)
                 elaborateExpression(r, scope, table)
-                table[l] ?: WaterfallType.IntType  // left.type placeholder; P11 fills
+                // R4: no side-table entry for BinaryOp — IrLowering derives the type as
+                // `lIr.type` (left operand type, P10 placeholder). The entry would be dead
+                // code that the table never reads. Only the sub-expressions get entries.
+                return
             }
 
             ExpressionData.Kind.ARRAY -> {

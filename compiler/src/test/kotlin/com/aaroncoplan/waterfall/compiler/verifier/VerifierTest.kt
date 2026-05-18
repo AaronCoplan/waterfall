@@ -1,9 +1,13 @@
 package com.aaroncoplan.waterfall.compiler.verifier
 
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
+import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
+import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
 import com.aaroncoplan.waterfall.parser.FileParser
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -202,5 +206,41 @@ class VerifierTest {
         val result = Verifier.verifyModule(module, SymbolTable())
         assertEquals(1, result.errors.size)
         assertTrue(result.errors[0] is VerifyError.VoidNotAValueType)
+    }
+
+    /**
+     * R3 regression: forward function references must resolve to the callee's actual
+     * return type in the side-table. Before Pass 1.5 in ModuleVerifier, a() calling
+     * b() (declared after a) would produce VoidType for the b() call because b() was
+     * not yet in the module scope when a()'s body was elaborated.
+     */
+    @Test fun forwardFunctionReferenceResolvesToNonVoidTypeInSideTable() {
+        val source = """
+            module Forward {
+                func a() returns int {
+                    return b()
+                }
+                func b() returns int {
+                    return 42
+                }
+            }
+        """.trimIndent()
+        val parseResult = FileParser.parseCodeString("test.wf", source)
+        assertFalse("Expected no syntax errors", parseResult.hasErrors())
+        val moduleAst = ModuleAst("test.wf", parseResult.getProgramAST().module())
+        val verifyResult = Verifier.verifyModule(moduleAst, SymbolTable())
+        assertTrue(
+            "forward-ref module should verify cleanly; errors: ${verifyResult.errors}",
+            verifyResult.isSuccessful
+        )
+        // func a is functions[0]; body[0] is `return b()`
+        val returnStmt = moduleAst.functions[0].statements[0] as ReturnStatementData
+        val callExpr = returnStmt.value
+        assertNotNull("return statement should have a value expression", callExpr)
+        val resolvedType = verifyResult.resolvedTypes[callExpr!!]
+        assertEquals(
+            "b() call should resolve to IntType (not VoidType — that was the R3 bug)",
+            WaterfallType.IntType, resolvedType
+        )
     }
 }

@@ -24,6 +24,16 @@ import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
  */
 object IrLowering {
 
+    /**
+     * Lowers [module] to IR using the expression-type side-table from [resolvedTypes].
+     *
+     * **R1 precondition:** callers MUST first run `Verifier.verifyModule(module, ...)`
+     * and confirm `result.isSuccessful` is true before invoking lowering. Calling on an
+     * unverified module will throw at any node where the side-table carries ErrorType.
+     *
+     * §5.5 carry-forward: every backend migration MUST gate on `verifyResult.isSuccessful`
+     * before invoking this method.
+     */
     fun lowerModule(module: ModuleAst, resolvedTypes: Map<ExpressionData, WaterfallType>): IrModule {
         // Derive a module-level source position from the first available item.
         val modulePos: SourcePosition = module.functions.firstOrNull()?.getSourcePosition()
@@ -75,6 +85,10 @@ object IrLowering {
         resolvedTypes: Map<ExpressionData, WaterfallType>
     ): IrStatement {
         val pos = stmt.getSourcePosition()
+        // TODO(P11): All sub-expressions inherit pos (= stmt.getSourcePosition()) because
+        // ExpressionData has no per-node source position. P11+ should add
+        // ExpressionData.sourcePosition and thread it through lowerExpression. Until then,
+        // per-expression diagnostics are at statement granularity only. (R2)
         return when (stmt) {
             is TypedVariableDeclarationAndAssignmentData -> IrStatement.TypedVarDecl(
                 name = stmt.name,
@@ -133,6 +147,10 @@ object IrLowering {
             is FunctionCallStatementData -> IrStatement.FunctionCallStatement(
                 call = lowerFunctionCall(stmt.call, resolvedTypes, pos),
                 sourcePosition = pos
+            )
+            is FunctionImplementationData -> error(
+                "FunctionImplementationData should be unreachable in IrLowering.lowerStatement; " +
+                "handled by ModuleVerifier (M1)"
             )
             else -> error("IrLowering: unexpected statement kind ${stmt::class.simpleName} at ${pos.generateMessage()}")
         }
@@ -267,6 +285,7 @@ object IrLowering {
             receiverPath = fc.receiverPath,
             functionName = fc.functionName,
             positionalArguments = fc.positionalArguments.map { lowerExpression(it, resolvedTypes, pos) },
+            // kotlin.Pair qualifier required to avoid collision with com.aaroncoplan.waterfall.parser.Pair (M4)
             namedArguments = fc.namedArguments.map { pair ->
                 kotlin.Pair(pair.firstVal, lowerExpression(pair.secondVal, resolvedTypes, pos))
             },
