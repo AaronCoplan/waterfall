@@ -3,10 +3,12 @@ package com.aaroncoplan.waterfall.compiler.statements
 import com.aaroncoplan.waterfall.generated.WaterfallParser
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
 import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult
-import com.aaroncoplan.waterfall.compiler.symboltables.DuplicateDeclarationException
+import com.aaroncoplan.waterfall.compiler.symboltables.DeclareResult
+import com.aaroncoplan.waterfall.compiler.symboltables.SymbolInfo
+import com.aaroncoplan.waterfall.compiler.symboltables.SymbolKind
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
-import com.aaroncoplan.waterfall.compiler.symboltables.VarInfo
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator
+import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
 
 class UntypedVariableDeclarationAndAssignmentData(
     filePath: String,
@@ -22,9 +24,13 @@ class UntypedVariableDeclarationAndAssignmentData(
     fun isImmutable(): Boolean = "const" in modifiers || "imm" in modifiers
 
     override fun verify(symbolTable: SymbolTable): VerificationResult {
-        try {
-            symbolTable.declare(name, VarInfo(inferredType, isImmutable()))
-        } catch (e: DuplicateDeclarationException) {
+        val result = symbolTable.declare(name, SymbolInfo(
+            type = WaterfallType.fromSourceText(inferredType),
+            isReadonly = isImmutable(),
+            kind = SymbolKind.Variable,
+            sourcePosition = getSourcePosition()
+        ))
+        if (result is DeclareResult.Failure) {
             return VerificationResult(false, "Duplicate declaration: $name")
         }
         return VerificationResult(true, null)

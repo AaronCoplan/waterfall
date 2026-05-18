@@ -25,7 +25,7 @@ class ForBlockData(filePath: String, ctx: WaterfallParser.ForBlockContext)
 
     override fun verify(symbolTable: SymbolTable): VerificationResult {
         // TODO(audit): iterator type isn't inferred from the collection yet.
-        val scope = SymbolTable(symbolTable)
+        val scope = symbolTable.enterScope()
         for (s in body) {
             val r = s.verify(scope)
             if (!r.isSuccessful()) return r

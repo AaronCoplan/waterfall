@@ -86,7 +86,7 @@ object Main {
             // itself into this scope, surfacing duplicate-top-level errors. Function
             // bodies create their own child scope and recurse — inner var-decls now
             // declare too, so a duplicate `int x = 1` inside a function body fails.
-            val symbolTable = SymbolTable(null)
+            val symbolTable = SymbolTable()
             val moduleAst = ModuleAst(parseResult.getFilePath(), module)
 
             for (v in moduleAst.topLevelVariables) {

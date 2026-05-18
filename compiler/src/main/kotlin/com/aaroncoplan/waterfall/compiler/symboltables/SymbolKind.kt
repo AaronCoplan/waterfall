@@ -30,8 +30,9 @@ sealed class SymbolKind {
      * `com.aaroncoplan.waterfall.parser.Pair`). Field convention: **first = name,
      * second = type**. This ordering is the OPPOSITE of the legacy `(type, name)`
      * convention used in `FunctionImplementationData.typedArguments` and
-     * `LambdaFunctionData` — when §5.2 migrates those callsites, swap the order
-     * at the boundary. Per §5.1 → §5.2 contract, do NOT introduce a `TypedArgument`
+     * `LambdaFunctionData` — the §5.2 boundary code at `FunctionImplementationData.kt:41`
+     * swaps the order: `kotlin.Pair(it.secondVal, WaterfallType.fromSourceText(it.firstVal))`.
+     * Per §5.1 → §5.2 contract, do NOT introduce a `TypedArgument`
      * data class or any additional field on this class in §5.1.
      */
     data class Function(

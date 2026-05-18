@@ -9,24 +9,97 @@ Templates from `notes/team-output/00-EXECUTION-PLAYBOOK.md` §2.
 
 - **Strategist roadmap entry:** `notes/team-output/04-strategy.md` §3, P10
 - **Predecessor phase exit tag:** `pre-p10-complete` (= `6435e2d`)
-- **Spec at implementation start:** `notes/PHASE-10-design.md` at commit
-  `<sha-of-Task-1-PR-merge>` _(placeholder — fill with the merge commit SHA
-  after the Task-1 PR lands on master)_
+- **Spec at implementation start:** `notes/PHASE-10-design.md` at PR-15 merge
+  (`5e6beaf`); subsequent §5.2 spec edits land in working tree pending the §5.2 PR.
 - **Pre-review skeptic session:** completed; 2 FATAL + 6 RISK + 3 MINOR findings,
   all folded into the spec before implementation began. Key changes: `void[]`
   guard in `fromSourceText`, `forReturnType` adapter, `SourcePosition` data-class
   requirement, `SymbolKind.Function` Pair-ordering KDoc, `fromSymbolTable`
   companion-object fix.
-- **Open ambiguities entering implementation:** none — pending team-lead dispatch
-  after sub-task 5.1 closes (the spec is locked; any new ambiguities discovered
-  during 5.1 implementation will be logged here).
+- **Open ambiguities entering implementation:** none at §5.1 boundary; §5.2
+  surfaced 8 silent-resolution points during plan-mode + 12 RISK from skeptic
+  pre-review, all folded into spec edits.
 - **Verification-design commitment (§3 triad):**
   - Property invariants: SymbolTable lookup/declare/shadow (§2.7 cases as forAll
     at N=10000); JoinAnalysis intersection correctness; IrLowering round-trip;
     JsonRenderer schema round-trip
   - Differential oracle: existing golden suite — zero golden diffs gate
   - Adversarial input target: ≥20, location
-    `compiler/src/test/resources/adversarial/phase-10/`
+    `compiler/src/test/resources/adversarial/phase-10/sub-task-N.M/`
+
+---
+
+## Sub-task 5.1 outcome — 2026-05-17 (merged PR #16, master at `755483d`)
+
+- **Triad:** Leg 1 = 28/28 WaterfallTypeTest ✓ • Leg 2 = zero golden diffs ✓ •
+  Leg 3 = 35/35 adversarial fixture (fresh-context Agent, §1.2 spec only); full
+  convergence including boundary probes (tab prefix, internal whitespace,
+  Unicode confusable, 1KB string, `int[][]`, `voidvoid`)
+- **Plan-mode iterations:** 3 (converged at zero silent resolutions)
+- **Pre-review skeptic (§1):** 2 FATAL + 6 RISK + 3 MINOR → all folded into spec
+- **Post-review skeptic (PR diff):** 0 FATAL + 5 RISK + 6 MINOR → 3 in-scope
+  fixups landed as commit 8 of PR #16; remaining items deferred to §5.2 or
+  accepted-as-is per skeptic verdict
+- **Spec edits during sub-task:** 17 (carry-forward 4 + skeptic-driven 10 +
+  B1 fromSymbolTable companion 1 + WaterfallTypeTest deliverable 1 +
+  fromSourceText whitespace/preservation/totality 3 minus dedup)
+- **Commits landed (8):** spec, WaterfallType, SymbolKind, SymbolInfo,
+  SourcePosition data-class, WaterfallTypeTest, FromSourceTextAdversarialTest +
+  fixture, skeptic-fixup commit
+- **Carry-forward into §5.2:** `forReturnType` no-round-trip contract is
+  unenforced at type-system level (skeptic R1) — to enforce via §5.2 PR-blocking
+  checklist; `SymbolKind.Function.parameters` ordering is opposite of legacy
+  `(type, name)` `typedArguments` — explicit code prescription in §5.2 spec;
+  PITFALL #8 deferral pattern (function position + TODO comment) established.
+- **One sentence on what surprised:** the recurring `git checkout -b` branch-
+  base bug (first push of Task #1 was cut from 16 commits behind master,
+  silently reverting Phase 0); caught pre-PR-open via diff-stat sanity check.
+  Future safeguard: always pre-verify `git rev-parse HEAD == git rev-parse
+  origin/master` before `git checkout -b`. Now documented in dispatch briefs.
+
+---
+
+## Sub-task 5.2 outcome — 2026-05-17 (PR opening; awaiting Aaron merge)
+
+- **Triad:** Leg 1 = 12 properties at N=10,000 ✓ • Leg 2 = zero golden diffs ✓ •
+  Leg 3 = 48/48 adversarial (25 positive + 23 negative; fresh-context Agent
+  reading §2 + §5.2 + branch diff)
+- **Plan-mode iterations:** 2 (converged at zero silent resolutions in the
+  resumed session; the original session's v1 plan-back pre-dated the post-
+  skeptic spec edits and was directed to stand down)
+- **Pre-review skeptic (§2):** 0 FATAL + 12 RISK + 6 MINOR → material findings
+  (R4 / R6 / R9 / R12 + Kotest style pin + version fallback) folded into spec
+  edits during ramp-up; remaining items accepted-as-is per skeptic verdict
+- **Post-review skeptic (PR diff):** 0 FATAL + 5 RISK + 6 MINOR → R1–R5 applied
+  as commit 7 (this commit); MINOR #4–#6 accepted-with-comment (Arb.string
+  printable-ASCII KDoc clarity, top-level error string wording, commitReadonly
+  per-name lookup perf — all low-impact)
+- **Spec edits during sub-task:** 12 (10 ramp-up edits from IMPLEMENTATION-LOG
+  pre-resume + commit 5.5 PINNED-style fix + commit 5.75 OQ-1 function-self-name
+  clarification)
+- **Commits landed (9):** docs(spec+log), build(Kotest deps), refactor(atomic
+  SymbolTable rewrite + callsite migrations), test(SymbolTableTest 14 cases),
+  test(SymbolTablePropertyTest 12 properties), spec(PINNED style fix), spec(OQ-1
+  self-name shadowing), test(Sub52AdversarialTest + 48-entry fixture),
+  refactor(post-skeptic fixups)
+- **Carry-forward into §5.3:**
+  - OQ-2 deferred: top-level decl-order error position UX — when `func add() {}`
+    and `int add = 99` collide at module level, Main.kt processes vars first so
+    the error reports at the function's source position regardless of source
+    order. Not a correctness bug; surface for P11+ diagnostics quality work.
+  - `commitReadonly` calls `lookup(name)` per name (O(names × scope-depth));
+    revisit if §5.3's join code measurements show it as hot.
+  - `exitScope` is wired in §5.3 (no production caller yet in §5.2); see §2.5
+    branch-join API contract.
+  - PITFALL #7 (functions implicitly readonly) is now a no-op for the current
+    corpus per pre-flight grep; verified no example source reassigns a function
+    name.
+- **One sentence on what surprised:** the playbook §1 trip-wire (`./gradlew
+  test --tests SymbolTablePropertyTest` reports zero tests) fired exactly as
+  designed — tester caught the §5.2 PINNED-style expression-body example as a
+  spec defect (`InvalidTestClassError: Method should be void`), surfaced as F10
+  cross-tree drift rather than silently fixing in code, and the spec was synced
+  at commit ac5ab5e.
 
 ---
 
