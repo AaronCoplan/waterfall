@@ -135,4 +135,37 @@ class VerifierTest {
         val result = Verifier.verifyModule(module, SymbolTable())
         assertTrue(result.isSuccessful)
     }
+
+    /**
+     * Leg 3 catch (OQ-5.3-1): `void` as a variable type must be rejected.
+     * WaterfallType.fromSourceText("void") returns VoidType (NOT ErrorType), so
+     * it requires its own explicit check in verifyTypedVarDecl.
+     */
+    @Test fun voidTypedVarDeclFails() {
+        val module = parseAndAst("""
+            module Foo {
+                func f() {
+                    void x = 5
+                }
+            }
+        """.trimIndent())
+        val result = Verifier.verifyModule(module, SymbolTable())
+        assertEquals(1, result.errors.size)
+        assertTrue(result.errors[0] is VerifyError.VoidNotAValueType)
+    }
+
+    /**
+     * Leg 3 catch (OQ-5.3-4): defensive check — top-level void var also rejected.
+     * Covers the top-level TypedVariableDeclarationAndAssignmentData path.
+     */
+    @Test fun voidTopLevelVarDeclFails() {
+        val module = parseAndAst("""
+            module Foo {
+                void x = 5
+            }
+        """.trimIndent())
+        val result = Verifier.verifyModule(module, SymbolTable())
+        assertEquals(1, result.errors.size)
+        assertTrue(result.errors[0] is VerifyError.VoidNotAValueType)
+    }
 }

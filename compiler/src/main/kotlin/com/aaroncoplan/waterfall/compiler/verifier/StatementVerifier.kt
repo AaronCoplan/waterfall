@@ -44,6 +44,12 @@ internal object StatementVerifier {
         if (type is WaterfallType.ErrorType) {
             errors += VerifyError.UnknownType(s.type, s.getSourcePosition())
         }
+        // Leg 3 catch (OQ-5.3-1): `void` is a return-type marker, not a value type.
+        // `void x = 5` must be rejected. WaterfallType.fromSourceText("void") returns
+        // VoidType (not ErrorType), so it needs its own check.
+        if (type is WaterfallType.VoidType) {
+            errors += VerifyError.VoidNotAValueType("variable declaration", s.getSourcePosition())
+        }
         // FATAL-2 fix: use s.isImmutable() — checks `const`/`imm` modifiers.
         // Grammar still emits const/imm in P10; readonly unification is P12.
         val info = SymbolInfo(
@@ -63,17 +69,25 @@ internal object StatementVerifier {
         s: UntypedVariableDeclarationAndAssignmentData,
         scope: SymbolTable
     ): List<VerifyError> {
+        val errors = mutableListOf<VerifyError>()
         val type = WaterfallType.fromSourceText(s.inferredType)
+        // Leg 3 catch (OQ-5.3-4): defensive VoidType guard. The current inferType()
+        // never returns "void", but guard explicitly so future inference paths can't
+        // accidentally produce a void-typed binding.
+        if (type is WaterfallType.VoidType) {
+            errors += VerifyError.VoidNotAValueType("inferred variable type", s.getSourcePosition())
+        }
         val info = SymbolInfo(
             type = type,
-            isReadonly = s.isImmutable(),  // same isImmutable() preservation per §5.2
+            isReadonly = s.isImmutable(),  // isImmutable() preservation per §5.2
             kind = SymbolKind.Variable,
             sourcePosition = s.getSourcePosition()
         )
         val result = scope.declare(s.name, info)
-        return if (result is DeclareResult.Failure) {
-            listOf(VerifyError.fromSymbolTable(result.error))
-        } else emptyList()
+        if (result is DeclareResult.Failure) {
+            errors += VerifyError.fromSymbolTable(result.error)
+        }
+        return errors
     }
 
     private fun verifyVarAssignment(
