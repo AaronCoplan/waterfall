@@ -4,6 +4,8 @@ import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
 import com.aaroncoplan.waterfall.compiler.target.Backends
+import com.aaroncoplan.waterfall.compiler.verifier.HumanRenderer
+import com.aaroncoplan.waterfall.compiler.verifier.Verifier
 import com.aaroncoplan.waterfall.parser.FileParser
 import com.aaroncoplan.waterfall.parser.FileUtils
 import org.apache.logging.log4j.LogManager
@@ -82,26 +84,17 @@ object Main {
                 throw CompilerError("duplicate module name")
             }
 
-            // Fresh top-level scope per module. Each top-level decl's verify() declares
-            // itself into this scope, surfacing duplicate-top-level errors. Function
-            // bodies create their own child scope and recurse — inner var-decls now
-            // declare too, so a duplicate `int x = 1` inside a function body fails.
             val symbolTable = SymbolTable()
             val moduleAst = ModuleAst(parseResult.getFilePath(), module)
 
-            for (v in moduleAst.topLevelVariables) {
-                val r = v.verify(symbolTable)
-                if (!r.isSuccessful()) {
-                    System.err.println("${r.getErrorMessage()} in ${v.getSourcePosition().generateMessage()}")
-                    throw CompilerError("verification failed")
+            // §5.3: single Verifier.verifyModule call replaces the old per-*Data verify loop.
+            // HumanRenderer preserves byte-identical error strings per §5.2 contract.
+            val verifyResult = Verifier.verifyModule(moduleAst, symbolTable)
+            if (!verifyResult.isSuccessful) {
+                for (err in verifyResult.errors) {
+                    System.err.println(HumanRenderer.render(err))
                 }
-            }
-            for (f in moduleAst.functions) {
-                val r = f.verify(symbolTable)
-                if (!r.isSuccessful()) {
-                    System.err.println("${r.getErrorMessage()} in ${f.getSourcePosition().generateMessage()}")
-                    throw CompilerError("verification failed")
-                }
+                throw CompilerError("verification failed")
             }
 
             println(backend.emitProgram(moduleAst))

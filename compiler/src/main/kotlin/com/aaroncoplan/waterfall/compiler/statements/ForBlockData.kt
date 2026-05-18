@@ -3,8 +3,6 @@ package com.aaroncoplan.waterfall.compiler.statements
 import com.aaroncoplan.waterfall.generated.WaterfallParser
 import com.aaroncoplan.waterfall.compiler.statements.helpers.StatementDispatcher
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
-import com.aaroncoplan.waterfall.compiler.statements.helpers.VerificationResult
-import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
 import com.aaroncoplan.waterfall.compiler.target.CodeGenerator
 
 class ForBlockData(filePath: String, ctx: WaterfallParser.ForBlockContext)
@@ -21,16 +19,6 @@ class ForBlockData(filePath: String, ctx: WaterfallParser.ForBlockContext)
         iteratorName = inner.ID(0).text
         collectionName = inner.ID(1).text
         body = StatementDispatcher.fromStatementBlock(filePath, inner.statementBlock())
-    }
-
-    override fun verify(symbolTable: SymbolTable): VerificationResult {
-        // TODO(audit): iterator type isn't inferred from the collection yet.
-        val scope = symbolTable.enterScope()
-        for (s in body) {
-            val r = s.verify(scope)
-            if (!r.isSuccessful()) return r
-        }
-        return VerificationResult(true, null)
     }
 
     override fun translate(backend: CodeGenerator): String = backend.emitForBlock(this)
