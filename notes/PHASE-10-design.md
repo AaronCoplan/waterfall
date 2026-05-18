@@ -1109,40 +1109,53 @@ sealed class IrExpression {
 ```kotlin
 package com.aaroncoplan.waterfall.compiler.ir
 
+import com.aaroncoplan.waterfall.compiler.statements.ExpressionData
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
-// ... import each *Data class and SymbolTable, SymbolInfo
+import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
+// ... import each *Data class
 
 /**
  * Single pass converting a verified ModuleAst (with its `*Data` statements) to
  * an IrModule consumable by backends.
  *
  * Contract:
- *   - Input: a ModuleAst whose .verify() has completed successfully.
- *   - The symbol table from verification is also passed in — type info on
- *     expression nodes is looked up here.
- *   - Output: an IrModule. Throws if the input contains anything verification
- *     should have caught (e.g., an undeclared identifier in an expression).
+ *   - Input: a ModuleAst + the `resolvedTypes` side-table from `VerifyResult`
+ *     (F1=C decision: the verifier elaborates each ExpressionData with its
+ *     resolved WaterfallType at verify time; lowering reads from there).
+ *   - The symbol table is NOT passed to lowering — use the side-table.
+ *   - Output: an IrModule. Throws `IllegalStateException` if the side-table
+ *     is missing an entry for a scope-dependent expression (e.g., an undeclared
+ *     identifier). This is a post-verification invariant violation per OQ-3=C:
+ *     the verifier did not catch the undeclared name, and lowering surfaces it.
+ *     Message: `"$name undeclared at ${pos.generateMessage()}; verifier should
+ *     have caught this"`.
  *
- * No verification logic in here. If you find yourself adding a check that
- * could fail validly, you're in the wrong package — move it to the verifier.
+ * **Escalate** in §3.8 always means: `throw IllegalStateException(...)`.
+ * NOT "return an error IR node" (there is no error variant). NOT "escalate
+ * to human review" (that's §6.2 semantics). P10 does not accumulate lowering
+ * errors — post-verification the tree should be clean.
+ *
+ * No verification logic here. If you find yourself adding a check that could
+ * fail on a legitimate input, move it to the verifier.
+ *
+ * §5.4 note: `Main.kt` does NOT invoke IrLowering in §5.4. Backends still
+ * consume `*Data` directly in §5.4; they migrate to IR in §5.5. `IrLoweringTest`
+ * is the only §5.4 consumer.
  */
 object IrLowering {
 
-    fun lowerModule(module: ModuleAst, symbolTable: SymbolTable): IrModule {
+    fun lowerModule(module: ModuleAst, resolvedTypes: Map<ExpressionData, WaterfallType>): IrModule {
         // Maps each top-level var and function to its IR counterpart.
         // Implementation: walk module.topLevelVariables, walk module.functions.
         // ... (see Section 3.8 for the lowering algorithm per node type)
         TODO()
     }
 
-    fun lowerStatement(stmt: TranslatableStatement, symbolTable: SymbolTable): IrStatement {
-        // Walks the existing dispatcher pattern (StatementDispatcher.fromStatement)
-        // but in reverse — `when (stmt)` over the known subclass list.
+    fun lowerStatement(stmt: TranslatableStatement, resolvedTypes: Map<ExpressionData, WaterfallType>): IrStatement {
         TODO()
     }
 
-    fun lowerExpression(expr: ExpressionData, symbolTable: SymbolTable): IrExpression {
-        // Single big when over ExpressionData.Kind.
+    fun lowerExpression(expr: ExpressionData, resolvedTypes: Map<ExpressionData, WaterfallType>): IrExpression {
         TODO()
     }
 }
@@ -1156,8 +1169,8 @@ The implementer should encode the mappings below as a `when` over the `*Data` su
 
 | Input (`*Data` class) | Output (IrStatement) | Notes |
 |---|---|---|
-| `TypedVariableDeclarationAndAssignmentData` | `IrStatement.TypedVarDecl` | `type` from `WaterfallType.fromSourceText(.type)`; `isReadonly` from `.modifiers.contains("readonly")` (the only modifier in v1, per language-design §2g) |
-| `UntypedVariableDeclarationAndAssignmentData` | `IrStatement.UntypedVarDecl` | `inferredType` from `WaterfallType.fromSourceText(.inferredType)` |
+| `TypedVariableDeclarationAndAssignmentData` | `IrStatement.TypedVarDecl` | `type` from `WaterfallType.fromSourceText(.type)` then `IrType.fromWaterfallType`; `isReadonly` from **`s.isImmutable()`** (checks `const`/`imm` — NOT `modifiers.contains("readonly")`; `readonly` unification is P12; see §5.2 preservation note) |
+| `UntypedVariableDeclarationAndAssignmentData` | `IrStatement.UntypedVarDecl` | `inferredType` from `WaterfallType.fromSourceText(.inferredType)` then `IrType.fromWaterfallType`; `isReadonly` from `s.isImmutable()` |
 | `VariableAssignmentData` | `IrStatement.VarAssignment` | `op`, `value` mapped directly |
 | `IncrementStatementData` | `IrStatement.IncrementStatement` | `op` directly |
 | `ReadonlyPromotionData` (NOT in P10 — Piece 2 lands in P12) | `IrStatement.ReadonlyPromotion` | Forward-looking row. The `*Data` class does not exist in the P10 codebase; P10's lowering `when` does NOT include this case. The IR variant `IrStatement.ReadonlyPromotion` ships in P10 so the IR shape is stable for P12, but no P10 input produces it. P12 adds the parser/AST + lowering case + verifier handler together. |
@@ -1176,14 +1189,14 @@ The implementer should encode the mappings below as a `when` over the `*Data` su
 | `INT_LITERAL` | `IrExpression.IntLiteral` | literalText preserved |
 | `DEC_LITERAL` | `IrExpression.DecLiteral` | literalText preserved |
 | `STRING_LITERAL` | `IrExpression.StringLiteral` | literalText preserved (backticks and all); type = `IrType.Char` (audit gap) |
-| `IDENTIFIER` | `IrExpression.Identifier` | `type` looked up via `symbolTable.lookup(name).type`; if null, **escalate** — verifier should have caught |
-| `LAMBDA` | `IrExpression.Lambda` | parameters and body lowered |
-| `BUNDLE` | `IrExpression.BundleLiteral` | placeholder type for P10 |
-| `ARRAY` | `IrExpression.ArrayLiteral` | element type from first element's inferred type |
-| `FUNCTION_CALL` | `IrExpression.FunctionCall` (also used in statement) | look up the function's return type via the symbol table for the `type` field |
-| `BINARY_OP` | `IrExpression.BinaryOp` | type = `left.type` for P10 placeholder; P11 inference improves this |
-| `ARRAY_INDEX` | `IrExpression.ArrayIndex` | type = element type of the target's array type via symbol lookup |
-| `CAST` | `IrExpression.Cast` | targetType from `WaterfallType.fromSourceText(.castTargetType)` then `IrType.fromWaterfallType` |
+| `IDENTIFIER` | `IrExpression.Identifier` | **F1=C**: `type` read from `resolvedTypes[expr]`; if null, `throw IllegalStateException("${e.literalText} undeclared at ${pos.generateMessage()}; verifier should have caught this")` |
+| `LAMBDA` | `IrExpression.Lambda` | **F1=C**: At VERIFY time (in `Elaboration.elaborateExpression`), declare lambda params into a child scope and elaborate the body's single function-call expression; the body's arg expressions get entries in `resolvedTypes`. At LOWERING time: map `typedArguments` to `IrParameter` (note: legacy ordering `firstVal=type, secondVal=name`; swap to `name, type` per §1.3), lower body `FunctionCallData` using `resolvedTypes`; type = `IrType.Void` placeholder. Empty body (`body == null`) → `IrExpression.Lambda(parameters, body = null, type = IrType.Void)`. |
+| `BUNDLE` | `IrExpression.BundleLiteral` | **R3 edge case**: lower each positional element; names are dropped (P10 has no named-field IR). type = `IrType.Void` placeholder. The grammar's BundleLiteral stores elements in `BundleLiteralData` — read that class before implementing. |
+| `ARRAY` | `IrExpression.ArrayLiteral` | element type from first element's type in `resolvedTypes`; if empty (`elements.isEmpty()`), type = `IrType.Void` placeholder per **Q3 decision** |
+| `FUNCTION_CALL` | `IrExpression.FunctionCall` (also used in statement) | **F1=C + R3 edge case**: for `Kind.LOCAL`, `type` = `resolvedTypes[expr]` (the elaboration stored the callee's return type); for `Kind.MODULE` and `Kind.OBJECT`, `type = IrType.Void` placeholder (non-local functions not in this module's symbol table in P10). Recurse into `positionalArguments` and `namedArguments` values. |
+| `BINARY_OP` | `IrExpression.BinaryOp` | type = `lowerExpression(left, resolvedTypes).type` for P10 placeholder; P11 inference improves this. Recurse into both sides. |
+| `ARRAY_INDEX` | `IrExpression.ArrayIndex` | **R3 edge case**: target is always an identifier in P10 grammar (no nested array-access). `type` = `resolvedTypes[expr]`; if null, `IrType.Void` placeholder (the array's element type). Index expression lowered via `lowerExpression`. |
+| `CAST` | `IrExpression.Cast` | targetType from `WaterfallType.fromSourceText(.castTargetType)` then `IrType.fromWaterfallType`; operand via `lowerExpression(castOperand, resolvedTypes)` |
 
 ### 3.9 Backend interface change
 
