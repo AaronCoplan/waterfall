@@ -247,6 +247,19 @@ carrying it to commit 4.
 
 ---
 
+## Sub-task 5.6 outcome — 2026-05-19 (merged PR #21; master at `3b02eb4`)
+
+- **Triad:** Leg 1 = N/A (deletion-only; no new property family; all 15 existing property tests still pass) • Leg 2 = zero golden diffs ✓ enforced by `scripts/check-goldens-unchanged.sh` • Leg 3 = N/A (pure dead-code removal — no behavioral changes)
+- **Plan-mode iterations:** 1 (plan-back v1 acked immediately; one OQ surfaced per F10: Translatable.kt fate → Aaron chose Option A=delete file)
+- **Pre-review skeptic:** N/A (mechanical deletion; no pre-review skeptic run)
+- **Post-review skeptic:** 0 FATAL + 2 RISK + 4 MINOR → MINOR #6 (1-char commit subject overshoot) accepted; all 5 doc-drift items (RISK #1/#2 + MINOR #3/#4/#5) deferred to phase-exit-docs PR (#22)
+- **Spec edits during sub-task:** 0 (Aaron waived optional §6.3 spec-sync; Translatable.kt fate resolved via plan-back OQ)
+- **Commits landed (1):** refactor(delete Translatable.kt + remove `: Translatable` from TranslatableStatement + remove 10 translate stubs + unused CodeGenerator imports)
+- **R6 decision — emitStatement default interface method:** **DECLINED.** No fourth backend is planned; all 3 backends already implement the private dispatcher pattern; promotion would require `public` visibility (encapsulation loss); a backend's `private emitStatement` would shadow a default anyway. Rationale recorded in CodeGenerator.kt KDoc and PHASE-10-design.md §3.9.
+- **One sentence on what surprised:** The skeptic's most dangerous finding was a stale `emitProgram(ModuleAst)` in BUS-FACTOR.md line 80 contradicting the diagram — a doc audit catches what the engineer normalizes after hours in a single file.
+
+---
+
 ## Phase 10 retrospective — (pending)
 
 _Filled when the phase-exit ritual completes (playbook §2). Template:_
