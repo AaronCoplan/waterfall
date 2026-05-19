@@ -18,5 +18,6 @@ class TypedVariableDeclarationAndAssignmentData(
     /** True iff the binding was declared with `const` or `imm`. */
     fun isImmutable(): Boolean = "const" in modifiers || "imm" in modifiers
 
-    override fun translate(backend: CodeGenerator): String = backend.emitTypedVarDecl(this)
+    override fun translate(backend: CodeGenerator): String =
+        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }

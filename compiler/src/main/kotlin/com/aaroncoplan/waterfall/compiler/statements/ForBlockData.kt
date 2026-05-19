@@ -21,5 +21,6 @@ class ForBlockData(filePath: String, ctx: WaterfallParser.ForBlockContext)
         body = StatementDispatcher.fromStatementBlock(filePath, inner.statementBlock())
     }
 
-    override fun translate(backend: CodeGenerator): String = backend.emitForBlock(this)
+    override fun translate(backend: CodeGenerator): String =
+        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }

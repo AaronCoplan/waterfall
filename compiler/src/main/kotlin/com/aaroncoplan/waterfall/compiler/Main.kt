@@ -1,6 +1,7 @@
 package com.aaroncoplan.waterfall.compiler
 
 import com.aaroncoplan.waterfall.compiler.argumentparsing.ArgParser
+import com.aaroncoplan.waterfall.compiler.ir.IrLowering
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
 import com.aaroncoplan.waterfall.compiler.target.Backends
@@ -97,7 +98,9 @@ object Main {
                 throw CompilerError("verification failed")
             }
 
-            println(backend.emitProgram(moduleAst))
+            // §5.5 (F4=Main.kt): lower to IR then emit. Backends are now pure IR consumers.
+            val ir = IrLowering.lowerModule(moduleAst, verifyResult.resolvedTypes)
+            println(backend.emitProgram(ir))
         }
         logger.info("[END] Verification and Translation")
     }
