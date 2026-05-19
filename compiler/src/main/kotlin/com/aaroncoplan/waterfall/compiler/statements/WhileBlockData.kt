@@ -3,15 +3,10 @@ package com.aaroncoplan.waterfall.compiler.statements
 import com.aaroncoplan.waterfall.generated.WaterfallParser
 import com.aaroncoplan.waterfall.compiler.statements.helpers.StatementDispatcher
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
-import com.aaroncoplan.waterfall.compiler.target.CodeGenerator
-
 class WhileBlockData(filePath: String, ctx: WaterfallParser.WhileBlockContext)
     : TranslatableStatement(filePath, ctx) {
 
     @JvmField val condition: ExpressionData = ExpressionData(filePath, ctx.expression())
     @JvmField val body: List<TranslatableStatement> =
         StatementDispatcher.fromStatementBlock(filePath, ctx.statementBlock())
-
-    override fun translate(backend: CodeGenerator): String =
-        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }
