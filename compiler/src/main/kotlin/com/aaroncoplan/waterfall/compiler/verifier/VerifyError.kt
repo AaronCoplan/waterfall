@@ -129,6 +129,52 @@ sealed class VerifyError {
         override val message = "Type 'void' is not a value type"
     }
 
+    // ------------------------------------------------------------------ //
+    // WF12xx — P11-era identifier-resolution errors
+    // ------------------------------------------------------------------ //
+
+    /**
+     * An identifier reference could not be resolved against the current scope
+     * chain. Closes OQ-3=C (P10 carry-forward). Error code WF1201.
+     *
+     * **Field semantics**:
+     * - [name]: the identifier text as it appeared in source.
+     * - [context]: the syntactic position — see [Context].
+     * - [primaryPosition]: the source position of the enclosing statement
+     *   in §4.1 (per-expression positions land in §4.2 via ExpressionData.sourcePosition).
+     *
+     * **OQ-11.3=(a)**: emitted by [Elaboration] for expression-context identifiers;
+     * by [StatementVerifier] for assignment LHS, increment target, for-collection,
+     * and LOCAL function-call-statement positions.
+     */
+    data class UnknownIdentifier(
+        val name: String,
+        val context: Context,
+        override val primaryPosition: SourcePosition
+    ) : VerifyError() {
+        override val code = "WF1201"
+        override val message: String = when (context) {
+            Context.EXPRESSION         -> "Unknown identifier '$name'"
+            Context.ASSIGNMENT_LHS     -> "Cannot assign to undeclared identifier '$name'"
+            Context.INCREMENT_TARGET   -> "Cannot increment undeclared identifier '$name'"
+            Context.FOR_COLLECTION     -> "Unknown collection identifier '$name' in for-loop"
+            Context.ARRAY_INDEX_TARGET -> "Unknown array identifier '$name'"
+        }
+
+        enum class Context {
+            /** Identifier in any expression position (RHS of `=`, condition, arg, etc.). */
+            EXPRESSION,
+            /** Identifier as the LHS of `x = ...` / `x += ...`. */
+            ASSIGNMENT_LHS,
+            /** Identifier as the target of `x++` / `x--`. */
+            INCREMENT_TARGET,
+            /** Identifier as the collection in `for(x in collection)`. */
+            FOR_COLLECTION,
+            /** Identifier as the array target in `arr[index]`. */
+            ARRAY_INDEX_TARGET,
+        }
+    }
+
     companion object {
         /**
          * Convert a symbol-table-level [DuplicateDeclarationError] into a

@@ -7,6 +7,7 @@ import com.aaroncoplan.waterfall.compiler.symboltables.SymbolInfo
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolKind
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
 import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
+import com.aaroncoplan.waterfall.compiler.verifier.VerifyError.UnknownIdentifier
 
 /**
  * Expression-type elaboration pass (F1=C side-table, §5.4).
@@ -48,15 +49,22 @@ internal object Elaboration {
      * Elaborate all [ExpressionData] nodes reachable from [stmt] within [scope].
      * Must be called with the same scope context that was active when
      * [StatementVerifier.verifyStatement] ran for this [stmt].
+     *
+     * **OQ-11.3=(a) §4.1**: [errors] receives [UnknownIdentifier] for unresolved
+     * expression-context identifiers (IDENTIFIER, ARRAY_INDEX target, FUNCTION_CALL.LOCAL).
+     * The same [errors] list that [StatementVerifier.verifyStatement] writes into is passed
+     * here so verifier + elaboration errors accumulate in one place (see [ModuleVerifier]).
      */
     fun elaborateStatement(
         stmt: TranslatableStatement,
         scope: SymbolTable,
-        table: MutableMap<ExpressionData, WaterfallType>
+        table: MutableMap<ExpressionData, WaterfallType>,
+        errors: MutableList<VerifyError>
     ) {
+        val stmtPos = stmt.getSourcePosition()
         when (stmt) {
             is TypedVariableDeclarationAndAssignmentData -> {
-                elaborateExpression(stmt.value, scope, table)
+                elaborateExpression(stmt.value, scope, table, errors, stmtPos)
                 // Declare into scope so subsequent stmts in the SAME body can look
                 // up this var during elaboration. At top-level function scope the
                 // verifier already declared it → DeclareResult.Failure, ignored.
@@ -64,47 +72,47 @@ internal object Elaboration {
                     type = WaterfallType.fromSourceText(stmt.type),
                     isReadonly = stmt.isImmutable(),
                     kind = SymbolKind.Variable,
-                    sourcePosition = stmt.getSourcePosition()
+                    sourcePosition = stmtPos
                 ))
             }
 
             is UntypedVariableDeclarationAndAssignmentData -> {
-                elaborateExpression(stmt.value, scope, table)
+                elaborateExpression(stmt.value, scope, table, errors, stmtPos)
                 scope.declare(stmt.name, SymbolInfo(
                     type = WaterfallType.fromSourceText(stmt.inferredType),
                     isReadonly = stmt.isImmutable(),
                     kind = SymbolKind.Variable,
-                    sourcePosition = stmt.getSourcePosition()
+                    sourcePosition = stmtPos
                 ))
             }
 
             is VariableAssignmentData ->
-                elaborateExpression(stmt.value, scope, table)
+                elaborateExpression(stmt.value, scope, table, errors, stmtPos)
 
             is IncrementStatementData -> { /* no expression sub-tree */ }
 
             is IfBlockData -> {
-                elaborateExpression(stmt.ifBranch.condition, scope, table)
+                elaborateExpression(stmt.ifBranch.condition, scope, table, errors, stmtPos)
                 val thenScope = scope.enterScope()
-                stmt.ifBranch.body.forEach { elaborateStatement(it, thenScope, table) }
+                stmt.ifBranch.body.forEach { elaborateStatement(it, thenScope, table, errors) }
                 scope.exitScope(thenScope)
                 for (elif in stmt.elifBranches) {
-                    elaborateExpression(elif.condition, scope, table)
+                    elaborateExpression(elif.condition, scope, table, errors, stmtPos)
                     val elifScope = scope.enterScope()
-                    elif.body.forEach { elaborateStatement(it, elifScope, table) }
+                    elif.body.forEach { elaborateStatement(it, elifScope, table, errors) }
                     scope.exitScope(elifScope)
                 }
                 if (stmt.elseBody != null) {
                     val elseScope = scope.enterScope()
-                    stmt.elseBody.forEach { elaborateStatement(it, elseScope, table) }
+                    stmt.elseBody.forEach { elaborateStatement(it, elseScope, table, errors) }
                     scope.exitScope(elseScope)
                 }
             }
 
             is WhileBlockData -> {
-                elaborateExpression(stmt.condition, scope, table)
+                elaborateExpression(stmt.condition, scope, table, errors, stmtPos)
                 val bodyScope = scope.enterScope()
-                stmt.body.forEach { elaborateStatement(it, bodyScope, table) }
+                stmt.body.forEach { elaborateStatement(it, bodyScope, table, errors) }
                 scope.exitScope(bodyScope)
             }
 
@@ -115,17 +123,17 @@ internal object Elaboration {
                     type = WaterfallType.IntType,
                     isReadonly = false,
                     kind = SymbolKind.Argument,
-                    sourcePosition = stmt.getSourcePosition()
+                    sourcePosition = stmtPos
                 ))
-                stmt.body.forEach { elaborateStatement(it, bodyScope, table) }
+                stmt.body.forEach { elaborateStatement(it, bodyScope, table, errors) }
                 scope.exitScope(bodyScope)
             }
 
             is ReturnStatementData ->
-                stmt.value?.let { elaborateExpression(it, scope, table) }
+                stmt.value?.let { elaborateExpression(it, scope, table, errors, stmtPos) }
 
             is FunctionCallStatementData ->
-                elaborateFunctionCall(stmt.call, scope, table)
+                elaborateFunctionCall(stmt.call, scope, table, errors, stmtPos)
 
             is FunctionImplementationData -> error(
                 "FunctionImplementationData unreachable in Elaboration.elaborateStatement; " +
@@ -137,26 +145,46 @@ internal object Elaboration {
     /**
      * Elaborate a single [ExpressionData] node and all its sub-expressions.
      * Writes the resolved [WaterfallType] for this node into [table].
+     *
+     * **OQ-11.3=(a) §4.1**: emits [UnknownIdentifier] into [errors] for unresolved
+     * IDENTIFIER / ARRAY_INDEX target / FUNCTION_CALL.LOCAL in expression context.
+     * VoidType is still written to [table] for unresolved names to keep the table
+     * invariant (every elaborated node has an entry). The IrLowering Void assertion
+     * is the drift catch if IrLowering is somehow called on a rejected module.
+     *
+     * @param primaryPos the enclosing statement's source position (§4.1 fallback;
+     *   replaced by [ExpressionData.sourcePosition] in §4.2 once that field exists).
      */
     fun elaborateExpression(
         expr: ExpressionData,
         scope: SymbolTable,
-        table: MutableMap<ExpressionData, WaterfallType>
+        table: MutableMap<ExpressionData, WaterfallType>,
+        errors: MutableList<VerifyError>,
+        primaryPos: SourcePosition
     ) {
         val resolvedType: WaterfallType = when (expr.kind) {
 
             // Scope-dependent — need symbol table
             ExpressionData.Kind.IDENTIFIER -> {
                 val name = expr.literalText ?: return
-                scope.lookup(name)?.type ?: WaterfallType.VoidType
-                // null → IrLowering will throw (OQ-3=C): undeclared identifier
+                val resolved = scope.lookup(name)?.type
+                if (resolved == null) {
+                    // OQ-11.3=(a): emit structured error; keep VoidType in table for IrLowering drift assertion
+                    errors += UnknownIdentifier(name, UnknownIdentifier.Context.EXPRESSION, primaryPos)
+                }
+                resolved ?: WaterfallType.VoidType
             }
 
             ExpressionData.Kind.FUNCTION_CALL -> {
                 val fc = expr.functionCall ?: return
-                elaborateFunctionCall(fc, scope, table)
+                elaborateFunctionCall(fc, scope, table, errors, primaryPos)
                 if (fc.kind == FunctionCallData.Kind.LOCAL) {
-                    scope.lookup(fc.functionName)?.type ?: WaterfallType.VoidType
+                    val resolved = scope.lookup(fc.functionName)?.type
+                    if (resolved == null) {
+                        // OQ-11.3=(a): emit for expression-context LOCAL call (distinct from statement-level check)
+                        errors += UnknownIdentifier(fc.functionName, UnknownIdentifier.Context.EXPRESSION, primaryPos)
+                    }
+                    resolved ?: WaterfallType.VoidType
                 } else {
                     WaterfallType.VoidType  // MODULE/OBJECT: Void placeholder (R3)
                 }
@@ -164,10 +192,14 @@ internal object Elaboration {
 
             ExpressionData.Kind.ARRAY_INDEX -> {
                 val ai = expr.arrayIndex ?: return
-                elaborateExpression(ai.index, scope, table)
+                elaborateExpression(ai.index, scope, table, errors, primaryPos)
                 val arrayType = scope.lookup(ai.target)?.type
+                if (arrayType == null) {
+                    // OQ-11.3=(a): emit for unresolved array target
+                    errors += UnknownIdentifier(ai.target, UnknownIdentifier.Context.ARRAY_INDEX_TARGET, primaryPos)
+                }
                 if (arrayType is WaterfallType.ArrayType) arrayType.element
-                else WaterfallType.VoidType  // target not in scope → Void placeholder
+                else WaterfallType.VoidType  // target not in scope or not array → Void placeholder
             }
 
             // Constant-type — no scope lookup
@@ -178,7 +210,7 @@ internal object Elaboration {
             ExpressionData.Kind.STRING_LITERAL   -> WaterfallType.CharType
 
             ExpressionData.Kind.CAST -> {
-                expr.castOperand?.let { elaborateExpression(it, scope, table) }
+                expr.castOperand?.let { elaborateExpression(it, scope, table, errors, primaryPos) }
                 val targetText = expr.castTargetType ?: return
                 WaterfallType.fromSourceText(targetText)
             }
@@ -186,17 +218,16 @@ internal object Elaboration {
             ExpressionData.Kind.BINARY_OP -> {
                 val l = expr.left ?: return
                 val r = expr.right ?: return
-                elaborateExpression(l, scope, table)
-                elaborateExpression(r, scope, table)
+                elaborateExpression(l, scope, table, errors, primaryPos)
+                elaborateExpression(r, scope, table, errors, primaryPos)
                 // R4: no side-table entry for BinaryOp — IrLowering derives the type as
-                // `lIr.type` (left operand type, P10 placeholder). The entry would be dead
-                // code that the table never reads. Only the sub-expressions get entries.
+                // `lIr.type` (left operand type, P10 placeholder). P11 §4.3 adds the entry.
                 return
             }
 
             ExpressionData.Kind.ARRAY -> {
                 val elements = expr.array?.elements ?: emptyList()
-                elements.forEach { elaborateExpression(it, scope, table) }
+                elements.forEach { elaborateExpression(it, scope, table, errors, primaryPos) }
                 if (elements.isEmpty()) {
                     WaterfallType.VoidType  // Q3: empty array → Void placeholder
                 } else {
@@ -206,7 +237,7 @@ internal object Elaboration {
 
             ExpressionData.Kind.BUNDLE -> {
                 val elements = expr.bundle?.elements ?: emptyList()
-                elements.forEach { elaborateExpression(it, scope, table) }
+                elements.forEach { elaborateExpression(it, scope, table, errors, primaryPos) }
                 WaterfallType.VoidType  // P10 placeholder (R3)
             }
 
@@ -223,7 +254,20 @@ internal object Elaboration {
                         sourcePosition = LAMBDA_POS
                     ))
                 }
-                lam.body?.let { elaborateFunctionCall(it, lambdaScope, table) }
+                lam.body?.let { body ->
+                    elaborateFunctionCall(body, lambdaScope, table, errors, primaryPos)
+                    // OQ-11.3=(a): check function name for LOCAL calls in lambda body.
+                    // This path isn't covered by elaborateExpression(FUNCTION_CALL) since the
+                    // lambda body is a FunctionCallData, not an ExpressionData.
+                    if (body.kind == FunctionCallData.Kind.LOCAL &&
+                        lambdaScope.lookup(body.functionName) == null) {
+                        errors += UnknownIdentifier(
+                            body.functionName,
+                            UnknownIdentifier.Context.EXPRESSION,
+                            primaryPos
+                        )
+                    }
+                }
                 scope.exitScope(lambdaScope)
                 WaterfallType.VoidType  // Lambda type = Void placeholder
             }
@@ -234,11 +278,13 @@ internal object Elaboration {
     private fun elaborateFunctionCall(
         fc: FunctionCallData,
         scope: SymbolTable,
-        table: MutableMap<ExpressionData, WaterfallType>
+        table: MutableMap<ExpressionData, WaterfallType>,
+        errors: MutableList<VerifyError>,
+        primaryPos: SourcePosition
     ) {
-        fc.positionalArguments.forEach { elaborateExpression(it, scope, table) }
+        fc.positionalArguments.forEach { elaborateExpression(it, scope, table, errors, primaryPos) }
         // namedArguments is List<com.aaroncoplan.waterfall.parser.Pair<String, ExpressionData>>
         // — use .secondVal (not destructuring; the custom Pair has no component functions)
-        fc.namedArguments.forEach { elaborateExpression(it.secondVal, scope, table) }
+        fc.namedArguments.forEach { elaborateExpression(it.secondVal, scope, table, errors, primaryPos) }
     }
 }

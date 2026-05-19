@@ -1,8 +1,0 @@
-// module ControlFlowModule
-void describe(int n) {
-    if (n) {int a = 1;} else if (n) {int b = 2;} else {int c = 3;}
-    for (int item = 0; item < 0; item++) /* TODO(audit): for-in over things */ {int x = item;}
-    doSomething();
-    Other_helper(1, 2);
-}
-

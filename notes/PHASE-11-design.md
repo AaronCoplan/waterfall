@@ -567,14 +567,19 @@ P11's four sub-tasks, in dependency order. Total budget ≤1 week calendar.
   2. Add a post-fetch assertion: `if (waterfallType is WaterfallType.VoidType) error("IrLowering: identifier '$name' resolved to Void at ${fallbackPos.generateMessage()}; ModuleVerifier should have emitted UnknownIdentifier")`. Fires only if Elaboration wrote VoidType but the verifier somehow passed the module (drift bug). **The two assertions are different: the first catches missing entries; the second catches Void-poisoned entries.** (`fallbackPos` is the statement-level position available in §4.1; `expr.sourcePosition` replaces it in §4.2 once per-expression positions land.)
 
 **Files added (tests):**
-- `compiler/src/test/kotlin/com/aaroncoplan/waterfall/compiler/verifier/UnknownIdentifierTest.kt` — 6 mandatory + 1 emission-site coverage case (expression-context cases land with §4.2):
+- `compiler/src/test/kotlin/com/aaroncoplan/waterfall/compiler/verifier/UnknownIdentifierTest.kt` — 6 mandatory + 1 emission-site coverage + 2 regression-coverage cases (expression-context cases land with §4.2):
   - `assignmentLhsUnknownIdentifierFails` — `undeclared = 5`.
   - `incrementUnknownIdentifierFails` — `undeclared++`.
   - `forCollectionUnknownIdentifierFails` — `for(item in undeclared) { ... }`. OQ-11.6 = strict (Aaron, 2026-05-19): test passes with FOR_COLLECTION error.
   - `undeclaredLocalFunctionCallStatementFails` — `func main() { doSomething() }` where `doSomething` is not declared anywhere. Asserts `UnknownIdentifier` with name `"doSomething"`, context = `EXPRESSION` (OQ-11.6=strict emission site 4; LOCAL function-call-statement).
+  - `decrementUnknownIdentifierFails` — `undeclared--`. Same emission path as increment (INCREMENT_TARGET). Cheap one-liner regression guard.
+  - `moduleCallDoesNotEmitUnknownIdentifier` — `Other::method()` (MODULE-kind call). Guards PITFALL #17: only LOCAL kind is checked; MODULE/OBJECT calls must NOT emit UnknownIdentifier.
   - `declaredIdentifierStillResolves` — guards no over-rejection: `int x = 5; x = 6` continues to verify.
   - `topLevelVarReferencedInFunctionStillResolves` — guards module-scope visibility into function bodies.
   - `forwardFunctionReferenceStillResolves` — guards the §5.4 Pass 1.5 forward-reference fix.
+- `compiler/src/test/kotlin/com/aaroncoplan/waterfall/compiler/verifier/ExpressionVerifierWalkerSkeletonTest.kt` — 2 cases verifying §4.1 skeleton shape:
+  - `walkerDispatchesOnKindWithoutCrashing` — exercises multiple ExpressionData.Kind values with declared identifiers; asserts no UnknownIdentifier + verifies clean.
+  - `walkerReturnsEmptyListForIdentifierInSkeleton` — asserts that undeclared expression-context IDENTIFIER produces UnknownIdentifier from Elaboration (OQ-11.3=(a)), NOT from ExpressionVerifier (which is emptyList() for IDENTIFIER in §4.1).
 - `compiler/src/test/kotlin/com/aaroncoplan/waterfall/compiler/verifier/UnknownIdentifierPropertyTest.kt` (Kotest style per existing `SymbolTablePropertyTest.kt` template) — at N=10000:
   - **Property 1**: for any program where every identifier reference is declared in scope, no UnknownIdentifier error is emitted.
   - **Property 2**: for any program with at least one identifier reference where the name does NOT appear in any scope, at least one UnknownIdentifier is emitted with that name and the correct Context.
@@ -606,7 +611,7 @@ P11's four sub-tasks, in dependency order. Total budget ≤1 week calendar.
 **Files changed (production):**
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/statements/ExpressionData.kt` — add `@JvmField val sourcePosition: SourcePosition` derived from `ctx.start`. Update the init block to populate it.
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/VerifyError.kt` — add `CastTargetUnknown` (§2.3) and `LambdaParameterShadowing` (§2.4).
-- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/ExpressionVerifier.kt` — fully implement (no longer skeleton from §4.1):
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/ExpressionVerifier.kt` — fully implement (no longer skeleton from §4.1). **Inherited from §4.1 deferral**: the IDENTIFIER emission responsibility remains with Elaboration per OQ-11.3=(a); §4.2 adds real bodies to the other cases below:
   - For `Kind.CAST`: validate `expr.castTargetType` parses to non-ErrorType; recurse into operand. Emit `CastTargetUnknown` on ErrorType.
   - For `Kind.LAMBDA`: enter child scope, declare params (with type validation), walk body via `verifyExpression(arg, lambdaScope)`. Emit `LambdaParameterShadowing` on shadowing; emit `UnknownType` on bad parameter type.
   - For `Kind.BINARY_OP`: recurse into left + right.

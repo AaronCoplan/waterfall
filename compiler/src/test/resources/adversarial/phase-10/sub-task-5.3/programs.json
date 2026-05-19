@@ -108,9 +108,9 @@
     },
     {
       "name": "pos-08-for-scope-isolated-from-outer",
-      "source": "module Pos08 {\n    func go() {\n        for(item in things) {\n            int x = 1\n        }\n        int x = 2\n    }\n}\n",
+      "source": "module Pos08 {\n    func go(int[] things) {\n        for(item in things) {\n            int x = 1\n        }\n        int x = 2\n    }\n}",
       "category": "positive",
-      "rationale": "For body declares int x, then function scope declares int x after the loop. Same scope-isolation property as pos-07 but exercising StatementVerifier.verifyForBlock (not JoinAnalysis). Confirms for body scope does not persist."
+      "rationale": "For body declares int x, then function scope declares int x after the loop. Same scope-isolation property as pos-07 but exercising StatementVerifier.verifyForBlock (not JoinAnalysis). Confirms for body scope does not persist. P11 fix: `things`/`others` now declared as function parameter (OQ-11.6=strict)."
     },
     {
       "name": "pos-09-recursive-fibonacci",
@@ -150,15 +150,15 @@
     },
     {
       "name": "pos-15-same-iterator-name-in-sequential-fors",
-      "source": "module Pos15 {\n    func go() {\n        for(item in things) {\n            int x = 1\n        }\n        for(item in others) {\n            int x = 2\n        }\n    }\n}\n",
+      "source": "module Pos15 {\n    func go(int[] things, int[] others) {\n        for(item in things) {\n            int x = 1\n        }\n        for(item in others) {\n            int x = 2\n        }\n    }\n}",
       "category": "positive",
-      "rationale": "Same iterator name 'item' and same body var 'x' in two sequential for loops. Iterator variable is NOT declared into scope in P10 (OQ-5.3-2). Each for body gets an independent child scope. Both loops complete without collision. Exercises StatementVerifier.verifyForBlock twice sequentially."
+      "rationale": "Same iterator name 'item' and same body var 'x' in two sequential for loops. Iterator variable is NOT declared into scope in P10 (OQ-5.3-2). Each for body gets an independent child scope. Both loops complete without collision. Exercises StatementVerifier.verifyForBlock twice sequentially. P11 fix: `things`/`others` now declared as function parameter (OQ-11.6=strict)."
     },
     {
       "name": "pos-16-deeply-nested-if-while-for",
-      "source": "module Pos16 {\n    func go() {\n        if(1) {\n            int a = 1\n            while(a) {\n                int b = 2\n                for(item in things) {\n                    int c = 3\n                }\n            }\n        }\n    }\n}\n",
+      "source": "module Pos16 {\n    func go(int[] things) {\n        if(1) {\n            int a = 1\n            while(a) {\n                int b = 2\n                for(item in things) {\n                    int c = 3\n                }\n            }\n        }\n    }\n}",
       "category": "positive",
-      "rationale": "Four scope levels: function -> if -> while -> for. Each level declares a distinct var (a, b, c). Exercises all three non-function scope-construction callsites: JoinAnalysis.verifyIfBlock, JoinAnalysis.verifyWhileBlock, StatementVerifier.verifyForBlock. Validates stub body-walking through arbitrary depth."
+      "rationale": "Four scope levels: function -> if -> while -> for. Each level declares a distinct var (a, b, c). Exercises all three non-function scope-construction callsites: JoinAnalysis.verifyIfBlock, JoinAnalysis.verifyWhileBlock, StatementVerifier.verifyForBlock. Validates stub body-walking through arbitrary depth. P11 fix: `things`/`others` now declared as function parameter (OQ-11.6=strict)."
     },
     {
       "name": "pos-17-mutable-function-parameter",
@@ -192,9 +192,9 @@
     },
     {
       "name": "pos-22-deeply-nested-error-free-path",
-      "source": "module Pos22 {\n    func go() {\n        if(1) {\n            if(1) {\n                if(1) {\n                    while(1) {\n                        for(item in things) {\n                            int deepVar = 42\n                        }\n                    }\n                }\n            }\n        }\n    }\n}\n",
+      "source": "module Pos22 {\n    func go(int[] things) {\n        if(1) {\n            if(1) {\n                if(1) {\n                    while(1) {\n                        for(item in things) {\n                            int deepVar = 42\n                        }\n                    }\n                }\n            }\n        }\n    }\n}",
       "category": "positive",
-      "rationale": "Five scope levels deep with no errors. Validates the stub body-walking recurses through arbitrary nesting without false positives. Tests that JoinAnalysis and verifyForBlock correctly propagate empty error lists upward."
+      "rationale": "Five scope levels deep with no errors. Validates the stub body-walking recurses through arbitrary nesting without false positives. Tests that JoinAnalysis and verifyForBlock correctly propagate empty error lists upward. P11 fix: `things`/`others` now declared as function parameter (OQ-11.6=strict)."
     },
     {
       "name": "pos-23-array-typed-parameter",
@@ -210,9 +210,9 @@
     },
     {
       "name": "pos-25-while-body-var-same-name-as-sibling-for-var",
-      "source": "module Pos25 {\n    func go() {\n        while(1) {\n            int tmp = 1\n        }\n        for(item in things) {\n            int tmp = 2\n        }\n    }\n}\n",
+      "source": "module Pos25 {\n    func go(int[] things) {\n        while(1) {\n            int tmp = 1\n        }\n        for(item in things) {\n            int tmp = 2\n        }\n    }\n}",
       "category": "positive",
-      "rationale": "Same var name 'tmp' in sequential while and for blocks. Each creates its own independent child scope (JoinAnalysis.verifyWhileBlock and StatementVerifier.verifyForBlock respectively). The scopes don't overlap. Exercises scope isolation across both loop kinds."
+      "rationale": "Same var name 'tmp' in sequential while and for blocks. Each creates its own independent child scope (JoinAnalysis.verifyWhileBlock and StatementVerifier.verifyForBlock respectively). The scopes don't overlap. Exercises scope isolation across both loop kinds. P11 fix: `things`/`others` now declared as function parameter (OQ-11.6=strict)."
     }
   ],
   "negative_entries": [

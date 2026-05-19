@@ -95,7 +95,11 @@ internal object StatementVerifier {
         scope: SymbolTable
     ): List<VerifyError> {
         val info = scope.lookup(s.name)
-            ?: return emptyList()  // P10 doesn't error on unknown LHS — P11 closes this gap
+            ?: return listOf(VerifyError.UnknownIdentifier(
+                name = s.name,
+                context = VerifyError.UnknownIdentifier.Context.ASSIGNMENT_LHS,
+                primaryPosition = s.getSourcePosition()
+            ))  // OQ-3=C closed: P11 rejects assignment to undeclared identifier
         return if (info.isReadonly) {
             listOf(VerifyError.AssignToReadonly(
                 name = s.name,
@@ -110,7 +114,11 @@ internal object StatementVerifier {
         scope: SymbolTable
     ): List<VerifyError> {
         val info = scope.lookup(s.name)
-            ?: return emptyList()
+            ?: return listOf(VerifyError.UnknownIdentifier(
+                name = s.name,
+                context = VerifyError.UnknownIdentifier.Context.INCREMENT_TARGET,
+                primaryPosition = s.getSourcePosition()
+            ))  // OQ-3=C closed: P11 rejects increment of undeclared identifier
         return if (info.isReadonly) {
             listOf(VerifyError.IncrementOfReadonly(
                 name = s.name,
@@ -132,10 +140,23 @@ internal object StatementVerifier {
      *
      * R2 fix (post-review skeptic): the iterator variable IS declared into the body
      * scope as [SymbolKind.Argument] with [WaterfallType.IntType] (implicit-int per
-     * the existing ForBlockData convention). P11 will infer the proper element type
+     * the existing ForBlockData convention). P11 §4.3 will infer the proper element type
      * from the collection expression.
+     *
+     * OQ-11.6=strict (P11 §4.1): check that the collection name resolves. Emit
+     * [VerifyError.UnknownIdentifier] with [VerifyError.UnknownIdentifier.Context.FOR_COLLECTION]
+     * on null lookup; continue body walk regardless (best-effort per §2.2 emission site #4).
      */
     internal fun verifyForBlock(s: ForBlockData, scope: SymbolTable): List<VerifyError> {
+        val errors = mutableListOf<VerifyError>()
+        // OQ-11.6=strict: reject undeclared collection name
+        if (scope.lookup(s.collectionName) == null) {
+            errors += VerifyError.UnknownIdentifier(
+                name = s.collectionName,
+                context = VerifyError.UnknownIdentifier.Context.FOR_COLLECTION,
+                primaryPosition = s.getSourcePosition()
+            )
+        }
         val bodyScope = scope.enterScope()
         // Declare the iterator into the body scope (R2 fix; IntType per P10 implicit-int)
         bodyScope.declare(s.iteratorName, SymbolInfo(
@@ -144,7 +165,6 @@ internal object StatementVerifier {
             kind = SymbolKind.Argument,
             sourcePosition = s.getSourcePosition()
         ))
-        val errors = mutableListOf<VerifyError>()
         s.body.forEach { errors += verifyStatement(it, bodyScope) }
         scope.exitScope(bodyScope)  // snapshot returned but not consumed (P12 join)
         return errors
@@ -160,11 +180,27 @@ internal object StatementVerifier {
         emptyList()  // TODO(P11): check return expression type against enclosing function's return type
 
     /**
-     * Function-call statement. P10 no-op — arg-type checking is P11 work.
+     * Function-call statement.
+     *
+     * OQ-11.6=strict (P11 §4.1): for LOCAL calls, check that the function name resolves.
+     * Emits [VerifyError.UnknownIdentifier] with [VerifyError.UnknownIdentifier.Context.EXPRESSION]
+     * on null lookup. MODULE and OBJECT calls are not validated here (cross-module visibility is P11.5+).
+     *
+     * Full argument-type checking is P11 §4.2+ work (OQ-11.5 deferred).
      */
     private fun verifyFunctionCallStatement(
         s: FunctionCallStatementData,
         scope: SymbolTable
-    ): List<VerifyError> =
-        emptyList()  // TODO(P11): check argument types against callee's parameter list
+    ): List<VerifyError> {
+        // OQ-11.6=strict: reject undeclared LOCAL function name at statement level
+        if (s.call.kind == FunctionCallData.Kind.LOCAL &&
+            scope.lookup(s.call.functionName) == null) {
+            return listOf(VerifyError.UnknownIdentifier(
+                name = s.call.functionName,
+                context = VerifyError.UnknownIdentifier.Context.EXPRESSION,
+                primaryPosition = s.getSourcePosition()
+            ))
+        }
+        return emptyList()
+    }
 }

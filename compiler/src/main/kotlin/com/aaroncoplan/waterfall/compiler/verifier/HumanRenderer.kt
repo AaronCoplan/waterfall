@@ -37,6 +37,9 @@ object HumanRenderer : ErrorRenderer {
                 "Cannot freeze undeclared binding '${error.name}'"
             is VerifyError.AlreadyReadonly ->
                 "Binding '${error.name}' is already readonly"
+            // P11 §4.1 — WF12xx identifier-resolution errors
+            is VerifyError.UnknownIdentifier ->
+                error.message  // context-specific message lives on the variant (§2.2)
         }
         return "$msg in $pos"
     }
