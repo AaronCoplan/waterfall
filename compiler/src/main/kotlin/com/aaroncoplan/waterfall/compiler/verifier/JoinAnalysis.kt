@@ -38,6 +38,12 @@ internal object JoinAnalysis {
      * Verify an if/elif/else block. Branch bodies are walked for declare/
      * lookup/immutability errors. Readonly intersection is TODO(P12).
      *
+     * **Asymmetry with [Elaboration]:** [Elaboration.elaborateStatement] for an
+     * IfBlock walks the CONDITION expression (in parent scope) before entering each
+     * branch child scope. This verifier does NOT walk the condition — condition
+     * type-checking is P11 work. P11+ should evaluate the condition BEFORE entering
+     * the child scope to keep verifier/elaboration scope walks aligned.
+     *
      * PITFALL #11 (implicit-else note): in the full P12 implementation, an
      * absent `else` clause adds an implicit non-terminating empty-shadow
      * predecessor to the intersection. P10's stub doesn't run the intersection,

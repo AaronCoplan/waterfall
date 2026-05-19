@@ -140,9 +140,13 @@ Templates from `notes/team-output/00-EXECUTION-PLAYBOOK.md` §2.
       `resolvedType: WaterfallType?` at verify time; IrLowering reads from there.
       Standard elaboration pattern; P11 inference builds on top.
       **Skeptic-recommended option.** Aaron decides at §5.4 plan-mode.
-  - **OQ-3=C identifier-resolution gap:** `verifyVarAssignment` and
-    `verifyIncrement` silently no-op on null lookup. §5.4 IrLowering owns the
-    escalation branch (documented in §5.3 carry-forward at spec line ~2420).
+  - **OQ-3=C + OQ-5.4-1 (identifier-resolution gap + F1=C interaction):**
+    `verifyVarAssignment` and `verifyIncrement` silently no-op on null lookup.
+    §5.4 Elaboration stores `WaterfallType.VoidType` for undeclared names (not
+    absent); IrLowering produces `IrExpression.Identifier(name, IrType.Void)`
+    without throwing — preserves differential-oracle invariant. P11 closes the
+    gap with `VerifyError.UnknownIdentifier`. (Leg 3 Agent caught the
+    divergence from plan-back v1 "throw if absent" during fixture validation.)
   - **`commitReadonly` per-name lookup perf** (§5.2 carry-forward): still
     applicable; revisit if §5.5 backend migration makes it hot.
   - **`exitScope` snapshot consumers:** JoinAnalysis and StatementVerifier
@@ -152,6 +156,41 @@ Templates from `notes/team-output/00-EXECUTION-PLAYBOOK.md` §2.
   the verifier guard checked `ErrorType` but not `VoidType`, so `void x = 5`
   compiled cleanly; bug + regression tests landed atomically in commit `1d64587`
   before the fixture committed.
+
+---
+
+## Sub-task 5.4 outcome — 2026-05-18 (PR opening; awaiting Aaron merge)
+
+- **Triad:** Leg 1 = 4 IrType round-trip properties at N=10,000 ✓ •
+  Leg 2 = zero golden diffs ✓ + 3 golden-IR oracles ✓ •
+  Leg 3 = 77/77 adversarial (37 compile_success + 24 verify_fail + 16
+  lower_fail; fresh-context Agent reading §3 + §5.4 + branch diff).
+  **Leg 3 caught OQ-5.4-1 (Elaboration stores VoidType, not absent, for
+  undeclared names — preserved UX per OQ-3=C; spec-synced commit 7a).**
+- **Plan-mode iterations:** 1 (v1 plan-back covered all 7 mandatory pre-
+  review skeptic edits + 5 SA resolutions; cleanly acked)
+- **Pre-review skeptic:** 3 FATAL + 7 RISK + 6 MINOR → all resolved via
+  F1=C (side-table elaboration), Q3=Void, OQ-3=C handoff + 7 spec edits
+- **Post-review skeptic:** 0 FATAL + 5 RISK + 6 MINOR → R1–R5 + M1/M2/M4/M5
+  applied as commit 8; M3 (LAMBDA_POS) + M6 (projectRoot normalization)
+  deferred-with-comment; R3 (forward function reference bug) fixed + regression test
+- **Spec edits during sub-task:** 7 mandatory (commit 1) + 1 OQ-5.4-1 sync (commit 7a) +
+  2 from commit 8 (§3.7 lowerModule KDoc + §5.4 source-position TODO note)
+- **Commits landed (9):** spec(7 edits), feat(elaboration + VerifyResult.resolvedTypes),
+  feat(ir/ skeleton), feat(IrLowering.lowerModule), test(IrLoweringTest golden-IR),
+  test(IrTypeRoundTripPropertyTest 4 props), spec(OQ-5.4-1 sync),
+  test(Sub54AdversarialTest + 77-entry fixture), refactor(post-skeptic R1–R5 + MINOR)
+- **Carry-forward into §5.5:**
+  - Pre-condition guard: backends MUST check `verifyResult.isSuccessful` before IrLowering
+  - Source position granularity: per-expression positions collapse to parent statement (P11)
+  - BinaryOp.type is left operand type (P10 placeholder; P11 fixes for comparison ops)
+  - FunctionCall.type for MODULE/OBJECT kinds is always Void (P10 placeholder)
+  - Forward function references now resolve correctly via Pass 1.5 (commit 8 R3 bug fix)
+- **One sentence on what surprised:** the Elaboration two-pass approach required
+  re-declaring variables into nested child scopes (if/while/for bodies) so subsequent
+  statements in the same scope could look up earlier-declared variables during
+  elaboration — the verifier's child scopes are discarded before elaboration runs,
+  so elaboration must reconstruct them independently.
 
 ---
 

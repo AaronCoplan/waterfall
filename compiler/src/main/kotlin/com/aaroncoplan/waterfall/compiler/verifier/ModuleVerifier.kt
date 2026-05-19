@@ -1,5 +1,6 @@
 package com.aaroncoplan.waterfall.compiler.verifier
 
+import com.aaroncoplan.waterfall.compiler.statements.ExpressionData
 import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
@@ -23,32 +24,37 @@ internal object ModuleVerifier {
 
     fun verifyModule(module: ModuleAst, symbolTable: SymbolTable): VerifyResult {
         val errors = mutableListOf<VerifyError>()
+        // F1=C: build the resolvedTypes side-table during the same scope walk.
+        // IdentityHashMap ensures ExpressionData instances are keyed by object identity.
+        val resolvedTypes = java.util.IdentityHashMap<ExpressionData, WaterfallType>()
 
         // Pass 1: top-level variables
         for (v in module.topLevelVariables) {
             errors += StatementVerifier.verifyStatement(v, symbolTable)
+            Elaboration.elaborateStatement(v, symbolTable, resolvedTypes)
         }
 
-        // Pass 2: function declarations
+        // Pass 1.5: pre-declare ALL function signatures into the module scope BEFORE
+        // walking any function body. This ensures forward references and mutual recursion
+        // are visible to Elaboration when it looks up callee return types. Without this,
+        // a() calling b() (declared after a) resolves b's return type as VoidType.
         for (f in module.functions) {
-            errors += verifyFunctionDeclaration(f, symbolTable)
+            errors += preDeclareFunction(f, symbolTable)
         }
 
-        return VerifyResult(errors)
+        // Pass 2: function body walks. Self-declare is already done in Pass 1.5.
+        for (f in module.functions) {
+            errors += verifyFunctionDeclaration(f, symbolTable, resolvedTypes)
+        }
+
+        return VerifyResult(errors, resolvedTypes)
     }
 
-    private fun verifyFunctionDeclaration(
+    /** Pre-declare a function signature into [moduleScope] (Pass 1.5). */
+    private fun preDeclareFunction(
         f: FunctionImplementationData,
         moduleScope: SymbolTable
     ): List<VerifyError> {
-        val errors = mutableListOf<VerifyError>()
-
-        // Validate return type
-        if (f.returnType != null && !PrimitiveTypes.isPrimitiveOrArray(f.returnType)) {
-            errors += VerifyError.UnknownType(f.returnType, f.getSourcePosition())
-        }
-
-        // Self-declaration into the module scope (enables recursion + duplicate detection)
         val selfResult = moduleScope.declare(f.name, SymbolInfo(
             type = WaterfallType.forReturnType(f.returnType),
             isReadonly = true,  // PITFALL #7: functions implicitly readonly
@@ -59,9 +65,24 @@ internal object ModuleVerifier {
             }),
             sourcePosition = f.getSourcePosition()
         ))
-        if (selfResult is DeclareResult.Failure) {
-            errors += VerifyError.fromSymbolTable(selfResult.error, topLevel = true)
+        return if (selfResult is DeclareResult.Failure) {
+            listOf(VerifyError.fromSymbolTable(selfResult.error, topLevel = true))
+        } else emptyList()
+    }
+
+    private fun verifyFunctionDeclaration(
+        f: FunctionImplementationData,
+        moduleScope: SymbolTable,
+        resolvedTypes: java.util.IdentityHashMap<ExpressionData, WaterfallType>
+    ): List<VerifyError> {
+        val errors = mutableListOf<VerifyError>()
+
+        // Validate return type
+        if (f.returnType != null && !PrimitiveTypes.isPrimitiveOrArray(f.returnType)) {
+            errors += VerifyError.UnknownType(f.returnType, f.getSourcePosition())
         }
+
+        // Self-declare already done in Pass 1.5 — do NOT repeat it here.
 
         // Function body: enter a child scope, declare args, verify statements
         val functionScope = moduleScope.enterScope()
@@ -82,6 +103,7 @@ internal object ModuleVerifier {
         }
         for (stmt in f.statements) {
             errors += StatementVerifier.verifyStatement(stmt, functionScope)
+            Elaboration.elaborateStatement(stmt, functionScope, resolvedTypes)
         }
         moduleScope.exitScope(functionScope)
 
