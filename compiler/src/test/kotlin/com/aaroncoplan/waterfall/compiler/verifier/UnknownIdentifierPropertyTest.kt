@@ -53,14 +53,15 @@ class UnknownIdentifierPropertyTest {
      */
     private val arbUndeclaredName: Arb<String> = Arb.of((1..9999).map { "u$it" })
 
-    /** The 6 syntactic positions where UnknownIdentifier can be emitted in §4.1. */
+    /** The 7 syntactic positions where UnknownIdentifier can be emitted in §4.1. */
     private enum class ErrorForm {
-        ASSIGNMENT_LHS,       // StatementVerifier.verifyVarAssignment
-        INCREMENT_TARGET,     // StatementVerifier.verifyIncrement
-        FOR_COLLECTION,       // StatementVerifier.verifyForBlock (OQ-11.6=strict)
-        LOCAL_CALL,           // StatementVerifier.verifyFunctionCallStatement (OQ-11.6=strict)
-        EXPRESSION_RHS,       // Elaboration.elaborateExpression IDENTIFIER (OQ-11.3=(a))
-        EXPRESSION_CONDITION, // Elaboration.elaborateExpression IDENTIFIER (OQ-11.3=(a))
+        ASSIGNMENT_LHS,        // StatementVerifier.verifyVarAssignment
+        INCREMENT_TARGET,      // StatementVerifier.verifyIncrement
+        FOR_COLLECTION,        // StatementVerifier.verifyForBlock (OQ-11.6=strict)
+        LOCAL_CALL,            // StatementVerifier.verifyFunctionCallStatement (OQ-11.6=strict)
+        EXPRESSION_RHS,        // Elaboration.elaborateExpression IDENTIFIER (OQ-11.3=(a))
+        EXPRESSION_CONDITION,  // Elaboration.elaborateExpression IDENTIFIER (OQ-11.3=(a))
+        LAMBDA_BODY_LOCAL_CALL // Elaboration.elaborateExpression LAMBDA body name check (OQ-11.3=(a))
     }
 
     private val arbErrorForm: Arb<ErrorForm> = Arb.of(ErrorForm.entries)
@@ -91,6 +92,11 @@ class UnknownIdentifierPropertyTest {
             "module M {\n    func f() {\n        int x = $name\n    }\n}"
         ErrorForm.EXPRESSION_CONDITION ->
             "module M {\n    func f() {\n        if($name) {\n            return\n        }\n    }\n}"
+        // Fix 6 (Seed B#4): lambda body LOCAL call coverage — tests the two-level check in
+        // Elaboration.elaborateExpression LAMBDA: elaborateFunctionCall processes args, then
+        // a separate check emits UnknownIdentifier for the undeclared function name itself.
+        ErrorForm.LAMBDA_BODY_LOCAL_CALL ->
+            "module M {\n    func f() {\n        lam := (int x) ==> $name(x)\n    }\n}"
     }
 
     // ------------------------------------------------------------------ //

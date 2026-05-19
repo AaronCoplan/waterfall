@@ -1,7 +1,10 @@
 package com.aaroncoplan.waterfall.compiler.verifier
 
+import com.aaroncoplan.waterfall.compiler.statements.ForBlockData
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
+import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
+import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
 import com.aaroncoplan.waterfall.parser.FileParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -277,6 +280,87 @@ class UnknownIdentifierTest {
         assertTrue(
             "Forward-declared function callee() should resolve without UnknownIdentifier; got: $unknownIdErrors",
             unknownIdErrors.isEmpty()
+        )
+    }
+
+    // ------------------------------------------------------------------ //
+    // Fix 7 (Seed B#5) — OQ-11.1=best-effort accumulation guard
+    // ------------------------------------------------------------------ //
+
+    /**
+     * OQ-11.1=(a) best-effort: multiple undeclared names in a single function body
+     * each emit their own [VerifyError.UnknownIdentifier]. The verifier accumulates
+     * all errors rather than short-circuiting at the first failure.
+     *
+     * Covers neg-12 in Sub41AdversarialTest which asserts only the first error's
+     * substring — this test asserts the FULL accumulation count and name set.
+     */
+    @Test fun multipleEmissionsAccumulatePerBestEffort() {
+        val module = parseAndAst("""
+            module Foo {
+                func go() {
+                    alpha = 1
+                    beta = 2
+                    gamma = 3
+                }
+            }
+        """.trimIndent())
+        val result = Verifier.verifyModule(module, SymbolTable())
+        assertFalse("Expected verify failure for 3 undeclared assignment LHSes", result.isSuccessful)
+        val unknownIds = result.errors.filterIsInstance<VerifyError.UnknownIdentifier>()
+        assertEquals("OQ-11.1=best-effort: all 3 undeclared names must be accumulated", 3, unknownIds.size)
+        val names = unknownIds.map { it.name }.toSet()
+        assertEquals(
+            "All 3 undeclared names should appear exactly once in the error list",
+            setOf("alpha", "beta", "gamma"),
+            names
+        )
+        assertTrue("All 3 errors should be ASSIGNMENT_LHS context",
+            unknownIds.all { it.context == VerifyError.UnknownIdentifier.Context.ASSIGNMENT_LHS })
+    }
+
+    // ------------------------------------------------------------------ //
+    // Fix 3 regression guard — ForBlock iterator type when collection undeclared
+    // ------------------------------------------------------------------ //
+
+    /**
+     * Fix 3 regression guard: when the for-loop collection is undeclared, the
+     * iterator variable must be declared with [WaterfallType.VoidType] (per §2.5
+     * table) rather than `IntType`. Prevents §4.3's iterator inference from reading
+     * an incorrect `IntType` from the side-table for undeclared-collection loops.
+     *
+     * Verifies `resolvedTypes[itemRef] == VoidType` where `itemRef` is the
+     * [ExpressionData] for the iterator identifier used in the for-body.
+     */
+    @Test fun forCollectionUndeclaredIteratorResolvesToVoid() {
+        val module = parseAndAst("""
+            module Foo {
+                func go() {
+                    for(item in undeclaredCollection) {
+                        int x = item
+                    }
+                }
+            }
+        """.trimIndent())
+        val result = Verifier.verifyModule(module, SymbolTable())
+        assertFalse("Expected verify failure: collection 'undeclaredCollection' is undeclared", result.isSuccessful)
+
+        // Verify FOR_COLLECTION error is present
+        val collectionErrors = result.errors.filterIsInstance<VerifyError.UnknownIdentifier>()
+            .filter { it.context == VerifyError.UnknownIdentifier.Context.FOR_COLLECTION }
+        assertTrue("Expected FOR_COLLECTION error for 'undeclaredCollection'", collectionErrors.isNotEmpty())
+        assertEquals("undeclaredCollection", collectionErrors[0].name)
+
+        // Fix 3 regression guard: iterator 'item' must resolve to VoidType in resolvedTypes
+        // since the collection is undeclared (§2.5 table: undeclared collection → VoidType iterator).
+        // The body statement 'int x = item' gives us the ExpressionData for the iterator reference.
+        val forBlock = module.functions[0].statements[0] as ForBlockData
+        val bodyStmt = forBlock.body[0] as TypedVariableDeclarationAndAssignmentData
+        val itemRef = bodyStmt.value  // ExpressionData(Kind.IDENTIFIER, "item")
+        assertEquals(
+            "Fix 3: iterator 'item' must resolve to VoidType when collection is undeclared (§2.5 table)",
+            WaterfallType.VoidType,
+            result.resolvedTypes[itemRef]
         )
     }
 }

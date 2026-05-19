@@ -102,9 +102,6 @@ sealed class VerifyError {
 
     /**
      * Unknown / unrecognized type text. Error code WF1101.
-     */
-    /**
-     * Unknown / unrecognized type text. Error code WF1101.
      *
      * Note: the `message` field is the short canonical form. [HumanRenderer]
      * appends the "Known: ..." suffix; consumers that need the verbose form

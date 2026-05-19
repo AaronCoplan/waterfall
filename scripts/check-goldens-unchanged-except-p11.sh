@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 # §7.2: P11 conditional golden gate. Allows the documented set to differ;
 # enforces byte-identical everywhere else.
+#
+# Usage:
+#   ./scripts/check-goldens-unchanged-except-p11.sh [TARGET]
+#
+# TARGET defaults to 'master' (compares working tree against merge base) — the
+# right choice for CI and manual gating on the feature branch.
+# Pass a specific SHA (e.g., 8c3dbb1) to compare against a per-commit baseline
+# during §4.1 development.
+#
+# NOTE: Full CI wiring (pre-commit hook or Gradle task) is a phase-exit
+# deliverable per spec §7.6 checklist. For §4.1, only this script's correct
+# default behavior is required; CI integration lands at P11 phase exit.
+#
 # Run at every commit. Exits non-zero if any UNDOCUMENTED golden has changed.
 
 # Documented-to-change set (per §7.2 of PHASE-11-design.md).
@@ -16,8 +29,8 @@ DOCUMENTED_CHANGES=(
   "compiler/src/test/resources/golden/js/WhileModule.expected"
 )
 
-# git diff against HEAD (pre-commit) or master (CI):
-TARGET="${1:-HEAD}"
+# git diff against master (default) or a specific SHA passed as first arg:
+TARGET="${1:-master}"
 
 # All goldens NOT in the documented set: require byte-identical.
 DIFF_ARGS=(--exit-code -- compiler/src/test/resources/golden/)

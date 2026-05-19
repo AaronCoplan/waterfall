@@ -117,10 +117,19 @@ internal object Elaboration {
             }
 
             is ForBlockData -> {
+                // §2.5 table: iterator type depends on collection's resolved type.
+                // In §4.1, the full §4.3 inference table is not yet wired; P11 §4.1 handles:
+                //   - undeclared collection → VoidType (Fix 3: prevents §4.3 iterator inference
+                //     from reading IntType where VoidType was intended; also signals the
+                //     OQ-11.6=strict rejection to any future consumer)
+                //   - declared collection (any type) → IntType (P10 implicit-int preserved;
+                //     §4.3 will refine to actual element type when inference lands)
+                val collectionType = scope.lookup(stmt.collectionName)?.type
+                val iteratorType = if (collectionType == null) WaterfallType.VoidType else WaterfallType.IntType
                 val bodyScope = scope.enterScope()
                 // Declare iterator so body expressions can resolve it
                 bodyScope.declare(stmt.iteratorName, SymbolInfo(
-                    type = WaterfallType.IntType,
+                    type = iteratorType,
                     isReadonly = false,
                     kind = SymbolKind.Argument,
                     sourcePosition = stmtPos

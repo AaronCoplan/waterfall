@@ -1,8 +1,10 @@
 package com.aaroncoplan.waterfall.compiler.verifier
 
 import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
+import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData
 import com.aaroncoplan.waterfall.compiler.symboltables.SymbolTable
 import com.aaroncoplan.waterfall.parser.FileParser
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -86,8 +88,21 @@ class ExpressionVerifierWalkerSkeletonTest {
                 }
             }
         """.trimIndent())
+
+        // Fix 4 (Seed A#1): Unit assertion — ExpressionVerifier IDENTIFIER case must return
+        // emptyList() in §4.1 skeleton. Directly tests the skeleton's own output, not the
+        // full pipeline. Verifies the OQ-11.3=(a) boundary: IDENTIFIER emission lives in
+        // Elaboration, ExpressionVerifier returns emptyList() for IDENTIFIER in §4.1.
+        val stmtData = module.functions[0].statements[0] as TypedVariableDeclarationAndAssignmentData
+        val identifierExpr = stmtData.value  // ExpressionData(Kind.IDENTIFIER, "undeclaredName")
+        assertEquals(
+            "ExpressionVerifier.verifyExpression(IDENTIFIER, emptyScope) must return emptyList() in §4.1 skeleton",
+            emptyList<VerifyError>(),
+            ExpressionVerifier.verifyExpression(identifierExpr, SymbolTable())
+        )
+
+        // Full-pipeline assertion — the error IS emitted (from Elaboration), but NOT from ExpressionVerifier
         val result = Verifier.verifyModule(module, SymbolTable())
-        // The error IS emitted (from Elaboration), but NOT from ExpressionVerifier
         assertFalse(
             "An undeclared identifier in expression context must be rejected",
             result.isSuccessful
