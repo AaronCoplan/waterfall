@@ -194,6 +194,59 @@ Templates from `notes/team-output/00-EXECUTION-PLAYBOOK.md` §2.
 
 ---
 
+## Sub-task 5.5 outcome — 2026-05-19 (PR opening; awaiting Aaron merge)
+
+- **Triad:** Leg 1 = N/A (§5.5 is backend code-generation; no new property family applies;
+  existing 4 IrType property tests still pass) • Leg 2 = zero golden diffs at every commit ✓
+  enforced by `scripts/check-goldens-unchanged.sh` • Leg 3 = N/A (per Aaron's D4 —
+  existing 66 golden tests × 3 backends = 198 byte-equivalence checks are the §5.5 oracle)
+- **Plan-mode iterations:** 1 (engineer's v1 plan-back covered all 9 mandatory pre-review
+  skeptic edits + 4 SA resolutions; cleanly acked)
+- **Pre-review skeptic:** 4 FATAL + 7 RISK + 5 MINOR + 4 open structural questions →
+  Aaron resolved 5 decisions (D1=B + D3=throw + D4=skip-fixture + D4=Main.kt + D5=pause);
+  all FATAL absorbed via 9 mandatory spec edits in commit 1
+- **Post-review skeptic:** 0 FATAL + 5 RISK + 7 MINOR → R5 + M2/M5/M7 applied as commit 5;
+  R1/R2/R3/R4 documented as silent behavior changes (see below); remaining MINOR deferred
+- **Commits landed (5):** spec(9 mandatory edits + golden-gate script), refactor(atomic
+  CodeGenerator swap + JS migration + Python/C stubs + Main.kt orchestration), refactor(Python
+  full IR migration + IrToDataBridge dropped early as unused), refactor(C full IR migration),
+  refactor(post-skeptic R5 + MINOR + log)
+- **Golden gate:** 198 byte-equivalence checks (66 golden tests × 3 backends) passed at every
+  commit. `scripts/check-goldens-unchanged.sh` enforces per-commit gate. No golden file was
+  ever touched — PITFALL #13 held throughout.
+
+### Silent behavior changes locked by this commit
+(Spec-aligned; no `.wf` example in the golden suite exercises these paths.)
+1. **Cast to unknown user type now crashes (was: soft TODO render)** — `IrLowering.lowerExpression`
+   for CAST throws `IllegalStateException` on ErrorType input. Pre-§5.5 emitted a TODO-annotated
+   placeholder. Spec-aligned per OQ-3=C; P11 closes when user-type validation lands.
+2. **C string array element type: `const char *` → `char *`** — Internally consistent with
+   scalar char emission. Pre-§5.5 inconsistency removed.
+3. **Python `Final` no longer in function bodies** — PEP 591 violation removed; only top-level
+   consts get `Final` per `notes/PHASE-10-design.md` §5.5. SA-1 fix.
+4. **C undeclared-identifier array element type: `int` → `void`** — Reads IR's resolved type
+   (Void per OQ-5.4-1). Both behaviors are wrong (undeclared identifiers aren't valid P10 input);
+   new behavior is more honest about the gap.
+
+### Carry-forward into §5.6
+- **`*Data.translate` cleanup** — 10 `*Data` classes have `translate` overrides replaced with
+  `error("dead in §5.5")` stubs. `Translatable.translate` interface method still exists.
+  §5.6 removes the interface method + all 10 dead stubs. Mechanical.
+- **§3.9 R6 default-interface-method consideration** — promoting `emitStatement` to a default
+  interface method would prevent a future fourth backend from silently bypassing the dispatcher
+  pattern. Out of §5.5 scope; consider at §5.6 cleanup time.
+- **BUS-FACTOR.md diagram** — updated in this commit (R5).
+- **Silent behavior changes R1–R4** — accepted as spec-aligned; P11 closes the cast-of-unknown-type
+  gap when user types land.
+
+### One sentence on what surprised
+The `IrToDataBridge` throwaway-helper concept — central to plan-back v1 — turned out to be unused
+in practice because inlining all expression rendering per backend in the temp stubs was simpler and
+produced byte-identical output; engineer identified and deleted the dead code in commit 3 rather than
+carrying it to commit 4.
+
+---
+
 ## Phase 10 retrospective — (pending)
 
 _Filled when the phase-exit ritual completes (playbook §2). Template:_

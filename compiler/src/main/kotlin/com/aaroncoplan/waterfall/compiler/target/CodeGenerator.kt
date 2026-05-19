@@ -10,8 +10,11 @@ import com.aaroncoplan.waterfall.compiler.ir.*
  * [emitReadonlyPromotion] throws in all P10 backends — the IR variant is
  * P12-deferred and must not reach the backend. (Aaron D3=throw decision.)
  *
- * Each backend should implement a private `emitStatement(s: IrStatement)` dispatcher
- * per the R6 spec note in §3.9. This replaces the old `it.translate(this)` pattern.
+ * Each backend SHOULD implement a private `emitStatement(s: IrStatement): String`
+ * dispatcher (per §3.9 R6 note) that routes to the appropriate `emit*` method.
+ * This replaces the old `it.translate(this)` pattern and prevents a future backend
+ * from accidentally bypassing the dispatcher. Consider promoting to a default
+ * interface method at §5.6 cleanup time if a fourth backend arrives. (M5)
  */
 interface CodeGenerator {
 

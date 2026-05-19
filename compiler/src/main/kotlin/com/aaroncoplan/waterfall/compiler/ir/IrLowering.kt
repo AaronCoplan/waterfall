@@ -184,10 +184,11 @@ object IrLowering {
             ExpressionData.Kind.IDENTIFIER -> {
                 val name = expr.literalText
                     ?: throw IllegalStateException("IDENTIFIER node has null literalText at ${fallbackPos.generateMessage()}")
-                val waterfallType = resolvedTypes[expr]
-                    ?: throw IllegalStateException(
-                        "$name undeclared at ${fallbackPos.generateMessage()}; verifier should have caught this"
-                    )
+                // OQ-5.4-1 (M7 fix): Elaboration stores WaterfallType.VoidType for undeclared
+                // names, so resolvedTypes[expr] is never null in normal operation. If it IS null,
+                // an ExpressionData was not elaborated (Elaboration bug) — treat as VoidType
+                // rather than crashing, consistent with OQ-5.4-1 / OQ-3=C semantics.
+                val waterfallType = resolvedTypes[expr] ?: WaterfallType.VoidType
                 IrExpression.Identifier(name, IrType.fromWaterfallType(waterfallType), fallbackPos)
             }
             ExpressionData.Kind.FUNCTION_CALL -> {

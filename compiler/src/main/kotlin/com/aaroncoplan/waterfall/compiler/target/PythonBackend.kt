@@ -173,7 +173,7 @@ class PythonBackend : CodeGenerator {
     // Interface methods — delegate to IR-aware helpers
     override fun emitExpression(e: IrExpression): String = emitIrExpression(e)
     override fun emitFunctionCall(c: IrExpression.FunctionCall): String = emitIrFunctionCall(c)
-    override fun emitLambda(l: IrExpression.Lambda): String = emitIrExpression(l)
+    override fun emitLambda(l: IrExpression.Lambda): String = emitIrExpression(l)  // M2: single source
     override fun emitArrayLiteral(a: IrExpression.ArrayLiteral): String =
         "[" + a.elements.joinToString(", ") { emitIrExpression(it) } + "]"
     override fun emitBundleLiteral(b: IrExpression.BundleLiteral): String =

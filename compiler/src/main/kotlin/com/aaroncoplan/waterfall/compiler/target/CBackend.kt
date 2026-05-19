@@ -210,7 +210,7 @@ class CBackend : CodeGenerator {
     // Interface method delegations
     override fun emitExpression(e: IrExpression): String = emitIrExpression(e)
     override fun emitFunctionCall(c: IrExpression.FunctionCall): String = emitIrFunctionCall(c)
-    override fun emitLambda(l: IrExpression.Lambda): String = "/* TODO(audit): lambda */ NULL"
+    override fun emitLambda(l: IrExpression.Lambda): String = emitIrExpression(l)  // M2: single source
     override fun emitArrayLiteral(a: IrExpression.ArrayLiteral): String = emitIrExpression(a)
     override fun emitBundleLiteral(b: IrExpression.BundleLiteral): String = "/* TODO(audit): bundle */ {0}"
 

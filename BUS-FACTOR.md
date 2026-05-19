@@ -33,8 +33,8 @@ pipeline yet — `wfpm` (the package manager) is a P13 deliverable.
 
 ## (b) Compiler pipeline at a glance
 
-The pipeline today (pre-P10). P10 will introduce a typed IR and a central
-`Verifier` class; this documents what exists now.
+Post-P10 pipeline (§5.3–§5.5 complete). The old `*Data.verify` + `*Data.translate`
+dispatch has been replaced by a central Verifier, an IR lowering pass, and IR-consuming backends.
 
 ```
 parser/src/main/antlr/
@@ -48,16 +48,23 @@ com.aaroncoplan.waterfall.parser.FileParser    wraps ANTLR; returns ParseResult
 compiler/.../statements/ModuleAst             assembles top-level vars + functions
           │                                   from the parse tree into typed lists
           │
-          ├─ *Data.verify(SymbolTable)         distributed verification — no central
-          │    → VerificationResult            Verifier class today; each *Data node
-          │                                   calls verify() on itself
+          ▼
+compiler/.../verifier/Verifier                central verifier; mutates SymbolTable;
+          │  .verifyModule(ModuleAst,          returns VerifyResult (errors +
+          │   SymbolTable)                     resolvedTypes side-table for lowering)
+          │    → VerifyResult
           │
-          └─ *Data.translate(CodeGenerator)   per-node translation dispatch; each
-               → String fragment              *Data calls the matching emit* method
-                                              on the backend
-
-compiler/.../target/CodeGenerator             interface; one emit* method per node kind
-  JavaScriptBackend  PythonBackend  CBackend  three implementations (js is default)
+          ▼
+compiler/.../ir/IrLowering                    lowers ModuleAst → IrModule using the
+          │  .lowerModule(ModuleAst,           resolvedTypes side-table; backends never
+          │   resolvedTypes)                   see *Data nodes
+          │    → IrModule
+          │
+          ▼
+compiler/.../target/CodeGenerator             interface; emitProgram(IrModule) is the
+  JavaScriptBackend  PythonBackend  CBackend  top-level entry point; each backend
+                                              implements emitStatement + emitExpression
+                                              dispatchers over sealed IrStatement/IrExpression
 ```
 
 **Key classes**:
