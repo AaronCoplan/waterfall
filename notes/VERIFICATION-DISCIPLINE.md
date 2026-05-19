@@ -43,7 +43,7 @@ emission per target. Zero golden diffs is the gate.
 
 - Property tests: 3/3 pass at N=10,000 (`IrTypeRoundTripPropertyTest` — IrType↔WaterfallType round-trip) ✓
 - Differential oracle: zero golden diffs ✓ + 3 IR-oracle golden tests (`golden-ir/`) ✓
-- Adversarial inputs: 77/77 pass (37 compile_success + 24 verify_fail + 16 lower_fail; `Sub54AdversarialTest`) ✓; `compiler/src/test/resources/adversarial/phase-10/sub-task-5.4/`; **pre-merge bug catch:** OQ-5.4-1 — Elaboration must store `VoidType` (not absent) for undeclared names; spec-synced in commit `7a`
+- Adversarial inputs: 77/77 pass (37 compile_success + 24 verify_fail + 16 lower_fail per `expected_outcome` field; fixture structural partition: 33 positive_entries + 44 negative_entries — 4 compile_success entries live in negative_entries as edge cases; `Sub54AdversarialTest`) ✓; `compiler/src/test/resources/adversarial/phase-10/sub-task-5.4/`; **pre-merge bug catch:** OQ-5.4-1 — Elaboration must store `VoidType` (not absent) for undeclared names; spec-synced in commit `7a`
 
 ### Sub-task 5.5 — Backend migration (JS → Python → C)
 

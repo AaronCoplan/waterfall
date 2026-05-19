@@ -95,8 +95,8 @@ compiler/.../target/CodeGenerator             interface; emitProgram(IrModule) i
 |---|---|---|
 | **Q1** Tier B upper-end + library-author/Gleam-vibe niche | **Load-bearing** — changing the niche reshapes the entire roadmap | `notes/team-output/00-FINAL-PLAN.md` §3 |
 | **Q5** Legacy backend dropped; `js` is the default target | **Load-bearing** — done; do not re-add | P0-PR1; `Backends.kt` |
-| **Q10** JSON-first error format (JSONL on stderr; `--errors human` for colorized output) | **Load-bearing** — LSP and tooling depend on the schema; changing it post-P10 is a breaking change | `notes/PHASE-10-design.md`; not yet implemented |
-| **Q11** Kotest as the property-test framework | **Load-bearing** — test infrastructure decision; changing mid-build invalidates existing property suites | `notes/PHASE-10-design.md` §4.9; not yet implemented |
+| **Q10** JSON-first error format (JSONL on stderr; `--errors human` for colorized output) | **Load-bearing** — LSP and tooling depend on the schema; changing it post-P10 is a breaking change | `notes/PHASE-10-design.md`; **P10 partial:** `VerifyError` typed variants + `HumanRenderer` + `JsonRenderer` stub landed in §5.3; JSONL-on-stderr framing and `--errors human` CLI flag not yet wired (P11+) |
+| **Q11** Kotest as the property-test framework | **Load-bearing** — test infrastructure decision; changing mid-build invalidates existing property suites | `notes/PHASE-10-design.md` §4.9; **implemented in P10 §5.2/§5.4** — `SymbolTablePropertyTest` (12 props, §5.2) + `IrTypeRoundTripPropertyTest` (3 props, §5.4) |
 | `Translatable.verify()` / `translate()` split | **Completed in P10 §5.3/§5.6** — `Translatable.kt` deleted; central Verifier + typed IR + IR-consuming backends are live. No `verify`/`translate` logic on `*Data` classes. | `compiler/.../statements/helpers/Translatable.kt` (deleted) |
 | Backend `emit*` method names | **Reversible** — rename freely; one-file change per backend | `compiler/.../target/CodeGenerator.kt` |
 | Golden test fixtures | **Reversible** — regenerate with `UPDATE_GOLDEN=1 ./gradlew test --tests GoldenTests` | `compiler/src/test/resources/golden/` |
