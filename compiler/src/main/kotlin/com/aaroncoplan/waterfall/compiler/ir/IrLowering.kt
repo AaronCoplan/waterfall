@@ -19,8 +19,8 @@ import com.aaroncoplan.waterfall.compiler.typesystem.WaterfallType
  *   stores `WaterfallType.VoidType` for undeclared identifiers (per OQ-3=C), so undeclared
  *   names lower to `IrExpression.Identifier("x", IrType.Void)` rather than throwing.
  *
- * §5.4 scope: `Main.kt` does NOT invoke this; [IrLoweringTest] is the only consumer.
- * Backends migrate to IR in §5.5.
+ * `Main.kt` invokes this after `verifyResult.isSuccessful` is confirmed (§5.5 F4=Main.kt).
+ * [IrLoweringTest] is the unit-level consumer.
  */
 object IrLowering {
 

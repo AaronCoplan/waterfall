@@ -13,8 +13,10 @@ import com.aaroncoplan.waterfall.compiler.ir.*
  * Each backend SHOULD implement a private `emitStatement(s: IrStatement): String`
  * dispatcher (per §3.9 R6 note) that routes to the appropriate `emit*` method.
  * This replaces the old `it.translate(this)` pattern and prevents a future backend
- * from accidentally bypassing the dispatcher. Consider promoting to a default
- * interface method at §5.6 cleanup time if a fourth backend arrives. (M5)
+ * from accidentally bypassing the dispatcher. §5.6 decision: NOT promoted to a
+ * default interface method — no fourth backend is planned; all 3 backends already
+ * implement the private dispatcher; promoting would require public visibility
+ * (encapsulation loss). Re-open if a fourth backend is added. (M5/R6 decline)
  */
 interface CodeGenerator {
 

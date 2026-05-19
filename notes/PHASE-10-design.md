@@ -1264,6 +1264,8 @@ private fun emitStatement(s: IrStatement): String = when (s) {
 ```
 This replaces the old `it.translate(this)` pattern (`TranslatableStatement.translate(CodeGenerator)`).
 
+**§5.6 R6 decision (per F10 — recorded here so future sessions do not re-litigate):** `emitStatement` was NOT promoted to a default interface method at §5.6 cleanup time. Rationale: no fourth backend is planned for P10/P11; all three existing backends already implement the private `emitStatement` dispatcher (established as template); promotion would require `public` visibility, degrading encapsulation; a backend's own `private emitStatement` would shadow a default method regardless. The `CodeGenerator.kt` KDoc was updated to record this as a committed decision. Re-open only when a fourth backend is being added.
+
 **R2 (§5.5 ArrayIndex.target is String):** `IrExpression.ArrayIndex.target` is `String` (the array variable's name), matching today's `ArrayIndexData.target: String`. P10 grammar supports only `simpleIdentifier[expr]` — no nested array-access. Backends emit `"${a.target}[${emitExpression(a.index)}]"` directly.
 
 **R3 (§5.5 CBackend `inferArrayElementType` obsolescence):** After migration, drop string-text parsing. Use `(v.type as? IrType.Array)?.element?.render()` (or `?.element` directly for C typedef logic). The IR's `IrType.Array(element: IrType)` carries the elaboration-resolved element type from §5.4; re-deriving from source text strings is wasted work and a silent-resolution risk.
@@ -2441,7 +2443,7 @@ That's a 14th test in `SymbolTableTest.kt` (deliverable count updated below).
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/verifier/README.md`
 
 **Files changed (production):**
-- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/statements/helpers/Translatable.kt` — `verify(symbolTable)` removed from the interface.
+- `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/statements/helpers/Translatable.kt` — `verify(symbolTable)` removed from the interface. (File subsequently deleted in §5.6.)
 - Every `*Data` class — its `override fun verify` method is removed; the body migrates into the corresponding `verifyXxx` function in `StatementVerifier.kt` (or `ModuleVerifier.kt` for `FunctionImplementationData`).
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/statements/helpers/VerificationResult.kt` — delete. Replaced by `VerifyResult` + `VerifyError`.
 - `compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/Main.kt:91-105` — the verify loop becomes a single call to `Verifier.verifyModule` + `HumanRenderer.render` per error.
@@ -2580,14 +2582,15 @@ println(backend.emitProgram(ir))
 **PITFALL #13** — The "produces the same output" check is *exactly* the verifier-overfitting failure mode. The honest test is: **goldens unchanged**. If the goldens change, something is wrong; if you find yourself updating a golden, **escalate**. `scripts/check-goldens-unchanged.sh` is the mechanical enforcement.
 
 **Carry-forward into §5.6:**
-- `Translatable.translate(backend: CodeGenerator)` still exists after §5.5 (backends no longer call it, but the interface method and all `*Data.translate` overrides remain). §5.6 deletes the method from `Translatable` and removes `override fun translate` from each *Data class.
+- `Translatable.translate(backend: CodeGenerator)` still exists after §5.5 (backends no longer call it, but the interface method and all `*Data.translate` overrides remain). §5.6 deletes `Translatable.kt` entirely (the file's only remaining method was `translate`; Aaron chose file deletion over leaving an empty marker interface) and removes `override fun translate` from each *Data class.
 - `Backends.kt` registry: no change in §5.5 (the registry stores `CodeGenerator` instances; the interface changes but the list stays the same).
 - `StringLiteralText` helper: still used by backends after migration (they call `StringLiteralText.unescape` / `StringLiteralText.escapeFor`; these are string manipulation utilities, not *Data consumers).
 
 ### Sub-task 5.6 — Remove old paths
 
 **Files changed:**
-- `Translatable.translate(backend)` — remove the method. `*Data` classes no longer have `translate`.
+- `compiler/.../statements/helpers/Translatable.kt` — **deleted** (interface's only remaining method was `translate`; Aaron chose Option A=delete rather than leave an empty marker interface). `*Data` classes no longer have `translate` overrides.
+- `compiler/.../statements/helpers/TranslatableStatement.kt` — remove `: Translatable` from class declaration.
 - `compiler/.../target/CodeGenerator.kt` — interface signature already updated in 5.5.
 
 **Files NOT deleted (yet):**
@@ -2660,7 +2663,7 @@ Before merging a P10 PR, the reviewer (Aaron) should verify:
 - [ ] **No golden file is modified** by the P10 PR. If one is, that's a behavioral regression — find it.
 - [ ] All test cases in §2.7 (SymbolTable) pass.
 - [ ] All test cases in §4.7 (Verifier) pass.
-- [ ] `Translatable.kt` no longer has `verify`. `*Data` classes no longer have `verify`.
+- [ ] `Translatable.kt` deleted in §5.6 (last method `translate` removed; file deleted). `*Data` classes no longer have `verify` (§5.3) or `translate` (§5.6) overrides.
 - [ ] No `*Data` class is imported in `compiler/.../target/` (the backends consume only `ir.*`).
 - [ ] `SymbolTable.lookup` is `public`.
 - [ ] `IrLowering.lowerModule` produces an `IrModule` for every example in `examples/`. (Manual inspection: pick one example and read its IR — it should look obvious.)
@@ -2740,7 +2743,7 @@ compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/
 │   └── README.md                     (NEW)
 ├── statements/
 │   └── helpers/
-│       ├── Translatable.kt           (MODIFIED — verify() removed)
+│       ├── Translatable.kt           (DELETED in §5.6 — last method translate() removed)
 │       ├── VerificationResult.kt     (DELETED)
 │   └── *Data.kt                       (MODIFIED — verify() removed from each)
 ├── symboltables/

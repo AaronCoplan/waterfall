@@ -23,43 +23,45 @@ emission per target. Zero golden diffs is the gate.
 
 ### Sub-task 5.1 — WaterfallType, SymbolKind, SymbolInfo
 
-- Property tests: _pending_
-- Differential oracle: _pending_
-- Adversarial inputs: _pending_
+- Property tests: N/A — `WaterfallTypeTest` (28/28 pass) is example-based, not a Kotest forAll suite; mislabeled as Leg 1 in the §5.1 kickoff brief (see retrospective)
+- Differential oracle: zero golden diffs ✓ (22 programs × 3 backends = 66 parameterized tests)
+- Adversarial inputs: 35/35 pass — fresh-context Agent, §1.2 spec only; `compiler/src/test/resources/adversarial/phase-10/sub-task-5.1/`
 
 ### Sub-task 5.2 — SymbolTable migration
 
-- Property tests: _pending_ (SymbolTable invariants from §2.7)
-- Differential oracle: _pending_ (goldens unchanged)
-- Adversarial inputs: _pending_
+- Property tests: 12/12 pass at N=10,000 (`SymbolTablePropertyTest` — SymbolTable invariants from §2.7) ✓
+- Differential oracle: zero golden diffs ✓
+- Adversarial inputs: 48/48 pass (25 positive + 23 negative; `Sub52AdversarialTest`) ✓; `compiler/src/test/resources/adversarial/phase-10/sub-task-5.2/`
 
 ### Sub-task 5.3 — Verifier package + JSON errors
 
-- Property tests: _pending_ (JoinAnalysis intersection, JsonRenderer round-trip)
-- Differential oracle: _pending_ (goldens unchanged)
-- Adversarial inputs: _pending_
+- Property tests: N/A (JoinAnalysis stubbed per OQ-1=C; verifier dispatch is routing logic, no rich generative invariants)
+- Differential oracle: zero golden diffs ✓
+- Adversarial inputs: 60/60 pass (25 positive + 35 negative; `Sub53AdversarialTest`) ✓; `compiler/src/test/resources/adversarial/phase-10/sub-task-5.3/`; **pre-merge bug catch:** `VoidNotAValueType` declared but never emitted — verifier checked `ErrorType` but not `VoidType`; fixed in commit `1d64587`
 
 ### Sub-task 5.4 — IR package + lowering pass
 
-- Property tests: _pending_ (IrLowering round-trip)
-- Differential oracle: _pending_ (goldens unchanged)
-- Adversarial inputs: _pending_
+- Property tests: 3/3 pass at N=10,000 (`IrTypeRoundTripPropertyTest` — IrType↔WaterfallType round-trip) ✓
+- Differential oracle: zero golden diffs ✓ + 3 IR-oracle golden tests (`golden-ir/`) ✓
+- Adversarial inputs: 77/77 pass (37 compile_success + 24 verify_fail + 16 lower_fail per `expected_outcome` field; fixture structural partition: 33 positive_entries + 44 negative_entries — 4 compile_success entries live in negative_entries as edge cases; `Sub54AdversarialTest`) ✓; `compiler/src/test/resources/adversarial/phase-10/sub-task-5.4/`; **pre-merge bug catch:** OQ-5.4-1 — Elaboration must store `VoidType` (not absent) for undeclared names; spec-synced in commit `7a`
 
 ### Sub-task 5.5 — Backend migration (JS → Python → C)
 
-- Property tests: _pending_
-- Differential oracle: _pending_ (goldens unchanged per backend)
-- Adversarial inputs: _pending_
+- Property tests: N/A (backend codegen; no new property family; existing 3 IrType properties still pass)
+- Differential oracle: zero golden diffs ✓ at every commit; enforced by `scripts/check-goldens-unchanged.sh`; 22 programs × 3 backends = 66 parameterized golden tests
+- Adversarial inputs: N/A (per Aaron D4 — existing 66 golden tests across the full pipeline are the §5.5 oracle)
 
 ### Sub-task 5.6 — Remove old paths + phase exit
 
-- Property tests: _pending_ (full suite at N=10000)
-- Differential oracle: _pending_ (full golden suite)
-- Adversarial inputs: _pending_ (≥20 AI-generated, fresh session)
+- Property tests: N/A (deletion only; no new property family; all 15 existing property tests still pass)
+- Differential oracle: zero golden diffs ✓
+- Adversarial inputs: N/A (pure dead-code removal; no behavioral changes)
 
 ### Phase 10 exit summary
 
-_Filled when phase-exit ritual completes (per playbook §2)._
+- **Leg 1 (property tests):** 15 total at N=10,000 — 12 SymbolTable (§5.2, `SymbolTablePropertyTest`) + 3 IrType (§5.4, `IrTypeRoundTripPropertyTest`). Note: §5.1 `WaterfallTypeTest` (28/28) is example-based, not a Kotest property suite.
+- **Leg 2 (differential oracle):** Zero golden diffs across all sub-tasks; oracle = 22 programs × 3 backends = 66 parameterized golden tests + 3 IR-oracle tests; `scripts/check-goldens-unchanged.sh` enforced per-commit from §5.5 onward.
+- **Leg 3 (adversarial inputs):** 220 total entries (35 §5.1 + 48 §5.2 + 60 §5.3 + 77 §5.4 + 0 §5.5 + 0 §5.6); 2 pre-merge bugs caught: (1) §5.3 `VoidNotAValueType` never-emitted; (2) §5.4 OQ-5.4-1 Elaboration/VoidType contract.
 
 ---
 

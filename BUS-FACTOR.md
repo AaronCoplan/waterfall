@@ -33,8 +33,9 @@ pipeline yet — `wfpm` (the package manager) is a P13 deliverable.
 
 ## (b) Compiler pipeline at a glance
 
-Post-P10 pipeline (§5.3–§5.5 complete). The old `*Data.verify` + `*Data.translate`
+Post-P10 pipeline (P10 complete, §5.1–§5.6). The old `*Data.verify` + `*Data.translate`
 dispatch has been replaced by a central Verifier, an IR lowering pass, and IR-consuming backends.
+`Translatable.kt` deleted in §5.6.
 
 ```
 parser/src/main/antlr/
@@ -73,18 +74,18 @@ compiler/.../target/CodeGenerator             interface; emitProgram(IrModule) i
 |---|---|
 | `parser/.../FileParser.kt` | Wraps ANTLR; entry point for parsing a `.wf` file |
 | `compiler/.../statements/ModuleAst.kt` | Assembles parsed module into two lists: `topLevelVariables`, `functions` |
-| `compiler/.../statements/helpers/Translatable.kt` | Interface: `verify(SymbolTable)` + `translate(CodeGenerator)` |
-| `compiler/.../statements/*Data.kt` | One class per AST node kind; each implements `Translatable` |
-| `compiler/.../symboltables/SymbolTable.kt` | Scoped name→info map; parent-linked for nested scopes; `declare` (public); `lookup` (made `internal` in P0-PR3 so the verifier can check immutability; P10 will further refine the SymbolInfo API) |
-| `compiler/.../statements/helpers/VerificationResult.kt` | Simple success/error wrapper returned by `verify()` |
-| `compiler/.../target/CodeGenerator.kt` | Backend interface; `emitProgram(ModuleAst)` is the top-level entry point |
+| `compiler/.../statements/helpers/Translatable.kt` | **Deleted in P10 §5.6.** Was: Interface `verify(SymbolTable)` + `translate(CodeGenerator)`. Both methods removed across §5.3/§5.6; file deleted. |
+| `compiler/.../statements/*Data.kt` | One class per AST node kind; each extends `TranslatableStatement` (no longer implements `Translatable` — deleted). Produced by parser; consumed by `IrLowering`. |
+| `compiler/.../symboltables/SymbolTable.kt` | Scoped name→info map; parent-linked for nested scopes; `declare` (public); `lookup` (public since P10 §5.2; `SymbolInfo` now carries `WaterfallType`, `SymbolKind`, `isReadonly`) |
+| `compiler/.../statements/helpers/VerificationResult.kt` | **Deleted in P10 §5.3.** Replaced by `VerifyResult` + `VerifyError` in `compiler/.../verifier/`. |
+| `compiler/.../target/CodeGenerator.kt` | Backend interface; `emitProgram(IrModule)` is the top-level entry point |
 | `compiler/.../target/Backends.kt` | Registry + `DEFAULT_TARGET`; add one line to register a new backend |
-| `compiler/.../Main.kt` | Driver: parse → syntax check → verify → translate → print |
+| `compiler/.../Main.kt` | Driver: parse → syntax check → verify → lower → emit(ir) → print |
 
-**What does not exist yet** (P10 deliverables):
-- A typed IR between parse and codegen
-- A central `Verifier` class
-- A typed `SymbolInfo` (today `SymbolTable` stores `Any?`)
+**P10 deliverables (complete as of §5.6):**
+- Typed IR (`IrModule`, `IrStatement`, `IrExpression`, `IrType`) in `compiler/.../ir/`
+- Central `Verifier` in `compiler/.../verifier/` (returns `VerifyResult` + `resolvedTypes` side-table)
+- Typed `SymbolInfo` (`WaterfallType`, `SymbolKind`, `isReadonly`) in `compiler/.../typesystem/` and `symboltables/`
 
 ---
 
@@ -94,9 +95,9 @@ compiler/.../target/CodeGenerator             interface; emitProgram(IrModule) i
 |---|---|---|
 | **Q1** Tier B upper-end + library-author/Gleam-vibe niche | **Load-bearing** — changing the niche reshapes the entire roadmap | `notes/team-output/00-FINAL-PLAN.md` §3 |
 | **Q5** Legacy backend dropped; `js` is the default target | **Load-bearing** — done; do not re-add | P0-PR1; `Backends.kt` |
-| **Q10** JSON-first error format (JSONL on stderr; `--errors human` for colorized output) | **Load-bearing** — LSP and tooling depend on the schema; changing it post-P10 is a breaking change | `notes/PHASE-10-design.md`; not yet implemented |
-| **Q11** Kotest as the property-test framework | **Load-bearing** — test infrastructure decision; changing mid-build invalidates existing property suites | `notes/PHASE-10-design.md` §4.9; not yet implemented |
-| `Translatable.verify()` / `translate()` split | **Load-bearing until P10** — P10 replaces this with a typed IR + central Verifier; do not add new verify/translate logic outside the P10 plan | `compiler/.../statements/helpers/Translatable.kt` |
+| **Q10** JSON-first error format (JSONL on stderr; `--errors human` for colorized output) | **Load-bearing** — LSP and tooling depend on the schema; changing it post-P10 is a breaking change | `notes/PHASE-10-design.md`; **P10 partial:** `VerifyError` typed variants + `HumanRenderer` + `JsonRenderer` stub landed in §5.3; JSONL-on-stderr framing and `--errors human` CLI flag not yet wired (P11+) |
+| **Q11** Kotest as the property-test framework | **Load-bearing** — test infrastructure decision; changing mid-build invalidates existing property suites | `notes/PHASE-10-design.md` §4.9; **implemented in P10 §5.2/§5.4** — `SymbolTablePropertyTest` (12 props, §5.2) + `IrTypeRoundTripPropertyTest` (3 props, §5.4) |
+| `Translatable.verify()` / `translate()` split | **Completed in P10 §5.3/§5.6** — `Translatable.kt` deleted; central Verifier + typed IR + IR-consuming backends are live. No `verify`/`translate` logic on `*Data` classes. | `compiler/.../statements/helpers/Translatable.kt` (deleted) |
 | Backend `emit*` method names | **Reversible** — rename freely; one-file change per backend | `compiler/.../target/CodeGenerator.kt` |
 | Golden test fixtures | **Reversible** — regenerate with `UPDATE_GOLDEN=1 ./gradlew test --tests GoldenTests` | `compiler/src/test/resources/golden/` |
 | Gradle wrapper version | **Reversible** — bump in `gradle/wrapper/gradle-wrapper.properties` | — |
