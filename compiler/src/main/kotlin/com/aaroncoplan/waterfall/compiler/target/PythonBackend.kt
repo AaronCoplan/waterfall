@@ -9,11 +9,7 @@ import com.aaroncoplan.waterfall.compiler.statements.StringLiteralText
  * "indent level 0" and the [indent] helper adds leading whitespace when placing
  * it inside a parent block.
  *
- * §5.5 THROWAWAY STUB: [emitProgram] delegates to [lowerThenEmit] which
- * translates IrModule fields using the same logic as the old *Data-walking
- * implementation. The real IR-consuming implementation lands in commit 3
- * and replaces this entire file. Marked explicitly so the reviewer knows
- * this code will be deleted.
+ * §5.5: full IR-consuming implementation (commit 3 — replaces throwaway stub).
  */
 class PythonBackend : CodeGenerator {
 
@@ -22,10 +18,6 @@ class PythonBackend : CodeGenerator {
     private var usesFinal: Boolean = false
 
     override fun name(): String = "python"
-
-    // ---------------------------------------------------------------------- //
-    // THROWAWAY: replaced by proper impl in commit 3
-    // ---------------------------------------------------------------------- //
 
     override fun emitProgram(module: IrModule): String {
         // Compute usesFinal from IrModule field (SA-1: top-level only per PEP 591).
@@ -48,7 +40,6 @@ class PythonBackend : CodeGenerator {
         return sb.toString()
     }
 
-    /** Top-level variable (IrTopLevelVariable). Emitted directly in [emitProgram]. */
     private fun emitTopLevelVar(v: IrTopLevelVariable): String {
         return if (v.isReadonly) "${v.name}: Final = ${emitIrExpression(v.initializer)}"
         else "${v.name} = ${emitIrExpression(v.initializer)}"
@@ -127,11 +118,9 @@ class PythonBackend : CodeGenerator {
         error("ReadonlyPromotion is P12-deferred — IR variant must not reach P10 backends")
 
     // ---------------------------------------------------------------------- //
-    // Expression rendering — inlined (no bridge delegation beyond generic 4)
+    // Expression rendering
     // ---------------------------------------------------------------------- //
 
-    /** Python-specific expression rendering. Inlined rather than bridged
-     *  because Python has backend-specific Bool/String/Null/BinaryOp/Cast/Call. */
     private fun emitIrExpression(e: IrExpression): String = when (e) {
         is IrExpression.Identifier   -> e.name                           // R5
         is IrExpression.IntLiteral   -> e.literalText
