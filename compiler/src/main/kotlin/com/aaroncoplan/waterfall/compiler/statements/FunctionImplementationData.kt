@@ -3,7 +3,6 @@ package com.aaroncoplan.waterfall.compiler.statements
 import com.aaroncoplan.waterfall.generated.WaterfallParser
 import com.aaroncoplan.waterfall.compiler.statements.helpers.StatementDispatcher
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
-import com.aaroncoplan.waterfall.compiler.target.CodeGenerator
 import com.aaroncoplan.waterfall.parser.Pair
 
 class FunctionImplementationData(
@@ -19,7 +18,4 @@ class FunctionImplementationData(
         }
     @JvmField val statements: List<TranslatableStatement> =
         StatementDispatcher.fromStatementBlock(filePath, ctx.statementBlock())
-
-    override fun translate(backend: CodeGenerator): String =
-        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }

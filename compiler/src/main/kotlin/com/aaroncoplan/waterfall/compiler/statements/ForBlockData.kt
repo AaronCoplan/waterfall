@@ -3,8 +3,6 @@ package com.aaroncoplan.waterfall.compiler.statements
 import com.aaroncoplan.waterfall.generated.WaterfallParser
 import com.aaroncoplan.waterfall.compiler.statements.helpers.StatementDispatcher
 import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
-import com.aaroncoplan.waterfall.compiler.target.CodeGenerator
-
 class ForBlockData(filePath: String, ctx: WaterfallParser.ForBlockContext)
     : TranslatableStatement(filePath, ctx) {
 
@@ -20,7 +18,4 @@ class ForBlockData(filePath: String, ctx: WaterfallParser.ForBlockContext)
         collectionName = inner.ID(1).text
         body = StatementDispatcher.fromStatementBlock(filePath, inner.statementBlock())
     }
-
-    override fun translate(backend: CodeGenerator): String =
-        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }

@@ -5,7 +5,7 @@ import org.antlr.v4.runtime.ParserRuleContext
 abstract class TranslatableStatement(
     filePath: String,
     parserRuleContext: ParserRuleContext
-) : Translatable {
+) {
 
     private val sourcePosition: SourcePosition = SourcePosition(
         filePath,
