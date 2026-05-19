@@ -260,17 +260,21 @@ carrying it to commit 4.
 
 ---
 
-## Phase 10 retrospective — (pending)
+## Phase 10 retrospective — 2026-05-19
 
-_Filled when the phase-exit ritual completes (playbook §2). Template:_
-
-```
-## Phase 10 retrospective — {date}
-- Calendar weeks budgeted vs. actual: {bud} / {act}
-- Triad caught (count): properties {n_prop}, differential {n_diff}, adversarial {n_adv}
-- Skeptic findings on exit: {fatal} fatal / {risk} risk / {minor} minor
-- Spec edits during phase (count): {n}
-- Plan-mode iterations average: {x}
-- Carry-forward into phase 11: <list>
-- One sentence on what surprised: <text>
-```
+- **Calendar budgeted vs. actual:** ≤1 week / ~4–5 days (2026-05-15 first §5.1 commit → 2026-05-19 `phase-10-complete` tag). Came in under budget.
+- **Triad caught (count):** properties = 15 at N=10K (3 IrType + 12 SymbolTable) ✓; differential = zero golden diffs across 66 parameterized cases + 3 IR-oracle tests ✓; adversarial = 2 compiler bugs caught pre-merge (§5.3 `VoidNotAValueType` never-emitted; §5.4 OQ-5.4-1 Elaboration/VoidType contract). 220 total adversarial entries across §5.1–§5.4.
+- **Skeptic findings on exit (full-P10 fresh-context):** 0 fatal / 2 risk / 3 minor. Finding 1 (IrLowering.kt stale KDoc) fixed in phase-exit-docs PR; Findings 2/3/5 recorded as P11 carry-forwards; Finding 4 confirmed already-planned tag sequencing.
+- **Spec edits during phase (commit count):** 9 commits touching `notes/PHASE-10-design.md` on master (`5e6beaf..master`) + 1 in phase-exit-docs PR = 10 total. Individual edit count ~63 across sub-tasks (17 §5.1 + 12 §5.2 + 15 §5.3 + 10 §5.4 + 9 §5.5 + 0 §5.6) plus ~6 phase-exit drift fixes.
+- **Plan-mode iterations average:** ~1.5 per sub-task (§5.1: 3 iterations; §5.2: 2; §5.3–§5.6: 1 each; avg converges to ~1.5).
+- **Carry-forward into P11:**
+  - OQ-3=C: `UnknownIdentifier` VerifyError variant closes the identifier-resolution gap
+  - OQ-5.4-1: `IrExpression.Identifier(name, IrType.Void)` path becomes unreachable once P11 validates all identifiers
+  - `BinaryOp.type` placeholder (left-operand type) — comparison/equality ops should resolve to Bool
+  - Lambda body not walked by verifier — add `verifyExpression` descent for `LambdaData.body`
+  - `forBlock` iterator type hard-coded as `IntType` — infer from collection element type in P11
+  - Per-expression `SourcePosition` (PITFALL #8) — `ExpressionData.sourcePosition` carries statement-level pos; P11 needs per-arg positions for friendly errors
+  - Cast-target validation: `ExpressionVerifier` no-ops on cast target type (OQ-3=C); until P11 closes this, `IrType.fromWaterfallType(ErrorType)` throws ISE that escapes `Main.kt` as a raw JVM stack trace (skeptic Finding 2)
+  - `StringLiteralText` package-boundary: backends import from `statements/`; relocate to `ir/` or new `util/` package (skeptic Finding 3); one file move + 3 import updates
+  - Skeptic seed cross-check: post-review skeptic produced identical finding counts (`0F+5R+6M`) for §5.1–§5.4; verify one P11 sub-task with two independently-seeded skeptic runs to distinguish template-anchoring from genuine calibration (skeptic Finding 5)
+- **One sentence on what surprised:** The phase-exit triad surfaced four accounting drifts beyond the production code itself — kickoff brief claimed 16 properties / 198 golden checks / 245 adversarial entries / 3 caught bugs; tester-verified numbers are 15 / 66+3-oracle / 220 / 2; tester explicitly self-corrected one drift rather than carrying the wrong number forward, which is exactly the discipline the verification triad exists to surface and is a meta-win worth repeating in P11.
