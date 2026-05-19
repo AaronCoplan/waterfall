@@ -83,9 +83,12 @@ class JoinAnalysisStubTest {
     @Test fun forBlockBodyErrorsAreCollected() {
         // C1: analogous to ifElseBodyErrorsAreCollected but for ForBlock.
         // Guards the SA-1 trap in StatementVerifier.verifyForBlock.
+        // `things` is declared as a function parameter so the for-collection resolves
+        // cleanly (P11 OQ-11.6=strict would otherwise emit UnknownIdentifier for `things`,
+        // masking the DuplicateDeclaration under test).
         val module = parseAndAst("""
             module Foo {
-                func go() {
+                func go(int[] things) {
                     for(item in things) {
                         int x = 1
                         int x = 2

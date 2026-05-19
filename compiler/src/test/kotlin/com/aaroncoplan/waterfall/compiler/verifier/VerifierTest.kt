@@ -179,12 +179,19 @@ class VerifierTest {
     }
 
     /**
-     * C3: assigning to an undeclared LHS is a P10 no-op per OQ-3=C carry-forward.
-     * §5.4 IrLowering will escalate on null-lookup. Regression guard: must NOT
-     * produce an AssignToReadonly error (it's not readonly; it's not even declared).
+     * P11 closes OQ-3=C: assigning to an undeclared LHS now emits
+     * [VerifyError.UnknownIdentifier] with [VerifyError.UnknownIdentifier.Context.ASSIGNMENT_LHS].
+     *
+     * **Replaces** the P10 no-op test `assignToUndeclaredLhsIsP10NoOp` (removed in §4.1).
+     * P10 behavior was: verifyVarAssignment silently no-oped on null lookup. P11 rejects.
+     *
+     * Assertions:
+     * - Verification fails (isSuccessful == false)
+     * - Exactly 1 error, which is UnknownIdentifier
+     * - Context is ASSIGNMENT_LHS (not EXPRESSION, not INCREMENT_TARGET)
+     * - No AssignToReadonly error (undeclaredVar is not immutable; it's not even declared)
      */
-    @Test fun assignToUndeclaredLhsIsP10NoOp() {
-        // OQ-3=C: verifyVarAssignment silently passes on null lookup — P11 closes this gap.
+    @Test fun assignToUndeclaredLhsNowEmitsUnknownIdentifier() {
         val module = parseAndAst("""
             module Foo {
                 func go() {
@@ -193,7 +200,15 @@ class VerifierTest {
             }
         """.trimIndent())
         val result = Verifier.verifyModule(module, SymbolTable())
-        // No AssignToReadonly error; no error at all from the verifier in P10.
+        assertFalse("Assigning to undeclared LHS must now fail verification", result.isSuccessful)
+        assertEquals("Expected exactly 1 error", 1, result.errors.size)
+        assertTrue(
+            "Expected UnknownIdentifier error, got: ${result.errors[0]}",
+            result.errors[0] is VerifyError.UnknownIdentifier
+        )
+        val err = result.errors[0] as VerifyError.UnknownIdentifier
+        assertEquals(VerifyError.UnknownIdentifier.Context.ASSIGNMENT_LHS, err.context)
+        // Regression guard: must NOT produce AssignToReadonly (undeclaredVar is not immutable)
         assertTrue(result.errors.none { it is VerifyError.AssignToReadonly })
     }
 

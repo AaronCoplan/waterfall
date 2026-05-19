@@ -1,35 +1,35 @@
 {
-  "description": "Adversarial inputs for §5.4 IR + IrLowering pass",
-  "spec_section": "§3.7 + §3.8 + §5.4",
+  "description": "Adversarial inputs for \u00a75.4 IR + IrLowering pass",
+  "spec_section": "\u00a73.7 + \u00a73.8 + \u00a75.4",
   "generated_by": "fresh-context Agent (spec + diff + impl context)",
   "generated_at": "2026-05-18",
   "notes": [
     "Schema: expected_outcome has three values:",
-    "  'compile_success'         — verifies + lowers cleanly",
-    "  'verify_fail:<substring>' — fails at Verifier.verifyModule; substring in HumanRenderer output",
-    "  'lower_fail:<substring>'  — verifies cleanly but IrLowering.lowerModule throws",
+    "  'compile_success'         \u2014 verifies + lowers cleanly",
+    "  'verify_fail:<substring>' \u2014 fails at Verifier.verifyModule; substring in HumanRenderer output",
+    "  'lower_fail:<substring>'  \u2014 verifies cleanly but IrLowering.lowerModule throws",
     "                              IllegalStateException whose message contains <substring>",
     "",
     "Test runner pattern (NOT via Main.run):",
     "  1. Parse source to ModuleAst.",
-    "  2. Verifier.verifyModule(moduleAst, SymbolTable()) → VerifyResult.",
+    "  2. Verifier.verifyModule(moduleAst, SymbolTable()) \u2192 VerifyResult.",
     "  3. If result.isSuccessful: IrLowering.lowerModule(moduleAst, result.resolvedTypes).",
     "     Catch IllegalStateException for lower_fail.",
     "  4. Compare outcome against expected_outcome.",
     "",
     "CRITICAL IMPL FINDING (OQ-5.4-1): Undeclared identifiers do NOT cause lower_fail.",
-    "  The spec-prompt stated undeclared identifiers → lower_fail.",
+    "  The spec-prompt stated undeclared identifiers \u2192 lower_fail.",
     "  ACTUAL BEHAVIOR: Elaboration.elaborateExpression for IDENTIFIER stores VoidType",
     "  when scope.lookup(name)==null (OQ-3=C). IrLowering reads resolvedTypes[expr]=VoidType",
-    "  → IrType.fromWaterfallType(VoidType)=IrType.Void. No throw. IrLowering.kt KDoc confirms:",
+    "  \u2192 IrType.fromWaterfallType(VoidType)=IrType.Void. No throw. IrLowering.kt KDoc confirms:",
     "  'undeclared names lower to IrExpression.Identifier(x, IrType.Void) rather than throwing'.",
     "  The IrLowering.lowerExpression IDENTIFIER arm throws ONLY if resolvedTypes[expr] is null",
-    "  — which never happens because Elaboration always writes at least VoidType.",
+    "  \u2014 which never happens because Elaboration always writes at least VoidType.",
     "  neg-41 through neg-44 document undeclared-identifier cases with compile_success outcomes.",
     "",
     "CRITICAL IMPL FINDING (OQ-5.4-2): Cast to unknown type IS a lower_fail.",
     "  IrLowering.lowerExpression for CAST calls WaterfallType.fromSourceText(castTargetType)",
-    "  then IrType.fromWaterfallType(result). Unknown types → ErrorType → fromWaterfallType",
+    "  then IrType.fromWaterfallType(result). Unknown types \u2192 ErrorType \u2192 fromWaterfallType",
     "  throws IllegalStateException('Cannot lower error type to IR: <text>').",
     "  ExpressionVerifier is a P10 no-op so the verifier never catches bad cast targets.",
     "  neg-22 through neg-30 are the lower_fail entries via cast-to-unknown-type.",
@@ -39,7 +39,7 @@
     "  A void-cast silently produces Cast(targetType=IrType.Void, operand).",
     "",
     "LAMBDA SYNTAX (OQ-5.4-6): Lambda arrow is '==>' NOT '->' (WaterfallLexer.g4: LAMBDA: '==>').",
-    "  Full syntax: 'f := (int x) ==> body' — walrus ':=' for untyped var + '==>' arrow.",
+    "  Full syntax: 'f := (int x) ==> body' \u2014 walrus ':=' for untyped var + '==>' arrow.",
     "  'var' is NOT a Waterfall keyword; untyped declarations use ':=' not 'var name ='.",
     "",
     "EMPTY ARRAY LITERAL (OQ-5.4-7): '[]' is NOT parseable with the current grammar.",
@@ -50,43 +50,58 @@
     "FOR-LOOP ITERATOR (OQ-5.4-4): The R2 fix declares iterator in the body scope.",
     "  StatementVerifier.verifyForBlock declares iterator with IntType before walking body.",
     "  Elaboration.elaborateStatement for ForBlockData also declares iterator with IntType.",
-    "  So 'for(item in things) { int x = item }' compiles cleanly in §5.4.",
+    "  So 'for(item in things) { int x = item }' compiles cleanly in \u00a75.4.",
     "",
-    "BINARY_OP type: left.type P10 placeholder. BinaryOp on Int operands → type=Int.",
-    "FUNCTION_CALL(LOCAL) undeclared: elaboration stores VoidType; lowering → type=Void. No throw."
+    "BINARY_OP type: left.type P10 placeholder. BinaryOp on Int operands \u2192 type=Int.",
+    "FUNCTION_CALL(LOCAL) undeclared: elaboration stores VoidType; lowering \u2192 type=Void. No throw."
   ],
   "open_questions": [
     {
       "id": "OQ-5.4-1",
-      "title": "Undeclared identifier at lower time: silent Void vs. throw — spec/impl divergence",
-      "description": "The spec-prompt §5.4 claimed that 'module M { func f() { var y = undeclared } }' would cause IrLowering to throw IllegalStateException. ACTUAL IMPL: Elaboration.elaborateExpression stores WaterfallType.VoidType (not null) for undeclared identifiers. IrLowering reads VoidType from the side-table → IrType.Void. No throw. IrLowering.kt KDoc (line 18-19) explicitly documents this: 'undeclared names lower to IrExpression.Identifier(x, IrType.Void) rather than throwing.' The IllegalStateException in IrLowering for IDENTIFIER fires only if resolvedTypes[expr] is null — which never happens because Elaboration always writes at least VoidType. Negative entries neg-41 through neg-44 are therefore marked compile_success. Recommend: document in §3.7/§3.8 spec that undeclared → Void (not throw) is the P10 behavior; explicitly note the P11 fix will move detection to the verifier.",
-      "status": "OPEN — spec-prompt mismatch from actual impl; impl is consistent with OQ-3=C decision",
-      "fixture_entries_affected": ["neg-41", "neg-42", "neg-43", "neg-44"]
+      "title": "Undeclared identifier at lower time: silent Void vs. throw \u2014 spec/impl divergence",
+      "description": "The spec-prompt \u00a75.4 claimed that 'module M { func f() { var y = undeclared } }' would cause IrLowering to throw IllegalStateException. ACTUAL IMPL: Elaboration.elaborateExpression stores WaterfallType.VoidType (not null) for undeclared identifiers. IrLowering reads VoidType from the side-table \u2192 IrType.Void. No throw. IrLowering.kt KDoc (line 18-19) explicitly documents this: 'undeclared names lower to IrExpression.Identifier(x, IrType.Void) rather than throwing.' The IllegalStateException in IrLowering for IDENTIFIER fires only if resolvedTypes[expr] is null \u2014 which never happens because Elaboration always writes at least VoidType. Negative entries neg-41 through neg-44 are therefore marked compile_success. Recommend: document in \u00a73.7/\u00a73.8 spec that undeclared \u2192 Void (not throw) is the P10 behavior; explicitly note the P11 fix will move detection to the verifier.",
+      "status": "OPEN \u2014 spec-prompt mismatch from actual impl; impl is consistent with OQ-3=C decision",
+      "fixture_entries_affected": [
+        "neg-41",
+        "neg-42",
+        "neg-43",
+        "neg-44"
+      ]
     },
     {
       "id": "OQ-5.4-2",
-      "title": "Cast to unknown type is an undetected lower_fail — P11 work",
+      "title": "Cast to unknown type is an undetected lower_fail \u2014 P11 work",
       "description": "Casting to any type not in the WaterfallType known set (e.g., 'n castas string') passes verification (ExpressionVerifier is P10 no-op) but throws at lowering via IrType.fromWaterfallType(ErrorType). This surfaces a class of programs that should have been caught at verify time. The exception message 'Cannot lower error type to IR: X. The verifier should have rejected this before lowering.' itself documents the gap. P11 should add cast-target-type validation to ExpressionVerifier, converting these from lower_fail to verify_fail.",
-      "status": "OPEN — documented P10 gap; P11 should move to verify_fail",
-      "fixture_entries_affected": ["neg-22", "neg-23", "neg-24", "neg-25", "neg-26", "neg-27", "neg-28", "neg-29", "neg-30"]
+      "status": "OPEN \u2014 documented P10 gap; P11 should move to verify_fail",
+      "fixture_entries_affected": [
+        "neg-22",
+        "neg-23",
+        "neg-24",
+        "neg-25",
+        "neg-26",
+        "neg-27",
+        "neg-28",
+        "neg-29",
+        "neg-30"
+      ]
     },
     {
       "id": "OQ-5.4-3",
-      "title": "Cast to void does not error — silent wrong-type cast",
+      "title": "Cast to void does not error \u2014 silent wrong-type cast",
       "description": "fromSourceText('void')=VoidType; IrType.fromWaterfallType(VoidType)=IrType.Void. A cast 'x castas void' in a return position verifies and lowers cleanly, producing Cast(targetType=IrType.Void). This is semantically wrong (void is not a value type) but P10 doesn't validate cast semantics. OQ-5.4-3 entry in notes covers this.",
-      "status": "OPEN — P10 gap; cast semantics check deferred to P11"
+      "status": "OPEN \u2014 P10 gap; cast semantics check deferred to P11"
     },
     {
       "id": "OQ-5.4-4",
-      "title": "String literal lowers to IrType.Char — audit gap §3.6",
-      "description": "STRING_LITERAL lowers to IrExpression.StringLiteral with type=IrType.Char. This matches today's untyped-string-infers-to-char behavior but is an audit gap. §3.6 notes it explicitly. pos-24 exercises this path. Escalation §6.2-5 applies.",
-      "status": "OPEN — documented audit gap §3.6; no P10 fix"
+      "title": "String literal lowers to IrType.Char \u2014 audit gap \u00a73.6",
+      "description": "STRING_LITERAL lowers to IrExpression.StringLiteral with type=IrType.Char. This matches today's untyped-string-infers-to-char behavior but is an audit gap. \u00a73.6 notes it explicitly. pos-24 exercises this path. Escalation \u00a76.2-5 applies.",
+      "status": "OPEN \u2014 documented audit gap \u00a73.6; no P10 fix"
     },
     {
       "id": "OQ-5.4-5",
       "title": "For-loop iterator type is always Int in P10 (implicit-int convention)",
       "description": "Elaboration and StatementVerifier both declare the for-loop iterator with WaterfallType.IntType. This is the P10 implicit-int convention. P11 will infer the proper element type from the collection expression. pos-09 and pos-33 exercise this path.",
-      "status": "OPEN — documented P10 convention; P11 closes"
+      "status": "OPEN \u2014 documented P10 convention; P11 closes"
     }
   ],
   "positive_entries": [
@@ -102,14 +117,14 @@
       "source": "module Pos02 {\n    dec ratio = 1.5\n}\n",
       "category": "positive",
       "expected_outcome": "compile_success",
-      "rationale": "Single top-level dec var. lowerExpression DEC_LITERAL → IrExpression.DecLiteral('1.5'). IrType.fromWaterfallType(DecType) = IrType.Dec. Exercises dec scalar lowering."
+      "rationale": "Single top-level dec var. lowerExpression DEC_LITERAL \u2192 IrExpression.DecLiteral('1.5'). IrType.fromWaterfallType(DecType) = IrType.Dec. Exercises dec scalar lowering."
     },
     {
       "name": "pos-03-top-level-bool-var",
       "source": "module Pos03 {\n    bool flag = true\n}\n",
       "category": "positive",
       "expected_outcome": "compile_success",
-      "rationale": "Single top-level bool var. BOOL_LITERAL 'true' → IrExpression.BoolLiteral(value=true). IrType.Bool is implicit on BoolLiteral."
+      "rationale": "Single top-level bool var. BOOL_LITERAL 'true' \u2192 IrExpression.BoolLiteral(value=true). IrType.Bool is implicit on BoolLiteral."
     },
     {
       "name": "pos-04-function-returning-int",
@@ -130,7 +145,7 @@
       "source": "module Pos06 {\n    func f(int a, dec b, bool c) returns dec {\n        return b\n    }\n}\n",
       "category": "positive",
       "expected_outcome": "compile_success",
-      "rationale": "Three parameters of distinct types. IrParameter list: [IrParameter(a, Int), IrParameter(b, Dec), IrParameter(c, Bool)]. Legacy Pair ordering firstVal=type/secondVal=name is swapped to name-first per §1.3. Return 'b' → Identifier(b, Dec). Adversarially targets PITFALL #8 parameter ordering inversion."
+      "rationale": "Three parameters of distinct types. IrParameter list: [IrParameter(a, Int), IrParameter(b, Dec), IrParameter(c, Bool)]. Legacy Pair ordering firstVal=type/secondVal=name is swapped to name-first per \u00a71.3. Return 'b' \u2192 Identifier(b, Dec). Adversarially targets PITFALL #8 parameter ordering inversion."
     },
     {
       "name": "pos-07-if-elif-else-control-flow",
@@ -150,8 +165,8 @@
       "name": "pos-09-for-loop-iterator-use-in-body",
       "source": "module Pos09 {\n    func go() {\n        for(item in things) {\n            int x = item\n        }\n    }\n}\n",
       "category": "positive",
-      "expected_outcome": "compile_success",
-      "rationale": "For-loop body using the iterator variable. R2 fix: verifyForBlock declares 'item' with IntType into the body scope; Elaboration also declares 'item' as IntType. 'int x = item' verifies cleanly and lowers to TypedVarDecl(x, Int, Identifier(item, Int)). Different from §5.3 where iterator was NOT declared. Per OQ-5.4-5 iterator type is always Int in P10."
+      "expected_outcome": "verify_fail:Unknown collection identifier",
+      "rationale": "For-loop body using the iterator variable. R2 fix: verifyForBlock declares 'item' with IntType into the body scope; Elaboration also declares 'item' as IntType. 'int x = item' verifies cleanly and lowers to TypedVarDecl(x, Int, Identifier(item, Int)). Different from \u00a75.3 where iterator was NOT declared. Per OQ-5.4-5 iterator type is always Int in P10. P11 \u00a74.1: 'things' is undeclared \u2192 UnknownIdentifier(FOR_COLLECTION); program now rejects at verify time per OQ-11.6=strict."
     },
     {
       "name": "pos-10-recursive-fibonacci",
@@ -193,14 +208,14 @@
       "source": "module Pos15 {\n    func greet() returns char {\n        char[] s = `hi`\n        return s[0]\n    }\n}\n",
       "category": "positive",
       "expected_outcome": "compile_success",
-      "rationale": "String literal (char array) + array index returning char. NOTE: The Q3=Void path (empty array literal []) is exercised by the implementation but is UNREACHABLE from the current grammar (positionalArgumentList requires at least one expression; [] parses as PARSE_ERROR). This test is a replacement that exercises the ArrayIndex on a char[] instead. OQ-5.4-3 applies: string literal lowers to StringLiteral with type=IrType.Char (audit gap §3.6)."
+      "rationale": "String literal (char array) + array index returning char. NOTE: The Q3=Void path (empty array literal []) is exercised by the implementation but is UNREACHABLE from the current grammar (positionalArgumentList requires at least one expression; [] parses as PARSE_ERROR). This test is a replacement that exercises the ArrayIndex on a char[] instead. OQ-5.4-3 applies: string literal lowers to StringLiteral with type=IrType.Char (audit gap \u00a73.6)."
     },
     {
       "name": "pos-16-binary-ops-arithmetic",
       "source": "module Pos16 {\n    func math(int a, int b) returns int {\n        int c = a + b\n        int d = c - a\n        int e = d * b\n        return e\n    }\n}\n",
       "category": "positive",
       "expected_outcome": "compile_success",
-      "rationale": "Multiple binary arithmetic ops. Each BINARY_OP: type = lowerExpression(left).type (P10 placeholder). a+b → BinaryOp(+, Identifier(a,Int), Identifier(b,Int), type=Int). Tests three BINARY_OP lowerings and chained identifier references."
+      "rationale": "Multiple binary arithmetic ops. Each BINARY_OP: type = lowerExpression(left).type (P10 placeholder). a+b \u2192 BinaryOp(+, Identifier(a,Int), Identifier(b,Int), type=Int). Tests three BINARY_OP lowerings and chained identifier references."
     },
     {
       "name": "pos-17-binary-op-boolean-equals",
@@ -249,28 +264,28 @@
       "source": "module Pos23 {\n    func go() {\n        x := 5\n        y := 1.5\n        z := true\n    }\n}\n",
       "category": "positive",
       "expected_outcome": "compile_success",
-      "rationale": "Walrus-operator declarations of int, dec, bool literals. inferType: INT_LITERAL→'int', DEC_LITERAL→'dec', BOOL_LITERAL→'int' (default fallback). IrStatement.UntypedVarDecl(x, Int), UntypedVarDecl(y, Dec), UntypedVarDecl(z, Int). Note: BOOL_LITERAL → 'int' due to inferType fallback (not a bug in fixtures — inferType is limited in P10). Exercises UntypedVarDecl lowering."
+      "rationale": "Walrus-operator declarations of int, dec, bool literals. inferType: INT_LITERAL\u2192'int', DEC_LITERAL\u2192'dec', BOOL_LITERAL\u2192'int' (default fallback). IrStatement.UntypedVarDecl(x, Int), UntypedVarDecl(y, Dec), UntypedVarDecl(z, Int). Note: BOOL_LITERAL \u2192 'int' due to inferType fallback (not a bug in fixtures \u2014 inferType is limited in P10). Exercises UntypedVarDecl lowering."
     },
     {
       "name": "pos-24-string-literal-lowers-to-char",
       "source": "module Pos24 {\n    func greeting() returns char {\n        char[] msg = `hello world`\n        return msg[0]\n    }\n}\n",
       "category": "positive",
       "expected_outcome": "compile_success",
-      "rationale": "String literal with backtick syntax. STRING_LITERAL → StringLiteral(literalText='`hello world`', type=IrType.Char). Elaboration: STRING_LITERAL → WaterfallType.CharType. ArrayIndex on msg: type=CharType from elaboration. Exercises OQ-5.4-4 string→char audit gap (§3.6)."
+      "rationale": "String literal with backtick syntax. STRING_LITERAL \u2192 StringLiteral(literalText='`hello world`', type=IrType.Char). Elaboration: STRING_LITERAL \u2192 WaterfallType.CharType. ArrayIndex on msg: type=CharType from elaboration. Exercises OQ-5.4-4 string\u2192char audit gap (\u00a73.6)."
     },
     {
       "name": "pos-25-null-literal",
       "source": "module Pos25 {\n    func go() {\n        x := null\n    }\n}\n",
       "category": "positive",
-      "expected_outcome": "compile_success",
-      "rationale": "Null literal assigned via walrus. inferType for NULL_LITERAL returns 'int' (default). Elaboration: NULL_LITERAL → WaterfallType.VoidType. lowerExpression: NullLiteral(type=IrType.Void). Exercises the NULL_LITERAL path through lowerExpression."
+      "expected_outcome": "verify_fail:Unknown identifier 'null'",
+      "rationale": "Null literal assigned via walrus. inferType for NULL_LITERAL returns 'int' (default). Elaboration: NULL_LITERAL \u2192 WaterfallType.VoidType. lowerExpression: NullLiteral(type=IrType.Void). Exercises the NULL_LITERAL path through lowerExpression. P11 \u00a74.1: 'null' is parsed as an IDENTIFIER in Waterfall, not a NULL_LITERAL keyword. Elaboration emits UnknownIdentifier(EXPRESSION) per OQ-11.3=(a) since scope.lookup('null')=null."
     },
     {
       "name": "pos-26-function-call-statement",
       "source": "module Pos26 {\n    func doWork() {\n        doSomething()\n    }\n}\n",
       "category": "positive",
-      "expected_outcome": "compile_success",
-      "rationale": "Function-call in statement position. FunctionCallStatementData wraps a LOCAL call to 'doSomething'. IrStatement.FunctionCallStatement(FunctionCall(Local, doSomething, [], [], type=Void)). 'doSomething' undeclared but per OQ-3=C/OQ-5.4-1 elaboration stores VoidType — lowers silently. Exercises FunctionCallStatement path."
+      "expected_outcome": "verify_fail:Unknown identifier 'doSomething'",
+      "rationale": "Function-call in statement position. FunctionCallStatementData wraps a LOCAL call to 'doSomething'. IrStatement.FunctionCallStatement(FunctionCall(Local, doSomething, [], [], type=Void)). 'doSomething' undeclared but per OQ-3=C/OQ-5.4-1 elaboration stores VoidType \u2014 lowers silently. Exercises FunctionCallStatement path. P11 \u00a74.1: undeclared LOCAL call 'doSomething()' now rejected by StatementVerifier.verifyFunctionCallStatement per OQ-11.6=strict."
     },
     {
       "name": "pos-27-module-call-statement",
@@ -312,14 +327,14 @@
       "source": "module Pos32 {\n    func get(int[] arr, int i) returns int {\n        return arr[i]\n    }\n}\n",
       "category": "positive",
       "expected_outcome": "compile_success",
-      "rationale": "Array index where the index expression is an IDENTIFIER. ArrayIndex: target='arr', index=Identifier(i, Int). Elaboration: arrayType=scope.lookup('arr').type=ArrayType(IntType) → element=IntType for arrayIndex expr. lowerExpression ARRAY_INDEX: type=IrType.Int, index=Identifier(i, Int). Tests non-literal index in ArrayIndex."
+      "rationale": "Array index where the index expression is an IDENTIFIER. ArrayIndex: target='arr', index=Identifier(i, Int). Elaboration: arrayType=scope.lookup('arr').type=ArrayType(IntType) \u2192 element=IntType for arrayIndex expr. lowerExpression ARRAY_INDEX: type=IrType.Int, index=Identifier(i, Int). Tests non-literal index in ArrayIndex."
     },
     {
       "name": "pos-33-for-loop-scope-isolation",
       "source": "module Pos33 {\n    func go() {\n        for(item in things) {\n            int x = 1\n        }\n        for(item in others) {\n            int x = 2\n        }\n    }\n}\n",
       "category": "positive",
-      "expected_outcome": "compile_success",
-      "rationale": "Same iterator name and body var in two sequential for loops. Each body scope is independent. Elaboration creates a fresh child scope per loop; 'item' re-declared in each. Tests sequential for-loop scope independence at the lowering layer."
+      "expected_outcome": "verify_fail:Unknown collection identifier",
+      "rationale": "Same iterator name and body var in two sequential for loops. Each body scope is independent. Elaboration creates a fresh child scope per loop; 'item' re-declared in each. Tests sequential for-loop scope independence at the lowering layer. P11 \u00a74.1: both 'things' and 'others' are undeclared \u2192 UnknownIdentifier(FOR_COLLECTION); program now rejects per OQ-11.6=strict."
     }
   ],
   "negative_entries": [
@@ -328,252 +343,252 @@
       "source": "module Neg01 {\n    int x = 1\n    int x = 2\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate declaration: x",
-      "rationale": "Carry-forward from §5.3. Duplicate top-level var name. Second declare finds 'x' in module scope → DuplicateDeclaration(topLevel=false) → 'Duplicate declaration: x'. Fails at verify time."
+      "rationale": "Carry-forward from \u00a75.3. Duplicate top-level var name. Second declare finds 'x' in module scope \u2192 DuplicateDeclaration(topLevel=false) \u2192 'Duplicate declaration: x'. Fails at verify time."
     },
     {
       "name": "neg-02-duplicate-inner-var",
       "source": "module Neg02 {\n    func go() {\n        int x = 1\n        int x = 2\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate declaration: x",
-      "rationale": "Carry-forward §5.3. Duplicate var in function body. Second declare → DuplicateDeclaration → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Duplicate var in function body. Second declare \u2192 DuplicateDeclaration \u2192 verify_fail."
     },
     {
       "name": "neg-03-shadow-function-param",
       "source": "module Neg03 {\n    func f(int n) {\n        int n = 1\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate declaration: n",
-      "rationale": "Carry-forward §5.3. Inner var shadows function parameter. Declare in child scope finds 'n' via parent chain → DuplicateDeclaration → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Inner var shadows function parameter. Declare in child scope finds 'n' via parent chain \u2192 DuplicateDeclaration \u2192 verify_fail."
     },
     {
       "name": "neg-04-duplicate-function-param-names",
       "source": "module Neg04 {\n    func f(int a, dec a) {}\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate declaration: a",
-      "rationale": "Carry-forward §5.3. Duplicate parameter names. Second param declare finds 'a' in functionScope → DuplicateDeclaration → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Duplicate parameter names. Second param declare finds 'a' in functionScope \u2192 DuplicateDeclaration \u2192 verify_fail."
     },
     {
       "name": "neg-05-assign-to-const",
       "source": "module Neg05 {\n    func go() {\n        const int x = 5\n        x = 10\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Cannot assign to immutable binding 'x'",
-      "rationale": "Carry-forward §5.3. AssignToReadonly: const var. verifyVarAssignment isReadonly=true → AssignToReadonly → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. AssignToReadonly: const var. verifyVarAssignment isReadonly=true \u2192 AssignToReadonly \u2192 verify_fail."
     },
     {
       "name": "neg-06-assign-to-function-name-pitfall7",
       "source": "module Neg06 {\n    func f() {}\n    func go() {\n        f = 5\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Cannot assign to immutable binding 'f'",
-      "rationale": "Carry-forward §5.3. PITFALL #7: function name is implicitly readonly. verifyVarAssignment isReadonly=true → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. PITFALL #7: function name is implicitly readonly. verifyVarAssignment isReadonly=true \u2192 verify_fail."
     },
     {
       "name": "neg-07-void-variable-type",
       "source": "module Neg07 {\n    func f() {\n        void y = 5\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:not a value type",
-      "rationale": "Carry-forward §5.3 (OQ-5.3-1 fixed). VoidNotAValueType: verifyTypedVarDecl emits VoidNotAValueType when type==VoidType → 'not a value type'. Fixed in §5.3 impl. Fails at verify; never reaches lowering."
+      "rationale": "Carry-forward \u00a75.3 (OQ-5.3-1 fixed). VoidNotAValueType: verifyTypedVarDecl emits VoidNotAValueType when type==VoidType \u2192 'not a value type'. Fixed in \u00a75.3 impl. Fails at verify; never reaches lowering."
     },
     {
       "name": "neg-08-unknown-return-type",
       "source": "module Neg08 {\n    func f() returns string {}\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:not a recognized primitive",
-      "rationale": "Carry-forward §5.3. Unknown return type 'string' → UnknownType → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Unknown return type 'string' \u2192 UnknownType \u2192 verify_fail."
     },
     {
       "name": "neg-09-duplicate-function-names",
       "source": "module Neg09 {\n    func helper() {}\n    func helper() {}\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate top-level declaration: helper",
-      "rationale": "Carry-forward §5.3. Duplicate function names. Second self-decl finds 'helper' in module scope → DuplicateDeclaration(topLevel=true) → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Duplicate function names. Second self-decl finds 'helper' in module scope \u2192 DuplicateDeclaration(topLevel=true) \u2192 verify_fail."
     },
     {
       "name": "neg-10-increment-imm-var",
       "source": "module Neg10 {\n    func go() {\n        imm int x = 5\n        x++\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Cannot increment immutable binding 'x'",
-      "rationale": "Carry-forward §5.3. IncrementOfReadonly via imm modifier → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. IncrementOfReadonly via imm modifier \u2192 verify_fail."
     },
     {
       "name": "neg-11-assign-toplevel-const-from-function",
       "source": "module Neg11 {\n    const int MAX = 100\n    func go() {\n        MAX = 5\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Cannot assign to immutable binding 'MAX'",
-      "rationale": "Carry-forward §5.3. Const top-level var assigned from function body. Lookup walks parent chain, finds isReadonly=true → AssignToReadonly → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Const top-level var assigned from function body. Lookup walks parent chain, finds isReadonly=true \u2192 AssignToReadonly \u2192 verify_fail."
     },
     {
       "name": "neg-12-inner-var-shadows-toplevel",
       "source": "module Neg12 {\n    int x = 1\n    func go() {\n        int x = 10\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate declaration: x",
-      "rationale": "Carry-forward §5.3. Inner var shadows top-level var. Declare in child scope finds 'x' via parent chain → DuplicateDeclaration → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Inner var shadows top-level var. Declare in child scope finds 'x' via parent chain \u2192 DuplicateDeclaration \u2192 verify_fail."
     },
     {
       "name": "neg-13-error-inside-if-branch",
       "source": "module Neg13 {\n    func go(int flag) {\n        if(flag) {\n            const int x = 1\n            x = 2\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Cannot assign to immutable binding 'x'",
-      "rationale": "Carry-forward §5.3. Assign to const inside if-then branch. JoinAnalysis walks branch; AssignToReadonly → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Assign to const inside if-then branch. JoinAnalysis walks branch; AssignToReadonly \u2192 verify_fail."
     },
     {
       "name": "neg-14-error-inside-while-body",
       "source": "module Neg14 {\n    func go() {\n        while(1) {\n            int n = 5\n            int n = 6\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate declaration: n",
-      "rationale": "Carry-forward §5.3. Duplicate var inside while body → DuplicateDeclaration → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Duplicate var inside while body \u2192 DuplicateDeclaration \u2192 verify_fail."
     },
     {
       "name": "neg-15-error-inside-for-body",
       "source": "module Neg15 {\n    func go() {\n        for(item in things) {\n            const int x = 0\n            x = 1\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Cannot assign to immutable binding 'x'",
-      "rationale": "Carry-forward §5.3. Assign to const inside for body. verifyForBlock walks body; AssignToReadonly → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Assign to const inside for body. verifyForBlock walks body; AssignToReadonly \u2192 verify_fail."
     },
     {
       "name": "neg-16-unknown-type-in-function-body",
       "source": "module Neg16 {\n    func go() {\n        string name = `hello`\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:not a recognized primitive",
-      "rationale": "Carry-forward §5.3. Unknown type 'string' in function body → UnknownType → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Unknown type 'string' in function body \u2192 UnknownType \u2192 verify_fail."
     },
     {
       "name": "neg-17-duplicate-walrus-vars",
       "source": "module Neg17 {\n    func go() {\n        x := 1\n        x := 2\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate declaration: x",
-      "rationale": "Carry-forward §5.3. Duplicate walrus declarations → DuplicateDeclaration → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Duplicate walrus declarations \u2192 DuplicateDeclaration \u2192 verify_fail."
     },
     {
       "name": "neg-18-deeply-nested-error",
       "source": "module Neg18 {\n    func go() {\n        if(1) {\n            while(1) {\n                for(item in things) {\n                    const int q = 1\n                    q = 99\n                }\n            }\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Cannot assign to immutable binding 'q'",
-      "rationale": "Carry-forward §5.3. Assign to const at 3-level nesting depth. Error propagates through all three nesting levels → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Assign to const at 3-level nesting depth. Error propagates through all three nesting levels \u2192 verify_fail."
     },
     {
       "name": "neg-19-void-top-level-var",
       "source": "module Neg19 {\n    void globalVar = 0\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:not a value type",
-      "rationale": "Carry-forward §5.3 (OQ-5.3-1 fix). Void used as top-level variable type → VoidNotAValueType → verify_fail."
+      "rationale": "Carry-forward \u00a75.3 (OQ-5.3-1 fix). Void used as top-level variable type \u2192 VoidNotAValueType \u2192 verify_fail."
     },
     {
       "name": "neg-20-param-shadows-function-name",
       "source": "module Neg20 {\n    func f(int f) {}\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate declaration: f",
-      "rationale": "Carry-forward §5.3. Parameter has same name as function. Self-decl puts 'f' in module scope; per-arg declare in child finds 'f' via parent chain → DuplicateDeclaration → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. Parameter has same name as function. Self-decl puts 'f' in module scope; per-arg declare in child finds 'f' via parent chain \u2192 DuplicateDeclaration \u2192 verify_fail."
     },
     {
       "name": "neg-21-while-body-shadows-outer-var",
       "source": "module Neg21 {\n    func go() {\n        int n = 5\n        while(n) {\n            int n = 10\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Duplicate declaration: n",
-      "rationale": "Carry-forward §5.3. While-body var shadows enclosing function var. JoinAnalysis creates child scope; declare('n') finds 'n' via parent → DuplicateDeclaration → verify_fail."
+      "rationale": "Carry-forward \u00a75.3. While-body var shadows enclosing function var. JoinAnalysis creates child scope; declare('n') finds 'n' via parent \u2192 DuplicateDeclaration \u2192 verify_fail."
     },
     {
       "name": "neg-22-cast-to-unknown-type-in-return",
       "source": "module Neg22 {\n    func transform(int n) returns int {\n        return n castas string\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: string",
-      "rationale": "OQ-5.4-2. Cast to unknown type 'string' in return expression. ExpressionVerifier is P10 no-op so verify succeeds. Elaboration for CAST: fromSourceText('string')=ErrorType('string') stored in table. lowerExpression for CAST: WaterfallType.fromSourceText('string')=ErrorType('string') → IrType.fromWaterfallType(ErrorType('string')) throws IllegalStateException('Cannot lower error type to IR: string. The verifier should have rejected this before lowering.')."
+      "rationale": "OQ-5.4-2. Cast to unknown type 'string' in return expression. ExpressionVerifier is P10 no-op so verify succeeds. Elaboration for CAST: fromSourceText('string')=ErrorType('string') stored in table. lowerExpression for CAST: WaterfallType.fromSourceText('string')=ErrorType('string') \u2192 IrType.fromWaterfallType(ErrorType('string')) throws IllegalStateException('Cannot lower error type to IR: string. The verifier should have rejected this before lowering.')."
     },
     {
       "name": "neg-23-cast-to-nullable-type",
       "source": "module Neg23 {\n    func go(int n) {\n        x := n castas ?int\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: ?int",
-      "rationale": "OQ-5.4-2. Cast to nullable type '?int'. fromSourceText('?int'): text starts with '?' → ErrorType('?int') (audit surprise #5). inferType for CAST returns 'int' default → UntypedVarDecl.inferredType='int' → verifier happy. lowerExpression for CAST throws on ErrorType('?int')."
+      "rationale": "OQ-5.4-2. Cast to nullable type '?int'. fromSourceText('?int'): text starts with '?' \u2192 ErrorType('?int') (audit surprise #5). inferType for CAST returns 'int' default \u2192 UntypedVarDecl.inferredType='int' \u2192 verifier happy. lowerExpression for CAST throws on ErrorType('?int')."
     },
     {
       "name": "neg-24-cast-to-multidim-array",
       "source": "module Neg24 {\n    func go(int n) returns int {\n        return n castas int[][]\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: int[][]",
-      "rationale": "OQ-5.4-2. Cast to 'int[][]'. fromSourceText('int[][]'): isArray=true, base='int[]', base not a known primitive key → ErrorType('int[][]'). lowerExpression CAST throws on ErrorType. Verify passes (P10 no-op). Tests multi-dimensional array type path."
+      "rationale": "OQ-5.4-2. Cast to 'int[][]'. fromSourceText('int[][]'): isArray=true, base='int[]', base not a known primitive key \u2192 ErrorType('int[][]'). lowerExpression CAST throws on ErrorType. Verify passes (P10 no-op). Tests multi-dimensional array type path."
     },
     {
       "name": "neg-25-cast-to-void-array",
       "source": "module Neg25 {\n    func go(int n) returns int {\n        return n castas void[]\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: void[]",
-      "rationale": "OQ-5.4-2. Cast to 'void[]'. fromSourceText('void[]'): isArray=true, base='void', baseType=VoidType; WaterfallType.kt line 79 guard: 'if (isArray && baseType == VoidType) return ErrorType(text)' → ErrorType('void[]'). lowerExpression CAST throws. Verify passes. Tests the void-array guard in WaterfallType.fromSourceText."
+      "rationale": "OQ-5.4-2. Cast to 'void[]'. fromSourceText('void[]'): isArray=true, base='void', baseType=VoidType; WaterfallType.kt line 79 guard: 'if (isArray && baseType == VoidType) return ErrorType(text)' \u2192 ErrorType('void[]'). lowerExpression CAST throws. Verify passes. Tests the void-array guard in WaterfallType.fromSourceText."
     },
     {
       "name": "neg-26-cast-unknown-inside-if-branch",
       "source": "module Neg26 {\n    func classify(int n) returns int {\n        if(n) {\n            return n castas florp\n        }\n        return n\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: florp",
-      "rationale": "OQ-5.4-2. Cast to 'florp' inside if-branch body. Elaboration walks branch body; CAST stores ErrorType('florp'). lowerStatement for IfBlock recursively lowers the branch body, hits CAST lowerExpression → throws. Tests that lower_fail propagates out of nested if-branch."
+      "rationale": "OQ-5.4-2. Cast to 'florp' inside if-branch body. Elaboration walks branch body; CAST stores ErrorType('florp'). lowerStatement for IfBlock recursively lowers the branch body, hits CAST lowerExpression \u2192 throws. Tests that lower_fail propagates out of nested if-branch."
     },
     {
       "name": "neg-27-cast-unknown-inside-while-body",
       "source": "module Neg27 {\n    func go(int n) {\n        while(n) {\n            x := n castas sprocket\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: sprocket",
-      "rationale": "OQ-5.4-2. Cast to 'sprocket' inside while body. inferType for CAST → 'int' (default) → UntypedVarDecl.inferredType='int' → verifier happy. Elaboration stores ErrorType('sprocket') for CAST. lowerStatement WhileBlock iterates body, hits CAST lowerExpression → throws. Tests lower_fail from while-body."
+      "rationale": "OQ-5.4-2. Cast to 'sprocket' inside while body. inferType for CAST \u2192 'int' (default) \u2192 UntypedVarDecl.inferredType='int' \u2192 verifier happy. Elaboration stores ErrorType('sprocket') for CAST. lowerStatement WhileBlock iterates body, hits CAST lowerExpression \u2192 throws. Tests lower_fail from while-body."
     },
     {
       "name": "neg-28-cast-unknown-inside-for-body",
       "source": "module Neg28 {\n    func go() {\n        for(item in things) {\n            x := item castas sprocket\n        }\n    }\n}\n",
       "category": "negative",
-      "expected_outcome": "lower_fail:Cannot lower error type to IR: sprocket",
-      "rationale": "OQ-5.4-2. Cast to 'sprocket' inside for body. Elaboration for ForBlock declares iterator 'item', elaborates the UntypedVarDecl CAST value → ErrorType('sprocket'). lowerStatement ForBlock iterates body → CAST lowerExpression → throws. Tests lower_fail from for-body."
+      "expected_outcome": "verify_fail:Unknown collection identifier 'things' in for-loop",
+      "rationale": "OQ-5.4-2. Cast to 'sprocket' inside for body. Elaboration for ForBlock declares iterator 'item', elaborates the UntypedVarDecl CAST value \u2192 ErrorType('sprocket'). lowerStatement ForBlock iterates body \u2192 CAST lowerExpression \u2192 throws. Tests lower_fail from for-body. P11 \u00a74.1: 'things' undeclared now caught at verify time; IrLowering never reached. Error changed from lower_fail to verify_fail."
     },
     {
       "name": "neg-29-cast-unknown-inside-lambda-body",
-      "source": "module Neg29 {\n    func go() {\n        f := (int x) ==> convert(x castas widget)\n    }\n}\n",
+      "source": "module Neg29 {\n    func convert(int x) returns int { return x }\n    func go() {\n        f := (int x) ==> convert(x castas widget)\n    }\n}",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: widget",
-      "rationale": "OQ-5.4-2. Cast to 'widget' inside lambda body function call argument. Elaboration for LAMBDA: child scope, param 'x'; elaborateFunctionCall(convert(x castas widget)) → elaborateExpression(x castas widget) → CAST → ErrorType('widget') stored. lowerExpression LAMBDA → lowerFunctionCall → lowerExpression(x castas widget) → CAST → throws. Tests lower_fail propagation from inside lambda body."
+      "rationale": "OQ-5.4-2. Cast to 'widget' inside lambda body function call argument. Elaboration for LAMBDA: child scope, param 'x'; elaborateFunctionCall(convert(x castas widget)) \u2192 elaborateExpression(x castas widget) \u2192 CAST \u2192 ErrorType('widget') stored. lowerExpression LAMBDA \u2192 lowerFunctionCall \u2192 lowerExpression(x castas widget) \u2192 CAST \u2192 throws. Tests lower_fail propagation from inside lambda body. P11 fix: 'convert' now declared (added to module) so lambda body name check passes per OQ-11.3=(a); test remains lower_fail for 'widget' cast since CastTargetUnknown validation is \u00a74.2+."
     },
     {
       "name": "neg-30-cast-unknown-in-if-condition",
       "source": "module Neg30 {\n    func go(int n) {\n        if(n castas sprocket) {\n            return\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: sprocket",
-      "rationale": "OQ-5.4-2. Cast to 'sprocket' in the if-block condition expression. Elaboration for IfBlock elaborates the condition (CAST) → ErrorType('sprocket'). lowerStatement IfBlock calls lowerExpression(ifBranch.condition) → CAST → throws. Tests lower_fail from the condition expression position (not just branch body)."
+      "rationale": "OQ-5.4-2. Cast to 'sprocket' in the if-block condition expression. Elaboration for IfBlock elaborates the condition (CAST) \u2192 ErrorType('sprocket'). lowerStatement IfBlock calls lowerExpression(ifBranch.condition) \u2192 CAST \u2192 throws. Tests lower_fail from the condition expression position (not just branch body)."
     },
     {
       "name": "neg-31-cast-unknown-in-binary-op",
       "source": "module Neg31 {\n    func go(int n) returns int {\n        return (n castas flim) + n\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: flim",
-      "rationale": "OQ-5.4-2. Cast to 'flim' nested as left operand of a binary op. lowerExpression BINARY_OP recurses into left = CAST(n, 'flim') → throws. Tests lower_fail propagation from inside a binary op sub-expression."
+      "rationale": "OQ-5.4-2. Cast to 'flim' nested as left operand of a binary op. lowerExpression BINARY_OP recurses into left = CAST(n, 'flim') \u2192 throws. Tests lower_fail propagation from inside a binary op sub-expression."
     },
     {
       "name": "neg-32-cast-to-unknown-array-type",
       "source": "module Neg32 {\n    func go(int n) returns int {\n        return n castas widget[]\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: widget[]",
-      "rationale": "OQ-5.4-2. Cast to unknown array type 'widget[]'. fromSourceText('widget[]'): isArray=true, base='widget' → ErrorType('widget[]'). lowerExpression CAST throws. Tests cast-to-array-of-unknown-type path."
+      "rationale": "OQ-5.4-2. Cast to unknown array type 'widget[]'. fromSourceText('widget[]'): isArray=true, base='widget' \u2192 ErrorType('widget[]'). lowerExpression CAST throws. Tests cast-to-array-of-unknown-type path."
     },
     {
       "name": "neg-33-assign-imm-inside-for-body",
       "source": "module Neg33 {\n    func go() {\n        for(item in things) {\n            imm int x = 1\n            x = 2\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:Cannot assign to immutable binding 'x'",
-      "rationale": "Assign to imm var inside for-loop body. verifyForBlock creates body scope, declares iterator, walks body: verifyTypedVarDecl(imm int x) → isReadonly=true; verifyVarAssignment(x=2) → AssignToReadonly → verify_fail. Tests that imm modifier is respected inside for-loop bodies."
+      "rationale": "Assign to imm var inside for-loop body. verifyForBlock creates body scope, declares iterator, walks body: verifyTypedVarDecl(imm int x) \u2192 isReadonly=true; verifyVarAssignment(x=2) \u2192 AssignToReadonly \u2192 verify_fail. Tests that imm modifier is respected inside for-loop bodies."
     },
     {
       "name": "neg-34-void-var-in-elif-branch",
       "source": "module Neg34 {\n    func go(int flag) {\n        if(flag) {\n            int ok = 1\n        } elif(flag) {\n            void bad = 0\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:not a value type",
-      "rationale": "Void variable type inside elif branch. JoinAnalysis walks elifBranches; verifyTypedVarDecl('void bad') → VoidNotAValueType → verify_fail. Tests VoidNotAValueType check fires correctly inside elif bodies."
+      "rationale": "Void variable type inside elif branch. JoinAnalysis walks elifBranches; verifyTypedVarDecl('void bad') \u2192 VoidNotAValueType \u2192 verify_fail. Tests VoidNotAValueType check fires correctly inside elif bodies."
     },
     {
       "name": "neg-35-unknown-toplevel-type",
       "source": "module Neg35 {\n    string x = `hello`\n}\n",
       "category": "negative",
       "expected_outcome": "verify_fail:not a recognized primitive",
-      "rationale": "Unknown type 'string' at top-level. verifyTypedVarDecl (Pass 1): fromSourceText('string')=ErrorType → UnknownType → verify_fail. Lowering not attempted."
+      "rationale": "Unknown type 'string' at top-level. verifyTypedVarDecl (Pass 1): fromSourceText('string')=ErrorType \u2192 UnknownType \u2192 verify_fail. Lowering not attempted."
     },
     {
       "name": "neg-36-cast-unknown-in-while-condition",
       "source": "module Neg36 {\n    func go(int n) {\n        while(n castas bogus) {\n            n--\n        }\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: bogus",
-      "rationale": "OQ-5.4-2. Cast to 'bogus' in while condition. Elaboration elaborates the condition CAST → ErrorType('bogus'). lowerStatement WhileBlock calls lowerExpression(condition) → CAST → throws. Tests lower_fail propagation from while-condition position."
+      "rationale": "OQ-5.4-2. Cast to 'bogus' in while condition. Elaboration elaborates the condition CAST \u2192 ErrorType('bogus'). lowerStatement WhileBlock calls lowerExpression(condition) \u2192 CAST \u2192 throws. Tests lower_fail propagation from while-condition position."
     },
     {
       "name": "neg-37-cast-to-unknown-chain",
@@ -587,49 +602,49 @@
       "source": "module Neg38 {\n    func go(int n) {\n        Other::method(n castas splat)\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: splat",
-      "rationale": "OQ-5.4-2. Cast to 'splat' as argument to a MODULE-kind function call. lowerFunctionCall iterates positionalArguments and calls lowerExpression on each. The argument 'n castas splat' is a CAST → ErrorType('splat') → throws. Tests lower_fail inside module-call arguments."
+      "rationale": "OQ-5.4-2. Cast to 'splat' as argument to a MODULE-kind function call. lowerFunctionCall iterates positionalArguments and calls lowerExpression on each. The argument 'n castas splat' is a CAST \u2192 ErrorType('splat') \u2192 throws. Tests lower_fail inside module-call arguments."
     },
     {
       "name": "neg-39-cast-unknown-in-var-assignment",
       "source": "module Neg39 {\n    func go(int n) {\n        int x = 0\n        x = n castas sprocket\n    }\n}\n",
       "category": "negative",
       "expected_outcome": "lower_fail:Cannot lower error type to IR: sprocket",
-      "rationale": "OQ-5.4-2. Cast to 'sprocket' as the value of a variable assignment. lowerStatement for VarAssignment calls lowerExpression(stmt.value) = CAST(n, 'sprocket') → ErrorType → throws. Tests lower_fail from assignment right-hand side expression."
+      "rationale": "OQ-5.4-2. Cast to 'sprocket' as the value of a variable assignment. lowerStatement for VarAssignment calls lowerExpression(stmt.value) = CAST(n, 'sprocket') \u2192 ErrorType \u2192 throws. Tests lower_fail from assignment right-hand side expression."
     },
     {
       "name": "neg-40-deeply-nested-cast-in-nested-control-flow",
       "source": "module Neg40 {\n    func go(int n) {\n        if(n) {\n            while(n) {\n                for(item in things) {\n                    x := n castas bogotype\n                }\n            }\n        }\n    }\n}\n",
       "category": "negative",
-      "expected_outcome": "lower_fail:Cannot lower error type to IR: bogotype",
-      "rationale": "OQ-5.4-2. Cast to 'bogotype' at 3-level nesting depth (if→while→for). Tests that lower_fail propagates correctly through three levels of nested control-flow lowering, mirroring the neg-18 pattern but for lower_fail instead of verify_fail."
+      "expected_outcome": "verify_fail:Unknown collection identifier 'things' in for-loop",
+      "rationale": "OQ-5.4-2. Cast to 'bogotype' at 3-level nesting depth (if\u2192while\u2192for). Tests that lower_fail propagates correctly through three levels of nested control-flow lowering, mirroring the neg-18 pattern but for lower_fail instead of verify_fail. P11 \u00a74.1: 'things' undeclared now caught at verify time; IrLowering never reached. Error changed from lower_fail to verify_fail."
     },
     {
       "name": "neg-41-undeclared-identifier-silently-void",
       "source": "module Neg41 {\n    func f() {\n        int y = undeclared\n    }\n}\n",
       "category": "negative",
-      "expected_outcome": "compile_success",
-      "rationale": "OQ-5.4-1 DOCUMENTATION: spec-prompt claimed lower_fail; actual behavior is compile_success. Elaboration stores VoidType for undeclared 'undeclared' identifier. IrLowering reads VoidType → Identifier('undeclared', IrType.Void). No throw. TypedVarDecl(y, Int, Identifier(undeclared, Void)). Verifier also does NOT reject this (OQ-3=C). Result: semantically wrong IR produced silently. This is the documented P10 gap."
+      "expected_outcome": "verify_fail:Unknown identifier 'undeclared'",
+      "rationale": "OQ-5.4-1 DOCUMENTATION: spec-prompt claimed lower_fail; actual behavior is compile_success. Elaboration stores VoidType for undeclared 'undeclared' identifier. IrLowering reads VoidType \u2192 Identifier('undeclared', IrType.Void). No throw. TypedVarDecl(y, Int, Identifier(undeclared, Void)). Verifier also does NOT reject this (OQ-3=C). Result: semantically wrong IR produced silently. This is the documented P10 gap. P11 \u00a74.1 OQ-11.3=(a): Elaboration now emits UnknownIdentifier(EXPRESSION) for undeclared identifier in RHS expression. No longer compile_success."
     },
     {
       "name": "neg-42-undeclared-function-call-silently-void",
       "source": "module Neg42 {\n    func f() {\n        x := nope(5)\n    }\n}\n",
       "category": "negative",
-      "expected_outcome": "compile_success",
-      "rationale": "OQ-5.4-1 DOCUMENTATION: LOCAL call to undeclared function 'nope'. Elaboration for FUNCTION_CALL(LOCAL): scope.lookup('nope')=null → VoidType stored. lowerExpression FUNCTION_CALL: returnType=VoidType → IrType.Void; no throw. FunctionCall(Local, nope, [IntLiteral(5)], type=Void). compile_success."
+      "expected_outcome": "verify_fail:Unknown identifier 'nope'",
+      "rationale": "OQ-5.4-1 DOCUMENTATION: LOCAL call to undeclared function 'nope'. Elaboration for FUNCTION_CALL(LOCAL): scope.lookup('nope')=null \u2192 VoidType stored. lowerExpression FUNCTION_CALL: returnType=VoidType \u2192 IrType.Void; no throw. FunctionCall(Local, nope, [IntLiteral(5)], type=Void). compile_success. P11 \u00a74.1 OQ-11.3=(a): Elaboration emits UnknownIdentifier(EXPRESSION) for undeclared LOCAL function call in expression context."
     },
     {
       "name": "neg-43-undeclared-array-index-silently-void",
       "source": "module Neg43 {\n    func f() {\n        int y = unknown[0]\n    }\n}\n",
       "category": "negative",
-      "expected_outcome": "compile_success",
-      "rationale": "OQ-5.4-1 DOCUMENTATION: Array index on undeclared target 'unknown'. Elaboration for ARRAY_INDEX: scope.lookup('unknown')=null → arrayType=null → VoidType stored. lowerExpression ARRAY_INDEX: elementType=IrType.Void. Produces ArrayIndex(target='unknown', index=IntLiteral(0), type=IrType.Void). No throw. compile_success."
+      "expected_outcome": "verify_fail:Unknown array identifier 'unknown'",
+      "rationale": "OQ-5.4-1 DOCUMENTATION: Array index on undeclared target 'unknown'. Elaboration for ARRAY_INDEX: scope.lookup('unknown')=null \u2192 arrayType=null \u2192 VoidType stored. lowerExpression ARRAY_INDEX: elementType=IrType.Void. Produces ArrayIndex(target='unknown', index=IntLiteral(0), type=IrType.Void). No throw. compile_success. P11 \u00a74.1 OQ-11.3=(a): Elaboration emits UnknownIdentifier(ARRAY_INDEX_TARGET) for undeclared array target."
     },
     {
       "name": "neg-44-lambda-body-refs-undeclared-silently-void",
       "source": "module Neg44 {\n    func go() {\n        f := (int x) ==> nope(x)\n    }\n}\n",
       "category": "negative",
-      "expected_outcome": "compile_success",
-      "rationale": "OQ-5.4-1 DOCUMENTATION: Lambda body calls undeclared 'nope'. Elaboration for LAMBDA: child scope with param 'x'; elaborateFunctionCall(nope(x), lambdaScope) → scope.lookup('nope')=null → VoidType. lowerExpression LAMBDA: body=FunctionCall(Local, nope, [Identifier(x,Int)], type=Void). No throw. compile_success. All four neg-41 through neg-44 entries document the OQ-5.4-1 gap."
+      "expected_outcome": "verify_fail:Unknown identifier 'nope'",
+      "rationale": "OQ-5.4-1 DOCUMENTATION: Lambda body calls undeclared 'nope'. Elaboration for LAMBDA: child scope with param 'x'; elaborateFunctionCall(nope(x), lambdaScope) \u2192 scope.lookup('nope')=null \u2192 VoidType. lowerExpression LAMBDA: body=FunctionCall(Local, nope, [Identifier(x,Int)], type=Void). No throw. compile_success. All four neg-41 through neg-44 entries document the OQ-5.4-1 gap. P11 \u00a74.1 OQ-11.3=(a): Elaboration walks lambda body and emits UnknownIdentifier(EXPRESSION) for undeclared 'nope' in lambda scope."
     }
   ]
 }

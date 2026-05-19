@@ -1,8 +1,0 @@
-// module ControlFlowModule
-function describe(n) {
-    if (n) {let a = 1;} else if (n) {let b = 2;} else {let c = 3;}
-    for (const item of things) {let x = item;}
-    doSomething();
-    Other.helper(1, 2);
-}
-

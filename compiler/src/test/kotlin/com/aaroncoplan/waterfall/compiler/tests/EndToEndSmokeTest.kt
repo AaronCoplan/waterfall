@@ -1,5 +1,6 @@
 package com.aaroncoplan.waterfall.compiler.tests
 
+import com.aaroncoplan.waterfall.compiler.CompilerError
 import com.aaroncoplan.waterfall.compiler.Main
 import org.junit.After
 import org.junit.Assert.assertFalse
@@ -46,16 +47,20 @@ class EndToEndSmokeTest {
     }
 
     @Test
-    fun controlFlowTranslates() {
-        Main.run(arrayOf("--target", "js", "../examples/ControlFlowModule.wf"))
-        val output = capturedOut.toString()
-        assertTrue("Output should emit if-block", output.contains("if ("))
-        assertTrue("Output should emit else-if-block", output.contains("else if ("))
-        assertTrue("Output should emit else-block", output.contains("else {"))
-        assertTrue("Output should emit for-block", output.contains("for ("))
-        assertTrue("Output should emit local function call", output.contains("doSomething()"))
-        assertTrue("Output should emit module-qualified function call as Module.fn",
-            output.contains("Other.helper(1, 2)"))
+    fun controlFlowModuleFailsVerificationInP11() {
+        // P11 §4.1 (OQ-11.6=strict): ControlFlowModule.wf references undeclared identifiers:
+        // `things` in for-loop collection and `doSomething` as a LOCAL function call.
+        // The verifier now rejects this module and throws CompilerError.
+        // Golden files for ControlFlowModule are updated to empty string per §7.2.
+        try {
+            Main.run(arrayOf("--target", "js", "../examples/ControlFlowModule.wf"))
+            org.junit.Assert.fail(
+                "Expected CompilerError: ControlFlowModule.wf should fail to compile in P11 " +
+                "(undeclared 'things' in for-collection + undeclared 'doSomething' in LOCAL call)"
+            )
+        } catch (e: CompilerError) {
+            // Expected — verifier rejects undeclared identifiers per OQ-11.6=strict
+        }
     }
 
     @Test

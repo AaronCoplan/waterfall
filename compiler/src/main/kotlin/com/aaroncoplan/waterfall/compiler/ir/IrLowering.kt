@@ -184,11 +184,14 @@ object IrLowering {
             ExpressionData.Kind.IDENTIFIER -> {
                 val name = expr.literalText
                     ?: throw IllegalStateException("IDENTIFIER node has null literalText at ${fallbackPos.generateMessage()}")
-                // OQ-5.4-1 (M7 fix): Elaboration stores WaterfallType.VoidType for undeclared
-                // names, so resolvedTypes[expr] is never null in normal operation. If it IS null,
-                // an ExpressionData was not elaborated (Elaboration bug) — treat as VoidType
-                // rather than crashing, consistent with OQ-5.4-1 / OQ-3=C semantics.
-                val waterfallType = resolvedTypes[expr] ?: WaterfallType.VoidType
+                // P11 §4.1 drift assertions — NEVER fire under normal operation because
+                // Main.kt short-circuits at !verifyResult.isSuccessful before IrLowering runs.
+                // Both assertions fire only as drift catches (verifier or Elaboration missed something).
+                val waterfallType = resolvedTypes[expr]
+                    ?: error("IrLowering: identifier '$name' missing from resolvedTypes at ${fallbackPos.generateMessage()}; verifier or Elaboration drift")
+                if (waterfallType is WaterfallType.VoidType) {
+                    error("IrLowering: identifier '$name' resolved to Void at ${fallbackPos.generateMessage()}; ModuleVerifier should have emitted UnknownIdentifier")
+                }
                 IrExpression.Identifier(name, IrType.fromWaterfallType(waterfallType), fallbackPos)
             }
             ExpressionData.Kind.FUNCTION_CALL -> {

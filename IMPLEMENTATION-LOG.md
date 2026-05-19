@@ -260,6 +260,26 @@ carrying it to commit 4.
 
 ---
 
+## Sub-task 4.1 outcome — 2026-05-19 (PR opening; awaiting Aaron merge)
+
+- **Triad:** Leg 1 = 3 properties at N=10K ✓ (soundness: declared identifiers emit no UnknownIdentifier; completeness: undeclared emit ≥1 at all 7 syntactic positions; shadowing-soundness: inner re-declaration → DuplicateDeclaration, not UnknownIdentifier) • Leg 2 = conditional golden gate: 6 documented changes (ControlFlowModule + WhileModule × 3 backends → empty string per OQ-11.6=strict); 192 others byte-identical ✓; `scripts/check-goldens-unchanged-except-p11.sh` enforces per-commit • Leg 3 = 24/24 adversarial entries pass (10 pos + 14 neg; fresh-context Agent per R8; covers all 4 StatementVerifier sites + 6 Elaboration expression-context cases + PITFALL #17 guard + OQ-11.1 best-effort accumulation)
+- **Plan-mode iterations:** 2 (v1 with 3 drifts → Aaron re-escalation on false-dichotomy Finding 2 → (c) OQ-11.3=(a) ruling → ack)
+- **Pre-review skeptic:** N/A — full-P11 spec pre-review completed before §4.1 plan-mode per §0 kickoff
+- **Post-review skeptic (OQ-11.18=(a) cross-check):** Seed A (standard) = 0F+4R+3M+1reclassified; Seed B (hostile) = 0F+2R+4M; overlap = 27% (3 of 11 unique findings shared); 8 of 11 findings fixed in commit 4; protocol verdict = **HIGH VALUE** — each seed caught ~5 findings the other missed; cross-check pays for its ~1h overhead and is recommended for all §4.x sub-tasks with new VerifyError variants.
+- **Spec edits during sub-task:** 3 commits touching `notes/PHASE-11-design.md` (commit 1: 6 F10 sync edits; commit 2: 3 fold-in edits; commit 4: §2.2 prose Fix 1 + §4.1 Appendix note). ~15 individual edits total.
+- **Commits landed (4):**
+  - `spec(§4.1 F10 sync — OQ-11.3 + OQ-11.6 prose + test list)`
+  - `feat(P11 §4.1 — UnknownIdentifier verifier + elab + golden gate)`
+  - `test(P11 §4.1 — 24-entry adversarial fixture 10 pos + 14 neg)`
+  - `fix(P11 §4.1 — post-skeptic fixups 8 findings 2 seeds)`
+- **Carry-forward into §4.2:**
+  - **Decrement message says "increment"** (Seed A#2 / Seed B#3): `ghost--` emits "Cannot increment undeclared identifier 'ghost'". Spec-mandated per §2.2 (both ++ and -- route through `verifyIncrement` / `Context.INCREMENT_TARGET`). Deferred to P11.5+ UX polish pass.
+  - **CI wiring for golden gate** (Seed A#3/#4): `check-goldens-unchanged-except-p11.sh` default now `master`; not yet wired into a Gradle task or pre-commit hook. Phase-exit checklist item per spec §7.6 line 1225.
+  - **Fix 8 partial**: `GoldenTests` catch asserts `"verification failed"` substring only; doesn't yet assert specific `UnknownIdentifier` variant. May strengthen in §4.2+ as expression-context `verify_fail` surface expands.
+- **One sentence on what surprised:** The spec-body sweep meta-discipline correctly caught the §4.1 file-scope descriptions but missed §2.2's narrative-level ISE prose (lines 176-178), which Seed A and Seed B independently flagged — confirming that F10 sweeps must cover both the per-sub-task file-scope section AND the motivating-design background sections.
+
+---
+
 ## Phase 10 retrospective — 2026-05-19
 
 - **Calendar budgeted vs. actual:** ≤1 week / ~4–5 days (2026-05-15 first §5.1 commit → 2026-05-19 `phase-10-complete` tag). Came in under budget.

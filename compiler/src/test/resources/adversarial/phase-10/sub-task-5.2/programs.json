@@ -1,9 +1,9 @@
 {
-  "description": "Adversarial inputs for SymbolTable typed-API migration — P10 Sub-task 5.2",
-  "spec_section": "§2 + §5.2",
+  "description": "Adversarial inputs for SymbolTable typed-API migration \u2014 P10 Sub-task 5.2",
+  "spec_section": "\u00a72 + \u00a75.2",
   "generated_by": "fresh-context Agent (spec + diff context)",
   "generated_at": "2026-05-17",
-  "shape": "A — single JSON manifest",
+  "shape": "A \u2014 single JSON manifest",
   "notes": [
     "All programs validated against the phase-10/sub-task-5.2-symboltable-typed-api branch JAR.",
     "Positive programs verified to exit 0. Negative programs verified to exit 1 with expected error substring in stderr.",
@@ -12,14 +12,14 @@
     "OPEN QUESTION: inner var shadowing function self-name (e.g. func f() { int f = 5 }) is REJECTED.",
     "The function's self-decl puts its name in the outer (module) scope BEFORE the inner scope is created.",
     "So the function body's declare('f') finds 'f' in the ancestor scope and fails.",
-    "This is unambiguous in the implementation but the spec (§2.2 declare semantics) does not call it out explicitly.",
-    "OQ-1 RESOLVED at commit ee7a8d6 — §2.2 declare() KDoc updated to enumerate the function-self-name shadowing case explicitly."
+    "This is unambiguous in the implementation but the spec (\u00a72.2 declare semantics) does not call it out explicitly.",
+    "OQ-1 RESOLVED at commit ee7a8d6 \u2014 \u00a72.2 declare() KDoc updated to enumerate the function-self-name shadowing case explicitly."
   ],
   "open_questions": [
     {
       "id": "OQ-1",
-      "title": "Function self-name leaks into own body scope — shadowing rejected",
-      "description": "When func f() is declared, its name 'f' is placed in the MODULE scope (outer). The function body uses a CHILD scope. Inside the body, declaring 'int f = 5' fails because declare() walks ancestor scopes and finds 'f' in the module scope. The spec §2.2 says 'Shadowing is rejected — current behavior, preserved here' but does not explicitly enumerate the function-self-name case. The behavior is consistent with the current rule, but a reader of the spec might expect the function body to be exempt from its own name (i.e., allowing 'int f = 5' as a local var inside f). Confirmed behavior: REJECTED with 'Duplicate declaration: f'. RESOLVED at commit ee7a8d6 — §2.2 declare() KDoc updated to enumerate the function-self-name shadowing case explicitly.",
+      "title": "Function self-name leaks into own body scope \u2014 shadowing rejected",
+      "description": "When func f() is declared, its name 'f' is placed in the MODULE scope (outer). The function body uses a CHILD scope. Inside the body, declaring 'int f = 5' fails because declare() walks ancestor scopes and finds 'f' in the module scope. The spec \u00a72.2 says 'Shadowing is rejected \u2014 current behavior, preserved here' but does not explicitly enumerate the function-self-name case. The behavior is consistent with the current rule, but a reader of the spec might expect the function body to be exempt from its own name (i.e., allowing 'int f = 5' as a local var inside f). Confirmed behavior: REJECTED with 'Duplicate declaration: f'. RESOLVED at commit ee7a8d6 \u2014 \u00a72.2 declare() KDoc updated to enumerate the function-self-name shadowing case explicitly.",
       "tested_by_negative_entry": "neg-22-inner-var-shadows-own-function-name"
     },
     {
@@ -64,7 +64,7 @@
       "name": "pos-06-function-returns-int",
       "source": "module Pos06 {\n    func one() returns int {\n        return 1\n    }\n}\n",
       "category": "positive",
-      "rationale": "Function returning int. Exercises WaterfallType.forReturnType('int') -> IntType self-decl. Confirms forReturnType adapter is used (not fromSourceText) per §5.2."
+      "rationale": "Function returning int. Exercises WaterfallType.forReturnType('int') -> IntType self-decl. Confirms forReturnType adapter is used (not fromSourceText) per \u00a75.2."
     },
     {
       "name": "pos-07-function-returns-bool",
@@ -130,31 +130,31 @@
       "name": "pos-17-three-branch-if-elif-else-same-var",
       "source": "module Pos17 {\n    func go(int flag) {\n        if(flag) {\n            int x = 1\n        } elif(flag) {\n            int x = 2\n        } else {\n            int x = 3\n        }\n    }\n}\n",
       "category": "positive",
-      "rationale": "Three-branch if/elif/else all declaring the same local var 'x'. Extends the two-branch positive case to exercise all three scope-creation callsites in IfBlockData (×3 symbolTable.enterScope() calls from the migration table in §2.4)."
+      "rationale": "Three-branch if/elif/else all declaring the same local var 'x'. Extends the two-branch positive case to exercise all three scope-creation callsites in IfBlockData (\u00d73 symbolTable.enterScope() calls from the migration table in \u00a72.4)."
     },
     {
       "name": "pos-18-same-var-in-sibling-for-loops",
-      "source": "module Pos18 {\n    func go() {\n        for(item in things) {\n            int x = 1\n        }\n        for(item2 in others) {\n            int x = 2\n        }\n    }\n}\n",
+      "source": "module Pos18 {\n    func go(int[] things, int[] others) {\n        for(item in things) {\n            int x = 1\n        }\n        for(item2 in others) {\n            int x = 2\n        }\n    }\n}",
       "category": "positive",
-      "rationale": "Same var name 'x' in two sequential for loops. Each ForBlockData.verify creates an independent child scope. The second loop's scope is created fresh; the first loop's scope has gone out of use, so 'x' does not persist. Tests ForBlockData's enterScope() migration."
+      "rationale": "Same var name 'x' in two sequential for loops. Each ForBlockData.verify creates an independent child scope. The second loop's scope is created fresh; the first loop's scope has gone out of use, so 'x' does not persist. Tests ForBlockData's enterScope() migration. P11 fix: things/others declared as function parameters (OQ-11.6=strict)."
     },
     {
       "name": "pos-19-const-and-imm-top-level",
       "source": "module Pos19 {\n    const int MAX = 100\n    imm int PAGE_SIZE = 10\n}\n",
       "category": "positive",
-      "rationale": "Both 'const' and 'imm' modifiers at top level. Exercises isImmutable() -> isReadonly=true path for both modifier keywords (the preserved §2.4 reality note about grammar still emitting const/imm). Both should declare successfully with distinct names."
+      "rationale": "Both 'const' and 'imm' modifiers at top level. Exercises isImmutable() -> isReadonly=true path for both modifier keywords (the preserved \u00a72.4 reality note about grammar still emitting const/imm). Both should declare successfully with distinct names."
     },
     {
       "name": "pos-20-deeply-nested-for-if-while",
-      "source": "module Pos20 {\n    func go() {\n        for(item in things) {\n            int a = 1\n            if(a) {\n                int b = 2\n                while(b) {\n                    int c = 3\n                }\n            }\n        }\n    }\n}\n",
+      "source": "module Pos20 {\n    func go(int[] things) {\n        for(item in things) {\n            int a = 1\n            if(a) {\n                int b = 2\n                while(b) {\n                    int c = 3\n                }\n            }\n        }\n    }\n}",
       "category": "positive",
-      "rationale": "Four scope levels: function -> for -> if -> while. Each level declares a distinct var (a, b, c). Exercises enterScope() at ForBlockData, IfBlockData, WhileBlockData call sites — all three non-function scope construction callsites from §2.4 migration table."
+      "rationale": "Four scope levels: function -> for -> if -> while. Each level declares a distinct var (a, b, c). Exercises enterScope() at ForBlockData, IfBlockData, WhileBlockData call sites \u2014 all three non-function scope construction callsites from \u00a72.4 migration table. P11 fix: things/others declared as function parameters (OQ-11.6=strict)."
     },
     {
       "name": "pos-21-function-mutable-param",
       "source": "module Pos21 {\n    func go(int n) {\n        n = 5\n    }\n}\n",
       "category": "positive",
-      "rationale": "Reassigning a function parameter. Per §5.2 diff: per-arg declare sets isReadonly=false. The VariableAssignmentData.verify checks info.isReadonly; for args this is false, so assignment is allowed. Confirms args are NOT readonly (unlike function names)."
+      "rationale": "Reassigning a function parameter. Per \u00a75.2 diff: per-arg declare sets isReadonly=false. The VariableAssignmentData.verify checks info.isReadonly; for args this is false, so assignment is allowed. Confirms args are NOT readonly (unlike function names)."
     },
     {
       "name": "pos-22-untyped-var-declaration",
@@ -172,7 +172,7 @@
       "name": "pos-24-function-accessing-module-level-var",
       "source": "module Pos24 {\n    int counter = 0\n\n    func increment() {\n        counter = counter + 1\n    }\n}\n",
       "category": "positive",
-      "rationale": "Function body that assigns to a module-level mutable var. The module-level scope has 'counter' as mutable (isReadonly=false). VariableAssignmentData.verify looks it up via the parent chain and finds isReadonly=false — no error. Tests lookup through parent chain."
+      "rationale": "Function body that assigns to a module-level mutable var. The module-level scope has 'counter' as mutable (isReadonly=false). VariableAssignmentData.verify looks it up via the parent chain and finds isReadonly=false \u2014 no error. Tests lookup through parent chain."
     },
     {
       "name": "pos-25-function-with-no-params-no-return",
@@ -236,7 +236,7 @@
       "source": "module Neg08 {\n    func f() {}\n    func go() {\n        f = 5\n    }\n}\n",
       "category": "negative",
       "expected_error_substring": "Cannot assign to immutable binding",
-      "rationale": "PITFALL #7 headline: reassigning a function name. 'f' is stored in the module scope with isReadonly=true (per §5.2 self-decl migration). VariableAssignmentData.verify looks up 'f', finds isReadonly=true -> 'Cannot assign to immutable binding \\'f\\''."
+      "rationale": "PITFALL #7 headline: reassigning a function name. 'f' is stored in the module scope with isReadonly=true (per \u00a75.2 self-decl migration). VariableAssignmentData.verify looks up 'f', finds isReadonly=true -> 'Cannot assign to immutable binding \\'f\\''."
     },
     {
       "name": "neg-09-pitfall7-increment-function-name",
@@ -264,7 +264,7 @@
       "source": "module Neg12 {\n    const int MAX = 100\n    func go() {\n        MAX = 5\n    }\n}\n",
       "category": "negative",
       "expected_error_substring": "Cannot assign to immutable binding",
-      "rationale": "Assigning to a const top-level var from inside a function. The module scope stores MAX with isReadonly=true. lookup() from the function's child scope walks the parent chain, finds MAX in the module scope, checks readonlyShadow chain — isReadonly=true. 'Cannot assign to immutable binding \\'MAX\\''."
+      "rationale": "Assigning to a const top-level var from inside a function. The module scope stores MAX with isReadonly=true. lookup() from the function's child scope walks the parent chain, finds MAX in the module scope, checks readonlyShadow chain \u2014 isReadonly=true. 'Cannot assign to immutable binding \\'MAX\\''."
     },
     {
       "name": "neg-13-increment-const-toplevel-from-function",
@@ -299,7 +299,7 @@
       "source": "module Neg17 {\n    int counter = 0\n    func go(int counter) {\n        return\n    }\n}\n",
       "category": "negative",
       "expected_error_substring": "Duplicate declaration",
-      "rationale": "Function parameter named same as top-level var. Per §2.4: args are declared in functionSymbolTable (child of module scope). parent.lookupOwning('counter') finds the module-scope 'counter' -> DeclareResult.Failure -> 'Duplicate declaration: counter'."
+      "rationale": "Function parameter named same as top-level var. Per \u00a72.4: args are declared in functionSymbolTable (child of module scope). parent.lookupOwning('counter') finds the module-scope 'counter' -> DeclareResult.Failure -> 'Duplicate declaration: counter'."
     },
     {
       "name": "neg-18-func-then-toplevel-var-same-name",
@@ -334,14 +334,14 @@
       "source": "module Neg22 {\n    func f() {\n        int f = 5\n    }\n}\n",
       "category": "negative",
       "expected_error_substring": "Duplicate declaration",
-      "rationale": "OQ-1 test: inner var with same name as the enclosing function. The function self-decl places 'f' in the module scope. The function body is a child scope; declare('f') finds 'f' via parent.lookupOwning -> 'Duplicate declaration: f'. This is consistent with the anti-shadowing rule but is an implicit consequence not called out in §2.2."
+      "rationale": "OQ-1 test: inner var with same name as the enclosing function. The function self-decl places 'f' in the module scope. The function body is a child scope; declare('f') finds 'f' via parent.lookupOwning -> 'Duplicate declaration: f'. This is consistent with the anti-shadowing rule but is an implicit consequence not called out in \u00a72.2."
     },
     {
       "name": "neg-23-duplicate-param-mixed-types",
       "source": "module Neg23 {\n    func f(int a, dec a) {}\n}\n",
       "category": "negative",
       "expected_error_substring": "Duplicate declaration",
-      "rationale": "Duplicate parameter names with different types. Type difference does not exempt from duplicate detection — the SymbolTable is name-keyed. Second declare('a') -> Failure -> 'Duplicate declaration: a'. Exercises that the type stored in SymbolInfo is irrelevant to the duplicate-detection logic."
+      "rationale": "Duplicate parameter names with different types. Type difference does not exempt from duplicate detection \u2014 the SymbolTable is name-keyed. Second declare('a') -> Failure -> 'Duplicate declaration: a'. Exercises that the type stored in SymbolInfo is irrelevant to the duplicate-detection logic."
     }
   ]
 }

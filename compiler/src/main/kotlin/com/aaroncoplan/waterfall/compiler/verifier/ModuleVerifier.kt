@@ -29,9 +29,11 @@ internal object ModuleVerifier {
         val resolvedTypes = java.util.IdentityHashMap<ExpressionData, WaterfallType>()
 
         // Pass 1: top-level variables
+        // OQ-11.3=(a): pass errors list to Elaboration so expression-context UnknownIdentifier
+        // errors accumulate alongside statement-level errors in the same list.
         for (v in module.topLevelVariables) {
             errors += StatementVerifier.verifyStatement(v, symbolTable)
-            Elaboration.elaborateStatement(v, symbolTable, resolvedTypes)
+            Elaboration.elaborateStatement(v, symbolTable, resolvedTypes, errors)
         }
 
         // Pass 1.5: pre-declare ALL function signatures into the module scope BEFORE
@@ -103,7 +105,8 @@ internal object ModuleVerifier {
         }
         for (stmt in f.statements) {
             errors += StatementVerifier.verifyStatement(stmt, functionScope)
-            Elaboration.elaborateStatement(stmt, functionScope, resolvedTypes)
+            // OQ-11.3=(a): pass errors list so Elaboration can emit expression-context UnknownIdentifier
+            Elaboration.elaborateStatement(stmt, functionScope, resolvedTypes, errors)
         }
         moduleScope.exitScope(functionScope)
 

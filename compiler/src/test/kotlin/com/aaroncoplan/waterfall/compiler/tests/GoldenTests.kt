@@ -3,6 +3,7 @@ package com.aaroncoplan.waterfall.compiler.tests
 import com.aaroncoplan.waterfall.compiler.CompilerError
 import com.aaroncoplan.waterfall.compiler.Main
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -83,8 +84,18 @@ class GoldenTests(
             // captured before the throw.
             try {
                 Main.run(arrayOf("--target", target, examplePath.toString()))
-            } catch (ignored: CompilerError) {
-                // expected for Duplicate*Module examples
+            } catch (e: CompilerError) {
+                // Fix 8 (Seed B#6): assert the caught CompilerError is a legitimate
+                // verification failure, not an unexpected crash wrapped as CompilerError.
+                // All expected failures (Duplicate*Module + P11 ControlFlowModule/WhileModule)
+                // throw CompilerError("verification failed") from Main.kt.
+                // §4.2+ may strengthen to assert the specific VerifyError variant.
+                assertEquals(
+                    "GoldenTests: unexpected CompilerError for $target/$example — only verification " +
+                    "failures are expected (not crashes or other failure modes)",
+                    "verification failed",
+                    e.message
+                )
             }
         } finally {
             System.setOut(originalOut)
