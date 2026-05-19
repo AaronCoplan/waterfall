@@ -513,7 +513,7 @@ P11's §2.6 introduces `ExpressionData.sourcePosition`. The audit checks:
 | `IrLowering.kt:144` (return value) | same | `stmt.value?.sourcePosition` |
 | `IrLowering.kt:148` (function call statement) | same | `stmt.call`'s inner ExpressionData if available — but FunctionCallData is NOT an ExpressionData. See OQ-11.13 below. |
 
-**OQ-11.13** (ESCALATE — see §6): `FunctionCallStatementData.call` is `FunctionCallData`, NOT `ExpressionData`. P11 does NOT add `sourcePosition` to FunctionCallData (that's an ANTLR-context-level change with ripples). The implication: the FunctionCallStatementData's IR statement carries the statement-level position; its sub-expressions (positionalArguments etc.) carry their own per-expression positions. This is the natural seam — the statement's position is what an error like "function call rejected" would point at. **Aaron decides at plan-mode time** whether this is acceptable or whether FunctionCallData also needs a position.
+**OQ-11.13** (ESCALATE — see §6, decision recorded): `FunctionCallStatementData.call` is `FunctionCallData`, NOT `ExpressionData`. Per OQ-11.13=(b), P11 DOES add `sourcePosition: SourcePosition` to `FunctionCallData` from `ctx.start`. The diff is small (1 field + constructor wiring); justifies the per-call source position for diagnostic quality and symmetry with `ExpressionData.sourcePosition`. The FunctionCallStatementData's IR statement then carries this per-call position rather than the enclosing statement's position.
 
 ### 3.5 No new IR types or variants
 
@@ -971,7 +971,7 @@ Same question for `doSomething()` — an undeclared local function call (FUNCTIO
 
 ### ESCALATE OQ-11.13 — FunctionCallData source position
 
-§3.4's audit notes that `FunctionCallStatementData.call` is a `FunctionCallData`, not an `ExpressionData`. `FunctionCallData` does NOT get a `sourcePosition` field in P11 — that's an ANTLR-context-level change.
+§3.4's audit notes that `FunctionCallStatementData.call` is a `FunctionCallData`, not an `ExpressionData`. Prior to this OQ's resolution, `FunctionCallData` did not carry a `sourcePosition` field. The candidates below were whether to add one.
 
 **Candidates:**
 - **(a) FunctionCallData inherits the statement's position.** Today's behavior; preserved in P11.
@@ -1298,6 +1298,7 @@ compiler/src/main/kotlin/com/aaroncoplan/waterfall/compiler/
 │       └── StringLiteralText.kt (MOVED from statements/; package changes from .statements to .ir.util)
 ├── statements/
 │   ├── ExpressionData.kt       (MODIFIED — adds sourcePosition: SourcePosition field)
+│   ├── FunctionCallData.kt     (MODIFIED — adds sourcePosition: SourcePosition field from ctx.start per OQ-11.13)
 │   └── StringLiteralText.kt    (DELETED — moved to ir/util/)
 ├── target/
 │   ├── JavaScriptBackend.kt    (MODIFIED — StringLiteralText import path)
