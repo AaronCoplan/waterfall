@@ -1238,6 +1238,36 @@ interface CodeGenerator {
 
 **PITFALL #10** — Don't try to keep the old interface alive in parallel with the new one. The audit's D4 (backend duplication) is a real issue, but it's a *separate* problem from D1. P10 is just the IR migration. After P10, all three backends consume IR; addressing D4 (e.g., a shared "block-of-statements" helper) is post-P10 work.
 
+**F3 decision (§5.5 Aaron's D3=throw):** `emitReadonlyPromotion` must throw in all three backends:
+```kotlin
+override fun emitReadonlyPromotion(s: IrStatement.ReadonlyPromotion): String =
+    error("ReadonlyPromotion is P12-deferred — IR variant must not reach P10 backends")
+```
+P10 never instantiates `IrStatement.ReadonlyPromotion` (the `ReadonlyPromotionData` *Data class does not exist; see §3.5 note). The throw is a defensive invariant.
+
+**R5 (§5.5 OQ-5.4-1 carry-through):** Backends that receive `IrExpression.Identifier(name, IrType.Void)` (undeclared identifier that passed verification per OQ-3=C) must emit just the `name` field and ignore the `Void` type. The Void type is a "fix-me signal" for P11 — P10 backends must produce the same byte-equivalent output as today.
+
+**R6 (§5.5 dispatcher pattern):** Each backend should have a private dispatcher:
+```kotlin
+private fun emitStatement(s: IrStatement): String = when (s) {
+    is IrStatement.TypedVarDecl          -> emitTypedVarDecl(s)
+    is IrStatement.UntypedVarDecl        -> emitUntypedVarDecl(s)
+    is IrStatement.VarAssignment         -> emitVarAssignment(s)
+    is IrStatement.IncrementStatement    -> emitIncrementStatement(s)
+    is IrStatement.IfBlock               -> emitIfBlock(s)
+    is IrStatement.WhileBlock            -> emitWhileBlock(s)
+    is IrStatement.ForBlock              -> emitForBlock(s)
+    is IrStatement.ReturnStatement       -> emitReturnStatement(s)
+    is IrStatement.FunctionCallStatement -> emitFunctionCallStatement(s)
+    is IrStatement.ReadonlyPromotion     -> emitReadonlyPromotion(s)  // throws in P10
+}
+```
+This replaces the old `it.translate(this)` pattern (`TranslatableStatement.translate(CodeGenerator)`).
+
+**R2 (§5.5 ArrayIndex.target is String):** `IrExpression.ArrayIndex.target` is `String` (the array variable's name), matching today's `ArrayIndexData.target: String`. P10 grammar supports only `simpleIdentifier[expr]` — no nested array-access. Backends emit `"${a.target}[${emitExpression(a.index)}]"` directly.
+
+**R3 (§5.5 CBackend `inferArrayElementType` obsolescence):** After migration, drop string-text parsing. Use `(v.type as? IrType.Array)?.element?.render()` (or `?.element` directly for C typedef logic). The IR's `IrType.Array(element: IrType)` carries the elaboration-resolved element type from §5.4; re-deriving from source text strings is wasted work and a silent-resolution risk.
+
 ---
 
 ## Section 4 — Verifier package (closes D3)
@@ -2469,23 +2499,90 @@ This was a silent resolution: the plan-back v1 said "throw if entry absent" but 
 
 ### Sub-task 5.5 — Migrate backends to consume IR
 
-This is the biggest single change. One backend at a time. The order to use:
+This is the biggest single change in P10. The CodeGenerator interface and all three backends migrate to IR in one PR. Aaron's decision (D1=B) specifies:
+- **Atomic interface swap in commit 2**: `CodeGenerator.kt` and `JavaScriptBackend.kt` migrate together. Python and C get throwaway `lowerThenEmit` stub adapters (see below).
+- **Per-backend real migration in commits 3 and 4**: Python then C replace their stubs with proper IR-consuming implementations.
 
-1. `JavaScriptBackend` (cleanest).
-2. `PythonBackend`.
-3. `CBackend` (most complex; do last so the others' migration patterns are settled).
+**Aaron's decisions (D1–D5):**
 
-**Files changed per backend:**
-- The backend's main file — every `emit*` method's parameter type changes from `*Data` to `Ir*`.
-- The `Backends.kt` registry — no change.
+- **D1=B** (migration shape): Atomic interface swap in commit 2; Python/C get temporary `IrToDataBridge` stubs deleted in commits 3 and 4.
+- **D2** (per-commit golden-diff gate): At EVERY commit (2, 3, 4, 5), `git diff -- compiler/src/test/resources/golden/` MUST be empty. The enforcement script `scripts/check-goldens-unchanged.sh` (committed in commit 1) must exit 0 before any commit lands.
+- **D3=throw** (`emitReadonlyPromotion`): All three backends use `error("ReadonlyPromotion is P12-deferred — IR variant must not reach P10 backends")`. See §3.9 F3 note.
+- **D4=Main.kt orchestrates**: `IrLowering.lowerModule` is called in `Main.kt` between `Verifier.verifyModule` and `backend.emitProgram(ir)`. Backends are pure IR consumers; they never call the lowering pass themselves.
+- **D5=pause after spec**: Commit 1 (spec + `check-goldens-unchanged.sh`) lands first; Aaron acks before commits 2+ begin.
 
-**Expected test impact:** All goldens unchanged. The IR-driven backend produces the same output as the `*Data`-driven one. Any divergence is a bug.
+**Adversarial fixture: skip.** The 198 golden byte-equivalence checks (66 examples × 3 backends) are the §5.5 oracle per Aaron's D4 decision. No new Leg 3 fixture for §5.5.
 
-**Sanity check after each backend:** Run `./gradlew test --tests GoldenTests` filtered to the relevant target. All pass.
+**Per-commit file enumeration:**
 
-After all three backends are migrated, `CodeGenerator.kt` itself updates (the interface signature change in Section 3.9).
+| Commit | Files changed | Golden gate |
+|---|---|---|
+| 2 (atomic swap + JS + stubs) | `CodeGenerator.kt`, `JavaScriptBackend.kt`, `PythonBackend.kt`, `CBackend.kt`, `IrToDataBridge.kt` (new), `Main.kt` | Zero diffs, all 3 targets |
+| 3 (Python real impl) | `PythonBackend.kt` (replace stub with real impl) | Zero diffs, all 3 targets |
+| 4 (C real impl) | `CBackend.kt` (replace stub), `IrToDataBridge.kt` (delete) | Zero diffs, all 3 targets |
+| 5 (post-skeptic) | Various | Zero diffs |
 
-**PITFALL #13** — The "produces the same output" check is *exactly* the verifier-overfitting failure mode the AI-research doc (07) warns about. The implementer will be tempted to write tests that the new IR-driven backend passes by construction, then declare victory. The honest test is: **goldens unchanged**. If the goldens have to change, something is wrong; if you find yourself updating a golden, **escalate**.
+**`IrToDataBridge.kt` — throwaway shared helper (commit 2, deleted by commit 4):**
+
+Lives in `compiler/.../target/IrToDataBridge.kt`. Handles ONLY the genuinely generic expression rendering shared between Python and C stubs. Cast, FunctionCall (all kinds), and Lambda are inlined per backend (they have backend-specific syntax). Any expression kind NOT in the bridge causes a loud error:
+
+```kotlin
+// THROWAWAY: deleted when Python migrates (commit 3) and C migrates (commit 4).
+// Contains only backend-agnostic expression rendering helpers.
+// Backend-specific rendering (Cast, FunctionCall, Lambda) is inlined per backend.
+internal object IrToDataBridge {
+    fun renderExpression(e: IrExpression): String = when (e) {
+        is IrExpression.Identifier    -> e.name   // R5: emit name; ignore Void type
+        is IrExpression.IntLiteral    -> e.literalText
+        is IrExpression.DecLiteral    -> e.literalText
+        is IrExpression.StringLiteral -> e.literalText  // backends apply escaping
+        is IrExpression.BoolLiteral   -> e.value.toString()
+        is IrExpression.NullLiteral   -> "null"
+        is IrExpression.BinaryOp      -> "(${renderExpression(e.left)} ${e.op} ${renderExpression(e.right)})"
+        is IrExpression.ArrayIndex    -> "${e.target}[${renderExpression(e.index)}]"
+        is IrExpression.ArrayLiteral  -> "[" + e.elements.joinToString(", ") { renderExpression(it) } + "]"
+        is IrExpression.BundleLiteral -> "[" + e.elements.joinToString(", ") { renderExpression(it) } + "]"
+        // Cast, FunctionCall, Lambda: NOT handled — backend must inline
+        else -> error("IrToDataBridge does not handle ${e::class.simpleName}; backend must inline")
+    }
+}
+```
+
+**Temporary stub pattern for Python and C in commit 2:**
+
+Each non-migrated backend implements the new `emitProgram(module: IrModule)` via a `lowerThenEmit` private helper, explicitly marked THROWAWAY. The stub delegates generic expression rendering to `IrToDataBridge.renderExpression` and handles Cast/FunctionCall/Lambda inline (same logic as the old *Data-walking code, translated to use IR fields).
+
+Python example:
+```kotlin
+// THROWAWAY: replaced by proper impl in commit 3
+private fun lowerThenEmit(module: IrModule): String {
+    usesFinal = module.topLevelVariables.any { it.isReadonly }  // SA-1 fix
+    // ... structure identical to old emitProgram but using IrModule fields
+}
+```
+
+**Main.kt wiring after commit 2 (F4):**
+```kotlin
+val verifyResult = Verifier.verifyModule(moduleAst, symbolTable)
+if (!verifyResult.isSuccessful) { /* render errors + throw */ }
+val ir = IrLowering.lowerModule(moduleAst, verifyResult.resolvedTypes)
+println(backend.emitProgram(ir))
+```
+
+**Per-backend traps (for the implementer):**
+
+| Backend | Traps |
+|---|---|
+| JS | `const`/`let` from `isReadonly`; `===` for `equals`; `**` for `^`; no type annotations; lambda → arrow function `(args) => body` |
+| Python | `usesFinal` from `topLevelVariables.any { it.isReadonly }`; `Final[T]` annotation for top-level consts only; 4-space indent; `def` not `function`; no semicolons; 3 blank lines between top-level defs |
+| C | `inferArrayElementType` → `(v.type as? IrType.Array)?.element?.render()` (R3); `typedef` wiring for array types; explicit cast functions (`(int)`); function body uses brace blocks not indent |
+
+**PITFALL #13** — The "produces the same output" check is *exactly* the verifier-overfitting failure mode. The honest test is: **goldens unchanged**. If the goldens change, something is wrong; if you find yourself updating a golden, **escalate**. `scripts/check-goldens-unchanged.sh` is the mechanical enforcement.
+
+**Carry-forward into §5.6:**
+- `Translatable.translate(backend: CodeGenerator)` still exists after §5.5 (backends no longer call it, but the interface method and all `*Data.translate` overrides remain). §5.6 deletes the method from `Translatable` and removes `override fun translate` from each *Data class.
+- `Backends.kt` registry: no change in §5.5 (the registry stores `CodeGenerator` instances; the interface changes but the list stays the same).
+- `StringLiteralText` helper: still used by backends after migration (they call `StringLiteralText.unescape` / `StringLiteralText.escapeFor`; these are string manipulation utilities, not *Data consumers).
 
 ### Sub-task 5.6 — Remove old paths
 

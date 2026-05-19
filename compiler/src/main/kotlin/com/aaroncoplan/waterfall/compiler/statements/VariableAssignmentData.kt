@@ -12,5 +12,6 @@ class VariableAssignmentData(filePath: String, ctx: WaterfallParser.VariableAssi
     @JvmField val op: String = ctx.op.text
     @JvmField val value: ExpressionData = ExpressionData(filePath, ctx.expression())
 
-    override fun translate(backend: CodeGenerator): String = backend.emitVarAssignment(this)
+    override fun translate(backend: CodeGenerator): String =
+        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }

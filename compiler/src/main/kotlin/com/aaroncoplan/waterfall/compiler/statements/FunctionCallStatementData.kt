@@ -9,5 +9,6 @@ class FunctionCallStatementData(filePath: String, ctx: WaterfallParser.FunctionC
 
     @JvmField val call: FunctionCallData = FunctionCallData(filePath, ctx)
 
-    override fun translate(backend: CodeGenerator): String = backend.emitFunctionCallStatement(this)
+    override fun translate(backend: CodeGenerator): String =
+        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }

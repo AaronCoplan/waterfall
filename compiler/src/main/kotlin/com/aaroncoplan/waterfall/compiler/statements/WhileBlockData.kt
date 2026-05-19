@@ -12,5 +12,6 @@ class WhileBlockData(filePath: String, ctx: WaterfallParser.WhileBlockContext)
     @JvmField val body: List<TranslatableStatement> =
         StatementDispatcher.fromStatementBlock(filePath, ctx.statementBlock())
 
-    override fun translate(backend: CodeGenerator): String = backend.emitWhileBlock(this)
+    override fun translate(backend: CodeGenerator): String =
+        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }

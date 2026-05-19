@@ -18,7 +18,8 @@ class UntypedVariableDeclarationAndAssignmentData(
     /** True iff the binding was declared with `const` or `imm`. */
     fun isImmutable(): Boolean = "const" in modifiers || "imm" in modifiers
 
-    override fun translate(backend: CodeGenerator): String = backend.emitUntypedVarDecl(this)
+    override fun translate(backend: CodeGenerator): String =
+        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 
     companion object {
         private fun inferType(expr: ExpressionData): String = when (expr.kind) {

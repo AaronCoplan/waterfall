@@ -30,5 +30,6 @@ class IfBlockData(filePath: String, ctx: WaterfallParser.IfBlockContext)
         StatementDispatcher.fromStatementBlock(filePath, it.statementBlock())
     }
 
-    override fun translate(backend: CodeGenerator): String = backend.emitIfBlock(this)
+    override fun translate(backend: CodeGenerator): String =
+        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }

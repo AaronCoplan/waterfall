@@ -1,52 +1,38 @@
 package com.aaroncoplan.waterfall.compiler.target
 
-import com.aaroncoplan.waterfall.compiler.statements.ArrayLiteralData
-import com.aaroncoplan.waterfall.compiler.statements.BundleLiteralData
-import com.aaroncoplan.waterfall.compiler.statements.ExpressionData
-import com.aaroncoplan.waterfall.compiler.statements.ForBlockData
-import com.aaroncoplan.waterfall.compiler.statements.FunctionCallData
-import com.aaroncoplan.waterfall.compiler.statements.FunctionCallStatementData
-import com.aaroncoplan.waterfall.compiler.statements.FunctionImplementationData
-import com.aaroncoplan.waterfall.compiler.statements.IfBlockData
-import com.aaroncoplan.waterfall.compiler.statements.IncrementStatementData
-import com.aaroncoplan.waterfall.compiler.statements.LambdaFunctionData
-import com.aaroncoplan.waterfall.compiler.statements.ModuleAst
-import com.aaroncoplan.waterfall.compiler.statements.ReturnStatementData
+import com.aaroncoplan.waterfall.compiler.ir.*
 import com.aaroncoplan.waterfall.compiler.statements.StringLiteralText
-import com.aaroncoplan.waterfall.compiler.statements.TypedVariableDeclarationAndAssignmentData
-import com.aaroncoplan.waterfall.compiler.statements.UntypedVariableDeclarationAndAssignmentData
-import com.aaroncoplan.waterfall.compiler.statements.VariableAssignmentData
-import com.aaroncoplan.waterfall.compiler.statements.WhileBlockData
-import com.aaroncoplan.waterfall.compiler.statements.helpers.TranslatableStatement
 
 /**
  * Emits Python 3. Types are dropped (Python is dynamic). Compounds use
  * indentation rather than braces, so each `emit*` method returns its node at
  * "indent level 0" and the [indent] helper adds leading whitespace when placing
  * it inside a parent block.
+ *
+ * §5.5: full IR-consuming implementation (commit 3 — replaces throwaway stub).
  */
 class PythonBackend : CodeGenerator {
 
-    /** Whether any const/imm decl was emitted; controls the `from typing import Final` prelude. */
+    /** True iff any top-level `const`/`imm` var was emitted. Controls the
+     *  `from typing import Final` prelude. SA-1: derived from IrModule field. */
     private var usesFinal: Boolean = false
 
     override fun name(): String = "python"
 
-    override fun emitProgram(module: ModuleAst): String {
-        // Render the body first so usesFinal reflects whether any const/imm got emitted.
-        usesFinal = false
+    override fun emitProgram(module: IrModule): String {
+        // Compute usesFinal from IrModule field (SA-1: top-level only per PEP 591).
+        usesFinal = module.topLevelVariables.any { it.isReadonly }
         val body = StringBuilder()
         for (v in module.topLevelVariables) {
-            body.append(emitTypedVarDecl(v)).append("\n")
+            body.append(emitTopLevelVar(v)).append("\n")
         }
         if (module.topLevelVariables.isNotEmpty() && module.functions.isNotEmpty()) {
             body.append("\n")
         }
         for ((i, fn) in module.functions.withIndex()) {
-            body.append(emitFunctionImpl(fn))
+            body.append(emitFunction(fn))
             body.append(if (i < module.functions.size - 1) "\n\n\n" else "\n")
         }
-
         val sb = StringBuilder()
         sb.append("# module ").append(module.name).append("\n")
         if (usesFinal) sb.append("from typing import Final\n")
@@ -54,38 +40,54 @@ class PythonBackend : CodeGenerator {
         return sb.toString()
     }
 
-    override fun emitTypedVarDecl(s: TypedVariableDeclarationAndAssignmentData): String {
-        if (s.isImmutable()) {
-            usesFinal = true
-            return "${s.name}: Final = ${emitExpression(s.value)}"
-        }
-        return "${s.name} = ${emitExpression(s.value)}"
+    private fun emitTopLevelVar(v: IrTopLevelVariable): String {
+        return if (v.isReadonly) "${v.name}: Final = ${emitIrExpression(v.initializer)}"
+        else "${v.name} = ${emitIrExpression(v.initializer)}"
     }
 
-    override fun emitUntypedVarDecl(s: UntypedVariableDeclarationAndAssignmentData): String {
-        if (s.isImmutable()) {
-            usesFinal = true
-            return "${s.name}: Final = ${emitExpression(s.value)}"
-        }
-        return "${s.name} = ${emitExpression(s.value)}"
+    // ---------------------------------------------------------------------- //
+    // Statement dispatcher (R6)
+    // ---------------------------------------------------------------------- //
+
+    private fun emitStatement(s: IrStatement): String = when (s) {
+        is IrStatement.TypedVarDecl          -> emitTypedVarDecl(s)
+        is IrStatement.UntypedVarDecl        -> emitUntypedVarDecl(s)
+        is IrStatement.VarAssignment         -> emitVarAssignment(s)
+        is IrStatement.IncrementStatement    -> emitIncrementStatement(s)
+        is IrStatement.IfBlock               -> emitIfBlock(s)
+        is IrStatement.WhileBlock            -> emitWhileBlock(s)
+        is IrStatement.ForBlock              -> emitForBlock(s)
+        is IrStatement.ReturnStatement       -> emitReturnStatement(s)
+        is IrStatement.FunctionCallStatement -> emitFunctionCallStatement(s)
+        is IrStatement.ReadonlyPromotion     -> emitReadonlyPromotion(s)
     }
 
-    override fun emitVarAssignment(s: VariableAssignmentData): String =
-        "${s.name} ${s.op} ${emitExpression(s.value)}"
+    // ---------------------------------------------------------------------- //
+    // Statement implementations
+    // ---------------------------------------------------------------------- //
 
-    override fun emitFunctionImpl(s: FunctionImplementationData): String {
-        val args = s.typedArguments.joinToString(", ") { it.secondVal }
+    override fun emitTypedVarDecl(s: IrStatement.TypedVarDecl): String =
+        "${s.name} = ${emitIrExpression(s.initializer)}"  // no Final inside function bodies
+
+    override fun emitUntypedVarDecl(s: IrStatement.UntypedVarDecl): String =
+        "${s.name} = ${emitIrExpression(s.initializer)}"
+
+    override fun emitVarAssignment(s: IrStatement.VarAssignment): String =
+        "${s.name} ${s.op} ${emitIrExpression(s.value)}"
+
+    override fun emitFunction(s: IrFunction): String {
+        val args = s.parameters.joinToString(", ") { it.name }
         val header = "def ${s.name}($args):"
-        if (s.statements.isEmpty()) return header + "\n" + INDENT_UNIT + "pass"
-        return header + "\n" + indent(joinStatements(s.statements), 1)
+        if (s.body.isEmpty()) return header + "\n" + INDENT_UNIT + "pass"
+        return header + "\n" + indent(joinStatements(s.body), 1)
     }
 
-    override fun emitIfBlock(s: IfBlockData): String {
+    override fun emitIfBlock(s: IrStatement.IfBlock): String {
         val sb = StringBuilder()
-        sb.append("if ").append(emitExpression(s.ifBranch.condition)).append(":\n")
+        sb.append("if ").append(emitIrExpression(s.ifBranch.condition)).append(":\n")
         sb.append(indent(bodyOrPass(s.ifBranch.body), 1))
         for (elif in s.elifBranches) {
-            sb.append("\n").append("elif ").append(emitExpression(elif.condition)).append(":\n")
+            sb.append("\n").append("elif ").append(emitIrExpression(elif.condition)).append(":\n")
             sb.append(indent(bodyOrPass(elif.body), 1))
         }
         s.elseBody?.let { else_ ->
@@ -95,101 +97,96 @@ class PythonBackend : CodeGenerator {
         return sb.toString()
     }
 
-    override fun emitForBlock(s: ForBlockData): String =
+    override fun emitForBlock(s: IrStatement.ForBlock): String =
         "for ${s.iteratorName} in ${s.collectionName}:\n${indent(bodyOrPass(s.body), 1)}"
 
-    override fun emitWhileBlock(s: WhileBlockData): String =
-        "while ${emitExpression(s.condition)}:\n${indent(bodyOrPass(s.body), 1)}"
+    override fun emitWhileBlock(s: IrStatement.WhileBlock): String =
+        "while ${emitIrExpression(s.condition)}:\n${indent(bodyOrPass(s.body), 1)}"
 
-    override fun emitFunctionCallStatement(s: FunctionCallStatementData): String =
-        emitFunctionCall(s.call)
+    override fun emitFunctionCallStatement(s: IrStatement.FunctionCallStatement): String =
+        emitIrFunctionCall(s.call)
 
-    override fun emitReturnStatement(s: ReturnStatementData): String =
-        if (s.value == null) "return" else "return ${emitExpression(s.value)}"
+    override fun emitReturnStatement(s: IrStatement.ReturnStatement): String =
+        if (s.value == null) "return" else "return ${emitIrExpression(s.value)}"
 
-    override fun emitIncrementStatement(s: IncrementStatementData): String {
-        // Python lacks ++/--; lower to augmented assignment.
+    override fun emitIncrementStatement(s: IrStatement.IncrementStatement): String {
         val delta = if (s.op == "++") "+= 1" else "-= 1"
         return "${s.name} $delta"
     }
 
-    override fun emitExpression(e: ExpressionData): String = when (e.kind) {
-        ExpressionData.Kind.NULL_LITERAL -> "None"
-        ExpressionData.Kind.BOOL_LITERAL -> if (e.literalText == "true") "True" else "False"
-        ExpressionData.Kind.INT_LITERAL,
-        ExpressionData.Kind.DEC_LITERAL,
-        ExpressionData.Kind.IDENTIFIER -> e.literalText!!
-        ExpressionData.Kind.STRING_LITERAL ->
+    override fun emitReadonlyPromotion(s: IrStatement.ReadonlyPromotion): String =
+        error("ReadonlyPromotion is P12-deferred — IR variant must not reach P10 backends")
+
+    // ---------------------------------------------------------------------- //
+    // Expression rendering
+    // ---------------------------------------------------------------------- //
+
+    private fun emitIrExpression(e: IrExpression): String = when (e) {
+        is IrExpression.Identifier   -> e.name                           // R5
+        is IrExpression.IntLiteral   -> e.literalText
+        is IrExpression.DecLiteral   -> e.literalText
+        is IrExpression.NullLiteral  -> "None"
+        is IrExpression.BoolLiteral  -> if (e.value) "True" else "False" // Python-specific
+        is IrExpression.StringLiteral ->
             StringLiteralText.escapeFor(StringLiteralText.unescape(e.literalText), '"')!!
-        ExpressionData.Kind.LAMBDA -> emitLambda(e.lambda!!)
-        ExpressionData.Kind.BUNDLE -> emitBundleLiteral(e.bundle!!)
-        ExpressionData.Kind.ARRAY -> emitArrayLiteral(e.array!!)
-        ExpressionData.Kind.FUNCTION_CALL -> emitFunctionCall(e.functionCall!!)
-        ExpressionData.Kind.ARRAY_INDEX ->
-            "${e.arrayIndex!!.target}[${emitExpression(e.arrayIndex.index)}]"
-        ExpressionData.Kind.CAST -> {
-            // Array-typed casts (`castas int[]`) have no Python conversion — Python lists
-            // are dynamically typed. Emit the operand untouched.
-            if (e.castTargetType!!.endsWith("[]")) {
-                emitExpression(e.castOperand!!)
-            } else {
-                val fn = when (e.castTargetType) {
-                    "int" -> "int"
-                    "dec" -> "float"
-                    "bool" -> "bool"
-                    "char" -> "str"
-                    else -> null
+        is IrExpression.ArrayIndex   -> "${e.target}[${emitIrExpression(e.index)}]"
+        is IrExpression.BinaryOp     -> {
+            val pyOp = when (e.op) {
+                "and" -> "and"; "or" -> "or"; "equals" -> "=="; "^" -> "**"; else -> e.op
+            }
+            "(${emitIrExpression(e.left)} $pyOp ${emitIrExpression(e.right)})"
+        }
+        is IrExpression.Cast         -> {
+            if (e.targetType is IrType.Array) emitIrExpression(e.operand)
+            else {
+                val fn = when (e.targetType) {
+                    IrType.Int -> "int"; IrType.Dec -> "float"
+                    IrType.Bool -> "bool"; IrType.Char -> "str"; else -> null
                 }
-                if (fn == null) emitExpression(e.castOperand!!)
-                else "$fn(${emitExpression(e.castOperand!!)})"
+                if (fn == null) emitIrExpression(e.operand) else "$fn(${emitIrExpression(e.operand)})"
             }
         }
-        ExpressionData.Kind.BINARY_OP -> {
-            val pyOp = when (e.op) {
-                "and" -> "and"
-                "or" -> "or"
-                "equals" -> "=="
-                "^" -> "**"  // Waterfall ^ is power; Python uses **
-                else -> e.op  // +, -, *, /, %, <, >, <=, >=
-            }
-            "(${emitExpression(e.left!!)} $pyOp ${emitExpression(e.right!!)})"
+        is IrExpression.FunctionCall  -> emitIrFunctionCall(e)
+        is IrExpression.ArrayLiteral  -> "[" + e.elements.joinToString(", ") { emitIrExpression(it) } + "]"
+        is IrExpression.BundleLiteral -> "[" + e.elements.joinToString(", ") { emitIrExpression(it) } + "]"
+        is IrExpression.Lambda        -> {
+            val argList = e.parameters.joinToString(", ") { it.name }
+            if (e.body == null) "(lambda $argList: None)"
+            else "(lambda $argList: ${emitIrFunctionCall(e.body)})"
         }
     }
 
-    override fun emitFunctionCall(c: FunctionCallData): String {
+    private fun emitIrFunctionCall(c: IrExpression.FunctionCall): String {
         val args = if (c.namedArguments.isNotEmpty()) {
-            c.namedArguments.joinToString(", ") { "${it.firstVal}=${emitExpression(it.secondVal)}" }
+            c.namedArguments.joinToString(", ") { "${it.first}=${emitIrExpression(it.second)}" }
         } else {
-            c.positionalArguments.joinToString(", ") { emitExpression(it) }
+            c.positionalArguments.joinToString(", ") { emitIrExpression(it) }
         }
         return when (c.kind) {
-            FunctionCallData.Kind.LOCAL  -> "${c.functionName}($args)"
-            FunctionCallData.Kind.MODULE -> "${c.moduleName}.${c.functionName}($args)"
-            FunctionCallData.Kind.OBJECT -> "${c.receiverPath.joinToString(".")}.${c.functionName}($args)"
+            IrExpression.FunctionCall.Kind.Local  -> "${c.functionName}($args)"
+            IrExpression.FunctionCall.Kind.Module -> "${c.moduleName}.${c.functionName}($args)"
+            IrExpression.FunctionCall.Kind.Object ->
+                "${c.receiverPath.joinToString(".")}.${c.functionName}($args)"
         }
     }
 
-    override fun emitLambda(l: LambdaFunctionData): String {
-        val argList = l.typedArguments.joinToString(", ") { it.secondVal }
-        return if (l.body == null) {
-            // Empty lambda body. Python can't have a statement-less lambda; use None.
-            "(lambda $argList: None)"
-        } else {
-            "(lambda $argList: ${emitFunctionCall(l.body)})"
-        }
-    }
+    // Interface methods — delegate to IR-aware helpers
+    override fun emitExpression(e: IrExpression): String = emitIrExpression(e)
+    override fun emitFunctionCall(c: IrExpression.FunctionCall): String = emitIrFunctionCall(c)
+    override fun emitLambda(l: IrExpression.Lambda): String = emitIrExpression(l)  // M2: single source
+    override fun emitArrayLiteral(a: IrExpression.ArrayLiteral): String =
+        "[" + a.elements.joinToString(", ") { emitIrExpression(it) } + "]"
+    override fun emitBundleLiteral(b: IrExpression.BundleLiteral): String =
+        "[" + b.elements.joinToString(", ") { emitIrExpression(it) } + "]"
 
-    override fun emitArrayLiteral(a: ArrayLiteralData): String =
-        "[" + a.elements.joinToString(", ") { emitExpression(it) } + "]"
+    // ---------------------------------------------------------------------- //
+    // Private helpers
+    // ---------------------------------------------------------------------- //
 
-    override fun emitBundleLiteral(b: BundleLiteralData): String =
-        // TODO(audit): bundle semantics aren't defined yet; emitting as a Python list.
-        "[" + b.elements.joinToString(", ") { emitExpression(it) } + "]"
+    private fun joinStatements(body: List<IrStatement>): String =
+        body.joinToString("\n") { emitStatement(it) }
 
-    private fun joinStatements(body: List<TranslatableStatement>): String =
-        body.joinToString("\n") { it.translate(this) }
-
-    private fun bodyOrPass(body: List<TranslatableStatement>): String =
+    private fun bodyOrPass(body: List<IrStatement>): String =
         if (body.isEmpty()) "pass" else joinStatements(body)
 
     companion object {

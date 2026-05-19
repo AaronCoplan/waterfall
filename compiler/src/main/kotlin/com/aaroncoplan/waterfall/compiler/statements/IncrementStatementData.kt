@@ -11,5 +11,6 @@ class IncrementStatementData(filePath: String, ctx: WaterfallParser.IncrementSta
     /** "++" or "--" */
     @JvmField val op: String = ctx.op.text
 
-    override fun translate(backend: CodeGenerator): String = backend.emitIncrementStatement(this)
+    override fun translate(backend: CodeGenerator): String =
+        error("translate() is dead in §5.5 — backends consume IrModule via IrLowering; removed in §5.6")
 }
