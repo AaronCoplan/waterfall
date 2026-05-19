@@ -11,11 +11,7 @@ import java.util.TreeSet
  * have a direct C equivalent and emit a best-guess placeholder with a
  * `/* TODO(audit) ... */` comment — these are the spots that surface real follow-up work.
  *
- * §5.5 THROWAWAY STUB: [emitProgram] delegates to [lowerThenEmit] which
- * translates IrModule fields using the same logic as the old *Data-walking
- * implementation. The real IR-consuming implementation lands in commit 4
- * and replaces this entire file. Marked explicitly so the reviewer knows
- * this code will be deleted.
+ * §5.5: full IR-consuming implementation (commit 4 — replaces throwaway stub).
  */
 class CBackend : CodeGenerator {
 
@@ -26,10 +22,6 @@ class CBackend : CodeGenerator {
     private var requiredHeaders: TreeSet<String> = TreeSet()
 
     override fun name(): String = "c"
-
-    // ---------------------------------------------------------------------- //
-    // THROWAWAY: replaced by proper impl in commit 4
-    // ---------------------------------------------------------------------- //
 
     override fun emitProgram(module: IrModule): String {
         requiredHeaders = TreeSet()
@@ -54,7 +46,6 @@ class CBackend : CodeGenerator {
         return sb.toString()
     }
 
-    /** Top-level variable. Emitted directly in [emitProgram]. */
     private fun emitTopLevelVar(v: IrTopLevelVariable): String {
         val prefix = if (v.isReadonly) "const " else ""
         return "$prefix${irTypeToCType(v.type)} ${v.name} = ${emitIrExpression(v.initializer)};"
